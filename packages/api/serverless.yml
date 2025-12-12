@@ -1,0 +1,251 @@
+service: secret-santa-api
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'ap-south-1'}
+  memorySize: 256
+  timeout: 30
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
+    JWT_SECRET: ${env:JWT_SECRET}
+    ENCRYPTION_SECRET: ${env:ENCRYPTION_SECRET}
+    ENCRYPTION_SALT: ${env:ENCRYPTION_SALT, 'secret-santa-salt-v1'}
+    FRONTEND_URL: ${env:FRONTEND_URL, 'http://localhost:3000'}
+    SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'noreply@secretsanta.app'}
+    STAGE: ${self:provider.stage}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - http://localhost:3000
+        - ${env:FRONTEND_URL, 'http://localhost:3000'}
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      allowCredentials: true
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: "node20"
+    platform: "node"
+    format: "esm"
+    mainFields:
+      - module
+      - main
+    banner:
+      js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);"
+
+functions:
+  # Auth
+  sendMagicLink:
+    handler: src/handlers/auth.sendMagicLink
+    events:
+      - httpApi:
+          path: /auth/magic-link
+          method: post
+
+  verifyMagicLink:
+    handler: src/handlers/auth.verifyMagicLink
+    events:
+      - httpApi:
+          path: /auth/verify
+          method: post
+
+  refreshToken:
+    handler: src/handlers/auth.refreshToken
+    events:
+      - httpApi:
+          path: /auth/refresh
+          method: post
+
+  getMe:
+    handler: src/handlers/auth.getMe
+    events:
+      - httpApi:
+          path: /auth/me
+          method: get
+
+  # Teams
+  createTeam:
+    handler: src/handlers/teams.createTeam
+    events:
+      - httpApi:
+          path: /teams
+          method: post
+
+  listTeams:
+    handler: src/handlers/teams.listTeams
+    events:
+      - httpApi:
+          path: /teams
+          method: get
+
+  getTeam:
+    handler: src/handlers/teams.getTeam
+    events:
+      - httpApi:
+          path: /teams/{teamId}
+          method: get
+
+  updateTeam:
+    handler: src/handlers/teams.updateTeam
+    events:
+      - httpApi:
+          path: /teams/{teamId}
+          method: patch
+
+  deleteTeam:
+    handler: src/handlers/teams.deleteTeam
+    events:
+      - httpApi:
+          path: /teams/{teamId}
+          method: delete
+
+  getTeamStatus:
+    handler: src/handlers/teams.getTeamStatus
+    events:
+      - httpApi:
+          path: /teams/{teamId}/status
+          method: get
+
+  # Invitations
+  inviteMembers:
+    handler: src/handlers/invitations.inviteMembers
+    events:
+      - httpApi:
+          path: /teams/{teamId}/invite
+          method: post
+
+  acceptInvitation:
+    handler: src/handlers/invitations.acceptInvitation
+    events:
+      - httpApi:
+          path: /invitations/{token}/accept
+          method: post
+
+  declineInvitation:
+    handler: src/handlers/invitations.declineInvitation
+    events:
+      - httpApi:
+          path: /invitations/{token}/decline
+          method: post
+
+  removeMember:
+    handler: src/handlers/invitations.removeMember
+    events:
+      - httpApi:
+          path: /teams/{teamId}/members/{memberId}
+          method: delete
+
+  # Wishlists
+  getWishlist:
+    handler: src/handlers/wishlists.getWishlist
+    events:
+      - httpApi:
+          path: /teams/{teamId}/wishlist
+          method: get
+
+  updateWishlist:
+    handler: src/handlers/wishlists.updateWishlist
+    events:
+      - httpApi:
+          path: /teams/{teamId}/wishlist
+          method: put
+
+  getGifteeWishlist:
+    handler: src/handlers/wishlists.getGifteeWishlist
+    events:
+      - httpApi:
+          path: /teams/{teamId}/giftee/wishlist
+          method: get
+
+  # Addresses
+  getAddress:
+    handler: src/handlers/addresses.getAddress
+    events:
+      - httpApi:
+          path: /teams/{teamId}/address
+          method: get
+
+  updateAddress:
+    handler: src/handlers/addresses.updateAddress
+    events:
+      - httpApi:
+          path: /teams/{teamId}/address
+          method: put
+
+  getGifteeAddress:
+    handler: src/handlers/addresses.getGifteeAddress
+    events:
+      - httpApi:
+          path: /teams/{teamId}/giftee/address
+          method: get
+
+  # Assignments
+  triggerAssignment:
+    handler: src/handlers/assignments.triggerAssignment
+    events:
+      - httpApi:
+          path: /teams/{teamId}/assign
+          method: post
+
+  getAssignment:
+    handler: src/handlers/assignments.getAssignment
+    events:
+      - httpApi:
+          path: /teams/{teamId}/assignment
+          method: get
+
+  updateAssignment:
+    handler: src/handlers/assignments.updateAssignment
+    events:
+      - httpApi:
+          path: /teams/{teamId}/assignment
+          method: patch
+
+  # Exclusions
+  listExclusions:
+    handler: src/handlers/exclusions.listExclusions
+    events:
+      - httpApi:
+          path: /teams/{teamId}/exclusions
+          method: get
+
+  addExclusion:
+    handler: src/handlers/exclusions.addExclusion
+    events:
+      - httpApi:
+          path: /teams/{teamId}/exclusions
+          method: post
+
+  removeExclusion:
+    handler: src/handlers/exclusions.removeExclusion
+    events:
+      - httpApi:
+          path: /teams/{teamId}/exclusions/{exclusionId}
+          method: delete
+
+  # Admin
+  sendReminders:
+    handler: src/handlers/admin.sendReminders
+    events:
+      - httpApi:
+          path: /teams/{teamId}/reminders
+          method: post
