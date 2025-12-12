@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0F1419;
+  --bg-secondary: #1A2332;
+  --bg-card: #232D3F;
+  --accent-gold: #D4A853;
+  --accent-copper: #B87333;
+  --accent-cream: #FFF8E7;
+  --success: #4ADE80;
+  --warning: #FBBF24;
+  --error: #F87171;
+}
+
+@layer base {
+  body {
+    @apply bg-midnight text-cream font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  ::selection {
+    @apply bg-gold/30 text-cream;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-midnight-50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-midnight-200 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-midnight-300;
+  }
+}
+
+@layer components {
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-gradient-card backdrop-blur-sm border border-gold/10 rounded-2xl shadow-card;
+  }
+
+  /* Gold gradient button */
+  .btn-gold {
+    @apply bg-gradient-gold text-midnight font-semibold px-6 py-3 rounded-lg 
+           transition-all duration-300 hover:shadow-glow hover:scale-[1.02] 
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
+           disabled:hover:shadow-none disabled:hover:scale-100;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-midnight-100 text-cream border border-gold/20 px-6 py-3 rounded-lg
+           transition-all duration-300 hover:border-gold/40 hover:bg-midnight-200
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply text-cream/70 px-4 py-2 rounded-lg transition-all duration-300
+           hover:text-cream hover:bg-midnight-100 active:scale-[0.98];
+  }
+
+  /* Input field */
+  .input-field {
+    @apply w-full bg-midnight-50 border border-gold/10 rounded-lg px-4 py-3
+           text-cream placeholder:text-cream/40 
+           focus:outline-none focus:border-gold/40 focus:ring-2 focus:ring-gold/10
+           transition-all duration-300;
+  }
+
+  /* Label */
+  .input-label {
+    @apply block text-sm text-cream/70 mb-2 font-medium;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success/20 text-success;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning/20 text-warning;
+  }
+
+  .badge-error {
+    @apply badge bg-error/20 text-error;
+  }
+
+  .badge-gold {
+    @apply badge bg-gold/20 text-gold;
+  }
+
+  /* Glow effect on hover */
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-glow;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    @apply relative overflow-hidden;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(212, 168, 83, 0.1),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+@layer utilities {
+  /* Text gradient */
+  .text-gradient-gold {
+    @apply bg-gradient-gold bg-clip-text text-transparent;
+  }
+
+  /* Frost effect */
+  .frost {
+    @apply bg-white/5 backdrop-blur-sm;
+  }
+
+  /* Animation delays */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+}
+
+/* Snowfall effect (optional) */
+.snowflake {
+  @apply fixed text-white/20 text-2xl pointer-events-none;
+  animation: snow linear infinite;
+}
+
