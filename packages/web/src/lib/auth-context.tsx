@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -6,8 +6,8 @@ import {
   useEffect,
   useState,
   type ReactNode,
-} from 'react';
-import { api, type User } from './api';
+} from "react";
+import { api, type User } from "./api";
 
 interface AuthContextType {
   user: User | null;
@@ -37,17 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
       } catch {
         // Token expired or invalid, try refresh
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
           try {
             const data = await api.refreshToken(refreshToken);
             api.setAccessToken(data.accessToken);
-            localStorage.setItem('refreshToken', data.refreshToken);
+            localStorage.setItem("refreshToken", data.refreshToken);
             setUser(data.user);
           } catch {
             // Refresh failed, clear tokens
             api.setAccessToken(null);
-            localStorage.removeItem('refreshToken');
+            localStorage.removeItem("refreshToken");
           }
         }
       } finally {
@@ -60,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
     api.setAccessToken(accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem("refreshToken", refreshToken);
     setUser(userData);
   };
 
   const logout = () => {
     api.setAccessToken(null);
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem("refreshToken");
     setUser(null);
   };
 
@@ -88,8 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
-

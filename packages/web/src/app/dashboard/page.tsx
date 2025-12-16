@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   Plus,
   Users,
@@ -13,23 +13,23 @@ import {
   ChevronRight,
   Loader2,
   LogOut,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
-import { Modal } from '@/components/ui/modal';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { api, type TeamWithRole } from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
-import { formatShortDate } from '@/lib/utils';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Modal } from "@/components/ui/modal";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { api, type TeamWithRole } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { formatShortDate } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 const createTeamSchema = z.object({
-  name: z.string().min(1, 'Team name is required').max(255),
+  name: z.string().min(1, "Team name is required").max(255),
   description: z.string().optional(),
   budgetMin: z.string().optional(),
   budgetMax: z.string().optional(),
@@ -41,15 +41,15 @@ type CreateTeamForm = z.infer<typeof createTeamSchema>;
 
 function TeamCard({ team }: { team: TeamWithRole }) {
   const statusVariant = {
-    collecting_wishes: 'warning',
-    assigned: 'success',
-    completed: 'gold',
-  }[team.status] as 'warning' | 'success' | 'gold';
+    collecting_wishes: "warning",
+    assigned: "success",
+    completed: "gold",
+  }[team.status] as "warning" | "success" | "gold";
 
   const statusLabel = {
-    collecting_wishes: 'Collecting Wishes',
-    assigned: 'Assigned',
-    completed: 'Completed',
+    collecting_wishes: "Collecting Wishes",
+    assigned: "Assigned",
+    completed: "Completed",
   }[team.status];
 
   return (
@@ -69,7 +69,7 @@ function TeamCard({ team }: { team: TeamWithRole }) {
           )}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center text-cream/50">
-              {team.role === 'admin' && (
+              {team.role === "admin" && (
                 <Badge variant="gold" className="mr-2 text-xs">
                   Admin
                 </Badge>
@@ -94,8 +94,12 @@ export default function DashboardPage() {
   const { user, isLoading: authLoading, logout } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const { data: teams, isLoading: teamsLoading, refetch } = useQuery({
-    queryKey: ['teams'],
+  const {
+    data: teams,
+    isLoading: teamsLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["teams"],
     queryFn: () => api.listTeams(),
     enabled: !!user,
   });
@@ -124,18 +128,18 @@ export default function DashboardPage() {
       refetch();
       router.push(`/dashboard/teams/${team.id}`);
     } catch (error) {
-      console.error('Failed to create team:', error);
+      console.error("Failed to create team:", error);
     }
   };
 
   const handleLogout = () => {
     logout();
-    router.push('/');
+    router.push("/");
   };
 
   // Redirect if not authenticated
   if (!authLoading && !user) {
-    router.push('/auth/login');
+    router.push("/auth/login");
     return null;
   }
 
@@ -161,7 +165,7 @@ export default function DashboardPage() {
             </Link>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <Avatar name={user?.name || user?.email || 'U'} size="sm" />
+                <Avatar name={user?.name || user?.email || "U"} size="sm" />
                 <span className="text-cream/70 text-sm hidden sm:block">
                   {user?.name || user?.email}
                 </span>
@@ -226,8 +230,8 @@ export default function DashboardPage() {
                   No teams yet
                 </h2>
                 <p className="text-cream/60 mb-6 max-w-md mx-auto">
-                  Create your first Secret Santa team and invite friends, family,
-                  or coworkers to join the gift exchange.
+                  Create your first Secret Santa team and invite friends,
+                  family, or coworkers to join the gift exchange.
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -248,7 +252,7 @@ export default function DashboardPage() {
       >
         <form onSubmit={handleSubmit(onCreateTeam)} className="space-y-4">
           <Input
-            {...register('name')}
+            {...register("name")}
             label="Team Name"
             placeholder="Family Christmas 2024"
             error={errors.name?.message}
@@ -256,20 +260,20 @@ export default function DashboardPage() {
           />
 
           <Textarea
-            {...register('description')}
+            {...register("description")}
             label="Description (optional)"
             placeholder="Our annual family gift exchange..."
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              {...register('budgetMin')}
+              {...register("budgetMin")}
               type="number"
               label="Min Budget ($)"
               placeholder="20"
             />
             <Input
-              {...register('budgetMax')}
+              {...register("budgetMax")}
               type="number"
               label="Max Budget ($)"
               placeholder="50"
@@ -278,12 +282,12 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              {...register('wishlistDeadline')}
+              {...register("wishlistDeadline")}
               type="date"
               label="Wishlist Deadline"
             />
             <Input
-              {...register('exchangeDate')}
+              {...register("exchangeDate")}
               type="date"
               label="Exchange Date"
             />
@@ -306,4 +310,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

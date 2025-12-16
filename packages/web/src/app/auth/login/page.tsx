@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { api } from '@/lib/api';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { api } from "@/lib/api";
 
 const schema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -22,7 +22,7 @@ type FormData = z.infer<typeof schema>;
 export default function LoginPage() {
   const router = useRouter();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   const {
     register,
@@ -38,7 +38,7 @@ export default function LoginPage() {
       setSubmittedEmail(data.email);
       setIsSubmitted(true);
     } catch (error) {
-      console.error('Failed to send magic link:', error);
+      console.error("Failed to send magic link:", error);
     }
   };
 
@@ -60,11 +60,12 @@ export default function LoginPage() {
                 Check Your Email
               </h1>
               <p className="text-cream/70 mb-6">
-                We sent a magic link to{' '}
+                We sent a magic link to{" "}
                 <span className="text-gold font-medium">{submittedEmail}</span>
               </p>
               <p className="text-cream/50 text-sm mb-6">
-                Click the link in the email to sign in. The link will expire in 15 minutes.
+                Click the link in the email to sign in. The link will expire in
+                15 minutes.
               </p>
               <Button
                 variant="secondary"
@@ -110,7 +111,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <Input
-                {...register('email')}
+                {...register("email")}
                 type="email"
                 label="Email address"
                 placeholder="you@example.com"
@@ -118,11 +119,7 @@ export default function LoginPage() {
                 autoFocus
               />
 
-              <Button
-                type="submit"
-                isLoading={isSubmitting}
-                className="w-full"
-              >
+              <Button type="submit" isLoading={isSubmitting} className="w-full">
                 <Mail className="w-4 h-4 mr-2" />
                 Send Magic Link
               </Button>
@@ -137,4 +134,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

@@ -1,14 +1,27 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from 'aws-lambda';
-import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
-import { db, teamMembers, wishlists, wishItems, assignments } from '../db/index.js';
-import { getUserFromEvent } from '../lib/auth.js';
-import { success, error, unauthorized, forbidden, notFound, serverError } from '../lib/response.js';
+import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { z } from "zod";
+import { eq, and } from "drizzle-orm";
+import {
+  db,
+  teamMembers,
+  wishlists,
+  wishItems,
+  assignments,
+} from "../db/index.js";
+import { getUserFromEvent } from "../lib/auth.js";
+import {
+  success,
+  error,
+  unauthorized,
+  forbidden,
+  notFound,
+  serverError,
+} from "../lib/response.js";
 
 const wishItemSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().optional(),
-  url: z.string().url().optional().or(z.literal('')),
+  url: z.string().url().optional().or(z.literal("")),
   priceEstimate: z.number().positive().optional(),
   priority: z.number().int().min(0).max(10).optional(),
 });
@@ -22,7 +35,7 @@ async function getMembershipForTeam(userId: string, teamId: string) {
     where: and(
       eq(teamMembers.teamId, teamId),
       eq(teamMembers.userId, userId),
-      eq(teamMembers.invitationStatus, 'accepted')
+      eq(teamMembers.invitationStatus, "accepted")
     ),
   });
 }
@@ -35,11 +48,11 @@ export async function getWishlist(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
     if (!membership) {
-      return forbidden('You are not a member of this team');
+      return forbidden("You are not a member of this team");
     }
 
     // Get or create wishlist
@@ -58,14 +71,14 @@ export async function getWishlist(
         .insert(wishlists)
         .values({ teamMemberId: membership.id })
         .returning();
-      
+
       wishlist = { ...newWishlist, items: [] };
     }
 
     return success(wishlist);
   } catch (err) {
-    console.error('Error getting wishlist:', err);
-    return serverError('Failed to get wishlist');
+    console.error("Error getting wishlist:", err);
+    return serverError("Failed to get wishlist");
   }
 }
 
@@ -77,18 +90,18 @@ export async function updateWishlist(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
     if (!membership) {
-      return forbidden('You are not a member of this team');
+      return forbidden("You are not a member of this team");
     }
 
-    const body = JSON.parse(event.body || '{}');
+    const body = JSON.parse(event.body || "{}");
     const parsed = updateWishlistSchema.safeParse(body);
 
     if (!parsed.success) {
-      return error('Invalid wishlist data', 400, 'VALIDATION_ERROR');
+      return error("Invalid wishlist data", 400, "VALIDATION_ERROR");
     }
 
     const { items } = parsed.data;
@@ -140,8 +153,8 @@ export async function updateWishlist(
 
     return success(updatedWishlist);
   } catch (err) {
-    console.error('Error updating wishlist:', err);
-    return serverError('Failed to update wishlist');
+    console.error("Error updating wishlist:", err);
+    return serverError("Failed to update wishlist");
   }
 }
 
@@ -153,11 +166,11 @@ export async function getGifteeWishlist(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
     if (!membership) {
-      return forbidden('You are not a member of this team');
+      return forbidden("You are not a member of this team");
     }
 
     // Find the assignment where this user is the giver
@@ -189,7 +202,9 @@ export async function getGifteeWishlist(
     });
 
     if (!assignment) {
-      return notFound('No assignment found. Assignments may not have been made yet.');
+      return notFound(
+        "No assignment found. Assignments may not have been made yet."
+      );
     }
 
     // Mark as revealed if first time viewing
@@ -202,15 +217,14 @@ export async function getGifteeWishlist(
 
     return success({
       giftee: {
-        name: assignment.receiver.user?.name || 'Unknown',
+        name: assignment.receiver.user?.name || "Unknown",
         avatarUrl: assignment.receiver.user?.avatarUrl,
       },
       wishlist: assignment.receiver.wishlist,
       giftStatus: assignment.giftStatus,
     });
   } catch (err) {
-    console.error('Error getting giftee wishlist:', err);
-    return serverError('Failed to get giftee wishlist');
+    console.error("Error getting giftee wishlist:", err);
+    return serverError("Failed to get giftee wishlist");
   }
 }
-

@@ -325,15 +325,15 @@ export default function TeamPage() {
                     team.status === "assigned"
                       ? "success"
                       : team.status === "completed"
-                      ? "gold"
-                      : "warning"
+                        ? "gold"
+                        : "warning"
                   }
                 >
                   {team.status === "collecting_wishes"
                     ? "Collecting Wishes"
                     : team.status === "assigned"
-                    ? "Assigned"
-                    : "Completed"}
+                      ? "Assigned"
+                      : "Completed"}
                 </Badge>
                 {team.exchangeDate && (
                   <span className="text-cream/50 text-sm">

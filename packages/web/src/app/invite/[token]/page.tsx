@@ -1,30 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { useParams, useRouter } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle, Gift } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { api } from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useParams, useRouter } from "next/navigation";
+import { Loader2, CheckCircle, XCircle, Gift } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 export default function InvitePage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
   const { user, isLoading: authLoading } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'needsAuth'>('loading');
-  const [teamName, setTeamName] = useState('');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState<
+    "loading" | "success" | "error" | "needsAuth"
+  >("loading");
+  const [teamName, setTeamName] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
       // Store the invitation token and redirect to login
-      sessionStorage.setItem('pendingInvitation', token);
-      setStatus('needsAuth');
+      sessionStorage.setItem("pendingInvitation", token);
+      setStatus("needsAuth");
       return;
     }
 
@@ -32,15 +34,17 @@ export default function InvitePage() {
       try {
         const result = await api.acceptInvitation(token);
         setTeamName(result.team.name);
-        setStatus('success');
+        setStatus("success");
 
         // Redirect after a brief delay
         setTimeout(() => {
           router.push(`/dashboard/teams/${result.team.id}`);
         }, 2000);
       } catch (err) {
-        setStatus('error');
-        setError(err instanceof Error ? err.message : 'Failed to accept invitation');
+        setStatus("error");
+        setError(
+          err instanceof Error ? err.message : "Failed to accept invitation"
+        );
       }
     };
 
@@ -49,24 +53,26 @@ export default function InvitePage() {
 
   // Check for pending invitation after login
   useEffect(() => {
-    if (user && status === 'needsAuth') {
-      const pendingToken = sessionStorage.getItem('pendingInvitation');
+    if (user && status === "needsAuth") {
+      const pendingToken = sessionStorage.getItem("pendingInvitation");
       if (pendingToken === token) {
-        sessionStorage.removeItem('pendingInvitation');
-        setStatus('loading');
-        
+        sessionStorage.removeItem("pendingInvitation");
+        setStatus("loading");
+
         const acceptInvitation = async () => {
           try {
             const result = await api.acceptInvitation(token);
             setTeamName(result.team.name);
-            setStatus('success');
+            setStatus("success");
 
             setTimeout(() => {
               router.push(`/dashboard/teams/${result.team.id}`);
             }, 2000);
           } catch (err) {
-            setStatus('error');
-            setError(err instanceof Error ? err.message : 'Failed to accept invitation');
+            setStatus("error");
+            setError(
+              err instanceof Error ? err.message : "Failed to accept invitation"
+            );
           }
         };
 
@@ -85,7 +91,7 @@ export default function InvitePage() {
       >
         <Card className="text-center">
           <CardContent className="pt-8 pb-6">
-            {(status === 'loading' || authLoading) && (
+            {(status === "loading" || authLoading) && (
               <>
                 <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
                   <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -99,7 +105,7 @@ export default function InvitePage() {
               </>
             )}
 
-            {status === 'needsAuth' && (
+            {status === "needsAuth" && (
               <>
                 <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
                   <Gift className="w-8 h-8 text-gold" />
@@ -110,13 +116,16 @@ export default function InvitePage() {
                 <p className="text-cream/70 mb-6">
                   Sign in to accept this Secret Santa invitation.
                 </p>
-                <Button onClick={() => router.push('/auth/login')} className="w-full">
+                <Button
+                  onClick={() => router.push("/auth/login")}
+                  className="w-full"
+                >
                   Sign In to Accept
                 </Button>
               </>
             )}
 
-            {status === 'success' && (
+            {status === "success" && (
               <>
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-8 h-8 text-success" />
@@ -125,13 +134,14 @@ export default function InvitePage() {
                   Welcome to the Team!
                 </h1>
                 <p className="text-cream/70">
-                  You've joined <span className="text-gold font-medium">{teamName}</span>.
+                  You've joined{" "}
+                  <span className="text-gold font-medium">{teamName}</span>.
                   Redirecting...
                 </p>
               </>
             )}
 
-            {status === 'error' && (
+            {status === "error" && (
               <>
                 <div className="w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mx-auto mb-6">
                   <XCircle className="w-8 h-8 text-error" />
@@ -140,7 +150,10 @@ export default function InvitePage() {
                   Oops!
                 </h1>
                 <p className="text-cream/70 mb-6">{error}</p>
-                <Button onClick={() => router.push('/dashboard')} className="w-full">
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  className="w-full"
+                >
                   Go to Dashboard
                 </Button>
               </>
@@ -151,4 +164,3 @@ export default function InvitePage() {
     </div>
   );
 }
-
