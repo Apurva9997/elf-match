@@ -1,17 +1,17 @@
+import { relations } from "drizzle-orm";
 import {
+  boolean,
+  date,
+  decimal,
+  integer,
+  jsonb,
   pgTable,
-  uuid,
-  varchar,
   text,
   timestamp,
-  decimal,
-  date,
-  integer,
-  boolean,
-  jsonb,
   uniqueIndex,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -103,7 +103,7 @@ export const addresses = pgTable("addresses", {
   streetLine2: varchar("street_line_2", { length: 255 }),
   city: varchar("city", { length: 100 }).notNull(),
   state: varchar("state", { length: 100 }),
-  postalCode: varchar("postal_code", { length: 20 }).notNull(),
+  postalCode: varchar("postal_code", { length: 500 }).notNull(),
   country: varchar("country", { length: 100 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -50,10 +50,18 @@ function VerifyContent() {
         login(data.accessToken, data.refreshToken, data.user);
         setStatus("success");
 
-        // Redirect after a brief delay
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
+        // Check for pending invitation before redirecting
+        const pendingInvitation = sessionStorage.getItem("pendingInvitation");
+        if (pendingInvitation) {
+          setTimeout(() => {
+            sessionStorage.removeItem("pendingInvitation");
+            router.push(`/invite/${pendingInvitation}`);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            router.push("/dashboard");
+          }, 1500);
+        }
       } catch (err) {
         // Don't update state if request was aborted
         if (abortController.signal.aborted) {
