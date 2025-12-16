@@ -22,26 +22,29 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen">
         <Script
-          src="https://cdn.amplitude.com/libs/analytics-browser-2.11.1-min.js.gz"
-          strategy="afterInteractive"
-        />
-        <Script
-          src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.25.0-min.js.gz"
-          strategy="afterInteractive"
+          src="https://cdn.amplitude.com/script/cafdae686221fc101d72a883c8f95324.js"
+          strategy="beforeInteractive"
         />
         <Script
           id="amplitude-init"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              if (window.amplitude && window.sessionReplay) {
-                window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
-                window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
-                  autocapture: {
-                    elementInteractions: true
-                  }
-                });
-              }
+              window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+              window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
+                fetchRemoteConfig: true,
+                autocapture: {
+                  attribution: true,
+                  fileDownloads: true,
+                  formInteractions: true,
+                  pageViews: true,
+                  sessions: true,
+                  elementInteractions: true,
+                  networkTracking: true,
+                  webVitals: true,
+                  frustrationInteractions: true
+                }
+              });
             `,
           }}
         />
