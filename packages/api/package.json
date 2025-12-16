@@ -30,9 +30,10 @@
     "drizzle-kit": "^0.24.0",
     "esbuild": "^0.21.0",
     "serverless": "^3.38.0",
+    "serverless-domain-manager": "^8.0.0",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-esbuild": "^1.52.0",
     "serverless-offline": "^13.6.0",
     "typescript": "^5.5.0"
   }
 }
-

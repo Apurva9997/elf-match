@@ -2,6 +2,8 @@ service: secret-santa-api
 
 frameworkVersion: "3"
 
+useDotenv: true
+
 provider:
   name: aws
   runtime: nodejs20.x
@@ -22,6 +24,8 @@ provider:
       allowedOrigins:
         - http://localhost:3000
         - ${env:FRONTEND_URL, 'http://localhost:3000'}
+        - https://giftwhisper.online
+        - https://www.giftwhisper.online
       allowedHeaders:
         - Content-Type
         - Authorization
@@ -36,9 +40,21 @@ provider:
 
 plugins:
   - serverless-esbuild
+  - serverless-domain-manager
   - serverless-offline
 
 custom:
+  customDomain:
+    domainName: apis.giftwhisper.online
+    certificateArn: arn:aws:acm:ap-south-1:038462770165:certificate/5c534062-14c1-4638-9a3f-63fd04ac6afc
+    basePath: ""
+    stage: ${self:provider.stage}
+    createRoute53Record: false
+    endpointType: regional
+    securityPolicy: tls_1_2
+    apiType: http
+    autoDomain: true
+
   esbuild:
     bundle: true
     minify: false
