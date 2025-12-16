@@ -66,13 +66,42 @@ export async function verifyMagicLink(
     const parsed = verifyMagicLinkSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.log("[verifyMagicLink] Validation failed:", parsed.error);
       return error("Invalid token", 400, "VALIDATION_ERROR");
     }
 
     const { token, name } = parsed.data;
 
+    // Log token info (first 8 and last 8 chars for security)
+    const tokenPreview = token.length > 16 
+      ? `${token.substring(0, 8)}...${token.substring(token.length - 8)}`
+      : `${token.substring(0, 4)}...`;
+    console.log("[verifyMagicLink] Verifying token:", tokenPreview, "length:", token.length);
+
     // Hash the provided token to compare with stored hash
     const tokenHash = hashToken(token);
+    console.log("[verifyMagicLink] Token hash:", tokenHash.substring(0, 16) + "...");
+
+    // First, check if token exists at all (even if expired/used) to diagnose hash mismatch
+    const anyMagicLink = await db.query.magicLinks.findFirst({
+      where: eq(magicLinks.token, tokenHash),
+    });
+
+    if (!anyMagicLink) {
+      console.log("[verifyMagicLink] Token hash not found in database");
+      return error("Invalid or expired token", 400, "INVALID_TOKEN");
+    }
+
+    console.log("[verifyMagicLink] Token found in DB:", {
+      id: anyMagicLink.id,
+      email: anyMagicLink.email,
+      expiresAt: anyMagicLink.expiresAt?.toISOString(),
+      usedAt: anyMagicLink.usedAt?.toISOString() || null,
+      createdAt: anyMagicLink.createdAt?.toISOString(),
+      now: new Date().toISOString(),
+      isExpired: anyMagicLink.expiresAt ? anyMagicLink.expiresAt < new Date() : null,
+      isUsed: !!anyMagicLink.usedAt,
+    });
 
     // Find and validate the magic link using the hash
     const magicLink = await db.query.magicLinks.findFirst({
@@ -84,6 +113,16 @@ export async function verifyMagicLink(
     });
 
     if (!magicLink) {
+      // Provide more specific error based on what we found
+      if (anyMagicLink.usedAt) {
+        console.log("[verifyMagicLink] Token already used at:", anyMagicLink.usedAt.toISOString());
+        return error("Invalid or expired token", 400, "INVALID_TOKEN");
+      }
+      if (anyMagicLink.expiresAt && anyMagicLink.expiresAt < new Date()) {
+        console.log("[verifyMagicLink] Token expired. ExpiresAt:", anyMagicLink.expiresAt.toISOString(), "Now:", new Date().toISOString());
+        return error("Invalid or expired token", 400, "INVALID_TOKEN");
+      }
+      console.log("[verifyMagicLink] Token validation failed for unknown reason");
       return error("Invalid or expired token", 400, "INVALID_TOKEN");
     }
 
@@ -120,6 +159,8 @@ export async function verifyMagicLink(
     // Generate tokens
     const tokens = await generateTokens(user.id, user.email);
 
+    console.log("[verifyMagicLink] Verification successful for user:", user.email, "userId:", user.id);
+
     return success({
       user: {
         id: user.id,
@@ -130,7 +171,10 @@ export async function verifyMagicLink(
       ...tokens,
     });
   } catch (err) {
-    console.error("Error verifying magic link:", err);
+    console.error("[verifyMagicLink] Error verifying magic link:", err);
+    if (err instanceof Error) {
+      console.error("[verifyMagicLink] Error stack:", err.stack);
+    }
     return serverError("Failed to verify magic link");
   }
 }
