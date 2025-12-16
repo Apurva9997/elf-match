@@ -83,11 +83,11 @@ export async function sendMagicLinkEmail(
                   </p>
                   
                   <!-- Button -->
-                  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
-                      <td align="center">
-                        <a href="${magicLink}" 
-                           style="display: inline-block; background: linear-gradient(135deg, #D4A853 0%, #B87333 100%); color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px;">
+                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
+                        <a href="${magicLink}" target="_blank" 
+                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           ✨ Sign In
                         </a>
                       </td>
@@ -176,11 +176,11 @@ export async function sendInvitationEmail(
                   </p>
                   
                   <!-- Button -->
-                  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
-                      <td align="center">
-                        <a href="${inviteLink}" 
-                           style="display: inline-block; background: linear-gradient(135deg, #D4A853 0%, #B87333 100%); color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px;">
+                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
+                        <a href="${inviteLink}" target="_blank" 
+                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           🎄 Accept Invitation
                         </a>
                       </td>
@@ -271,11 +271,11 @@ export async function sendAssignmentEmail(
                   </p>
                   
                   <!-- Button -->
-                  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
-                      <td align="center">
-                        <a href="${dashboardLink}" 
-                           style="display: inline-block; background: linear-gradient(135deg, #D4A853 0%, #B87333 100%); color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px;">
+                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
+                        <a href="${dashboardLink}" target="_blank" 
+                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           🎁 View Their Wishlist
                         </a>
                       </td>
@@ -377,11 +377,11 @@ export async function sendReminderEmail(
                   </ul>
                   
                   <!-- Button -->
-                  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
-                      <td align="center">
-                        <a href="${dashboardLink}" 
-                           style="display: inline-block; background: linear-gradient(135deg, #D4A853 0%, #B87333 100%); color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px;">
+                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
+                        <a href="${dashboardLink}" target="_blank" 
+                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           ✏️ Complete Now
                         </a>
                       </td>

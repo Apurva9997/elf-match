@@ -1,59 +1,64 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
+import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { cn, formatDate } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  Users,
-  Gift,
-  MapPin,
-  Settings,
-  UserPlus,
-  Sparkles,
-  Loader2,
   CheckCircle,
   Clock,
-  Package,
-  Truck,
-  Mail,
-  Trash2,
   ExternalLink,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
-import { Modal } from '@/components/ui/modal';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { api, type TeamWithMembers, type TeamStatus, type Assignment, type Wishlist, type Address } from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
-import { formatDate, cn } from '@/lib/utils';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+  Gift,
+  Loader2,
+  Mail,
+  MapPin,
+  Package,
+  Sparkles,
+  Trash2,
+  Truck,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const inviteSchema = z.object({
-  emails: z.string().min(1, 'Enter at least one email'),
+  emails: z.string().min(1, "Enter at least one email"),
 });
 
 const wishItemSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+  title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  url: z.string().url().optional().or(z.literal('')),
+  url: z.string().url().optional().or(z.literal("")),
   priceEstimate: z.string().optional(),
 });
 
 const addressSchema = z.object({
-  streetLine1: z.string().min(1, 'Street address is required'),
+  streetLine1: z.string().min(1, "Street address is required"),
   streetLine2: z.string().optional(),
-  city: z.string().min(1, 'City is required'),
+  city: z.string().min(1, "City is required"),
   state: z.string().optional(),
-  postalCode: z.string().min(1, 'Postal code is required'),
-  country: z.string().min(1, 'Country is required'),
+  postalCode: z.string().min(1, "Postal code is required"),
+  country: z.string().min(1, "Country is required"),
 });
 
 type WishItemForm = z.infer<typeof wishItemSchema>;
@@ -63,58 +68,70 @@ export default function TeamPage() {
   const params = useParams();
   const router = useRouter();
   const teamId = params.teamId as string;
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'wishlist' | 'address' | 'assignment'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "wishlist" | "address" | "assignment"
+  >("overview");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [wishItems, setWishItems] = useState<WishItemForm[]>([]);
 
+  if (!authLoading && !user) {
+    router.push("/auth/login");
+    return null;
+  }
+
   // Queries
   const { data: team, isLoading: teamLoading } = useQuery({
-    queryKey: ['team', teamId],
+    queryKey: ["team", teamId],
     queryFn: () => api.getTeam(teamId),
+    enabled: !!user,
   });
 
   const { data: status } = useQuery({
-    queryKey: ['team-status', teamId],
+    queryKey: ["team-status", teamId],
     queryFn: () => api.getTeamStatus(teamId),
+    enabled: !!user,
   });
 
   const { data: wishlist } = useQuery({
-    queryKey: ['wishlist', teamId],
+    queryKey: ["wishlist", teamId],
     queryFn: () => api.getWishlist(teamId),
+    enabled: !!user,
   });
 
   const { data: address } = useQuery({
-    queryKey: ['address', teamId],
+    queryKey: ["address", teamId],
     queryFn: () => api.getAddress(teamId),
+    enabled: !!user,
   });
 
   const { data: assignment } = useQuery({
-    queryKey: ['assignment', teamId],
+    queryKey: ["assignment", teamId],
     queryFn: () => api.getAssignment(teamId),
+    enabled: !!user,
   });
 
   const { data: gifteeWishlist } = useQuery({
-    queryKey: ['giftee-wishlist', teamId],
+    queryKey: ["giftee-wishlist", teamId],
     queryFn: () => api.getGifteeWishlist(teamId),
-    enabled: !!assignment?.assigned,
+    enabled: !!user && !!assignment?.assigned,
   });
 
   const { data: gifteeAddress } = useQuery({
-    queryKey: ['giftee-address', teamId],
+    queryKey: ["giftee-address", teamId],
     queryFn: () => api.getGifteeAddress(teamId),
-    enabled: !!assignment?.assigned,
+    enabled: !!user && !!assignment?.assigned,
   });
 
   // Mutations
   const inviteMutation = useMutation({
     mutationFn: (emails: string[]) => api.inviteMembers(teamId, emails),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['team-status', teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       setIsInviteModalOpen(false);
     },
   });
@@ -127,37 +144,40 @@ export default function TeamPage() {
           title: item.title,
           description: item.description,
           url: item.url || undefined,
-          priceEstimate: item.priceEstimate ? parseFloat(item.priceEstimate) : undefined,
+          priceEstimate: item.priceEstimate
+            ? parseFloat(item.priceEstimate)
+            : undefined,
         }))
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['team-status', teamId] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
     },
   });
 
   const updateAddressMutation = useMutation({
     mutationFn: (data: AddressForm) => api.updateAddress(teamId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['address', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['team-status', teamId] });
+      queryClient.invalidateQueries({ queryKey: ["address", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
     },
   });
 
   const triggerAssignmentMutation = useMutation({
     mutationFn: () => api.triggerAssignment(teamId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['team-status', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['assignment', teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
       setIsAssignModalOpen(false);
     },
   });
 
   const updateGiftStatusMutation = useMutation({
-    mutationFn: (giftStatus: string) => api.updateAssignment(teamId, giftStatus),
+    mutationFn: (giftStatus: string) =>
+      api.updateAssignment(teamId, giftStatus),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assignment', teamId] });
+      queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
     },
   });
 
@@ -176,9 +196,9 @@ export default function TeamPage() {
       setWishItems(
         wishlist.items.map((item) => ({
           title: item.title,
-          description: item.description || '',
-          url: item.url || '',
-          priceEstimate: item.priceEstimate || '',
+          description: item.description || "",
+          url: item.url || "",
+          priceEstimate: item.priceEstimate || "",
         }))
       );
     }
@@ -194,14 +214,21 @@ export default function TeamPage() {
   };
 
   const handleAddWishItem = () => {
-    setWishItems([...wishItems, { title: '', description: '', url: '', priceEstimate: '' }]);
+    setWishItems([
+      ...wishItems,
+      { title: "", description: "", url: "", priceEstimate: "" },
+    ]);
   };
 
   const handleRemoveWishItem = (index: number) => {
     setWishItems(wishItems.filter((_, i) => i !== index));
   };
 
-  const handleWishItemChange = (index: number, field: keyof WishItemForm, value: string) => {
+  const handleWishItemChange = (
+    index: number,
+    field: keyof WishItemForm,
+    value: string
+  ) => {
     const updated = [...wishItems];
     updated[index] = { ...updated[index], [field]: value };
     setWishItems(updated);
@@ -216,9 +243,9 @@ export default function TeamPage() {
     updateAddressMutation.mutate(data);
   };
 
-  const isAdmin = team?.role === 'admin';
+  const isAdmin = team?.role === "admin";
 
-  if (teamLoading) {
+  if (authLoading || teamLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -295,18 +322,18 @@ export default function TeamPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <Badge
                   variant={
-                    team.status === 'assigned'
-                      ? 'success'
-                      : team.status === 'completed'
-                      ? 'gold'
-                      : 'warning'
+                    team.status === "assigned"
+                      ? "success"
+                      : team.status === "completed"
+                      ? "gold"
+                      : "warning"
                   }
                 >
-                  {team.status === 'collecting_wishes'
-                    ? 'Collecting Wishes'
-                    : team.status === 'assigned'
-                    ? 'Assigned'
-                    : 'Completed'}
+                  {team.status === "collecting_wishes"
+                    ? "Collecting Wishes"
+                    : team.status === "assigned"
+                    ? "Assigned"
+                    : "Completed"}
                 </Badge>
                 {team.exchangeDate && (
                   <span className="text-cream/50 text-sm">
@@ -332,19 +359,27 @@ export default function TeamPage() {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
           >
             <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">{status.totalMembers}</div>
+              <div className="text-2xl font-bold text-gold">
+                {status.totalMembers}
+              </div>
               <div className="text-cream/60 text-sm">Members</div>
             </Card>
             <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">{status.membersWithWishlist}</div>
+              <div className="text-2xl font-bold text-gold">
+                {status.membersWithWishlist}
+              </div>
               <div className="text-cream/60 text-sm">Wishlists</div>
             </Card>
             <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">{status.membersWithAddress}</div>
+              <div className="text-2xl font-bold text-gold">
+                {status.membersWithAddress}
+              </div>
               <div className="text-cream/60 text-sm">Addresses</div>
             </Card>
             <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">{status.completionPercentage}%</div>
+              <div className="text-2xl font-bold text-gold">
+                {status.completionPercentage}%
+              </div>
               <div className="text-cream/60 text-sm">Complete</div>
             </Card>
           </motion.div>
@@ -352,24 +387,32 @@ export default function TeamPage() {
 
         {/* Tabs */}
         <div className="flex space-x-1 mb-6 p-1 bg-midnight-50 rounded-lg w-fit">
-          {(['overview', 'wishlist', 'address', 'assignment'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
-                activeTab === tab
-                  ? 'bg-gradient-gold text-midnight'
-                  : 'text-cream/60 hover:text-cream'
-              )}
-            >
-              {tab === 'overview' && <Users className="w-4 h-4 inline mr-2" />}
-              {tab === 'wishlist' && <Gift className="w-4 h-4 inline mr-2" />}
-              {tab === 'address' && <MapPin className="w-4 h-4 inline mr-2" />}
-              {tab === 'assignment' && <Sparkles className="w-4 h-4 inline mr-2" />}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+          {(["overview", "wishlist", "address", "assignment"] as const).map(
+            (tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                  activeTab === tab
+                    ? "bg-gradient-gold text-midnight"
+                    : "text-cream/60 hover:text-cream"
+                )}
+              >
+                {tab === "overview" && (
+                  <Users className="w-4 h-4 inline mr-2" />
+                )}
+                {tab === "wishlist" && <Gift className="w-4 h-4 inline mr-2" />}
+                {tab === "address" && (
+                  <MapPin className="w-4 h-4 inline mr-2" />
+                )}
+                {tab === "assignment" && (
+                  <Sparkles className="w-4 h-4 inline mr-2" />
+                )}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            )
+          )}
         </div>
 
         {/* Tab Content */}
@@ -380,12 +423,13 @@ export default function TeamPage() {
           transition={{ duration: 0.3 }}
         >
           {/* Overview Tab */}
-          {activeTab === 'overview' && (
+          {activeTab === "overview" && (
             <Card>
               <CardHeader>
                 <CardTitle>Team Members</CardTitle>
                 <CardDescription>
-                  {team.members.length} member{team.members.length !== 1 ? 's' : ''}
+                  {team.members.length} member
+                  {team.members.length !== 1 ? "s" : ""}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -397,7 +441,7 @@ export default function TeamPage() {
                     >
                       <div className="flex items-center space-x-3">
                         <Avatar
-                          name={member.user?.name || member.invitedEmail || 'U'}
+                          name={member.user?.name || member.invitedEmail || "U"}
                           src={member.user?.avatarUrl}
                         />
                         <div>
@@ -410,10 +454,10 @@ export default function TeamPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {member.role === 'admin' && (
+                        {member.role === "admin" && (
                           <Badge variant="gold">Admin</Badge>
                         )}
-                        {member.invitationStatus === 'pending' && (
+                        {member.invitationStatus === "pending" && (
                           <Badge variant="warning">Pending</Badge>
                         )}
                       </div>
@@ -425,7 +469,7 @@ export default function TeamPage() {
           )}
 
           {/* Wishlist Tab */}
-          {activeTab === 'wishlist' && (
+          {activeTab === "wishlist" && (
             <Card>
               <CardHeader>
                 <CardTitle>My Wishlist</CardTitle>
@@ -436,11 +480,16 @@ export default function TeamPage() {
               <CardContent>
                 <div className="space-y-4">
                   {wishItems.map((item, index) => (
-                    <div key={index} className="p-4 rounded-lg bg-midnight-50 space-y-3">
+                    <div
+                      key={index}
+                      className="p-4 rounded-lg bg-midnight-50 space-y-3"
+                    >
                       <div className="flex items-start justify-between">
                         <Input
                           value={item.title}
-                          onChange={(e) => handleWishItemChange(index, 'title', e.target.value)}
+                          onChange={(e) =>
+                            handleWishItemChange(index, "title", e.target.value)
+                          }
                           placeholder="Item name"
                           className="flex-1"
                         />
@@ -453,19 +502,33 @@ export default function TeamPage() {
                       </div>
                       <Textarea
                         value={item.description}
-                        onChange={(e) => handleWishItemChange(index, 'description', e.target.value)}
+                        onChange={(e) =>
+                          handleWishItemChange(
+                            index,
+                            "description",
+                            e.target.value
+                          )
+                        }
                         placeholder="Description (optional)"
                         className="min-h-[60px]"
                       />
                       <div className="grid grid-cols-2 gap-3">
                         <Input
                           value={item.url}
-                          onChange={(e) => handleWishItemChange(index, 'url', e.target.value)}
+                          onChange={(e) =>
+                            handleWishItemChange(index, "url", e.target.value)
+                          }
                           placeholder="Link (optional)"
                         />
                         <Input
                           value={item.priceEstimate}
-                          onChange={(e) => handleWishItemChange(index, 'priceEstimate', e.target.value)}
+                          onChange={(e) =>
+                            handleWishItemChange(
+                              index,
+                              "priceEstimate",
+                              e.target.value
+                            )
+                          }
                           placeholder="Price estimate"
                           type="number"
                         />
@@ -473,7 +536,11 @@ export default function TeamPage() {
                     </div>
                   ))}
 
-                  <Button variant="secondary" onClick={handleAddWishItem} className="w-full">
+                  <Button
+                    variant="secondary"
+                    onClick={handleAddWishItem}
+                    className="w-full"
+                  >
                     <Gift className="w-4 h-4 mr-2" />
                     Add Item
                   </Button>
@@ -493,7 +560,7 @@ export default function TeamPage() {
           )}
 
           {/* Address Tab */}
-          {activeTab === 'address' && (
+          {activeTab === "address" && (
             <Card>
               <CardHeader>
                 <CardTitle>Shipping Address</CardTitle>
@@ -502,45 +569,48 @@ export default function TeamPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={addressForm.handleSubmit(handleSaveAddress)} className="space-y-4">
+                <form
+                  onSubmit={addressForm.handleSubmit(handleSaveAddress)}
+                  className="space-y-4"
+                >
                   <Input
-                    {...addressForm.register('streetLine1')}
+                    {...addressForm.register("streetLine1")}
                     label="Street Address"
                     placeholder="123 Main St"
                     error={addressForm.formState.errors.streetLine1?.message}
                     defaultValue={address?.streetLine1}
                   />
                   <Input
-                    {...addressForm.register('streetLine2')}
+                    {...addressForm.register("streetLine2")}
                     label="Apt, Suite, etc. (optional)"
                     placeholder="Apt 4B"
-                    defaultValue={address?.streetLine2 || ''}
+                    defaultValue={address?.streetLine2 || ""}
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <Input
-                      {...addressForm.register('city')}
+                      {...addressForm.register("city")}
                       label="City"
                       placeholder="New York"
                       error={addressForm.formState.errors.city?.message}
                       defaultValue={address?.city}
                     />
                     <Input
-                      {...addressForm.register('state')}
+                      {...addressForm.register("state")}
                       label="State/Province"
                       placeholder="NY"
-                      defaultValue={address?.state || ''}
+                      defaultValue={address?.state || ""}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <Input
-                      {...addressForm.register('postalCode')}
+                      {...addressForm.register("postalCode")}
                       label="Postal Code"
                       placeholder="10001"
                       error={addressForm.formState.errors.postalCode?.message}
                       defaultValue={address?.postalCode}
                     />
                     <Input
-                      {...addressForm.register('country')}
+                      {...addressForm.register("country")}
                       label="Country"
                       placeholder="United States"
                       error={addressForm.formState.errors.country?.message}
@@ -560,7 +630,7 @@ export default function TeamPage() {
           )}
 
           {/* Assignment Tab */}
-          {activeTab === 'assignment' && (
+          {activeTab === "assignment" && (
             <div className="space-y-6">
               {/* My Assignment */}
               <Card>
@@ -571,7 +641,7 @@ export default function TeamPage() {
                   {assignment?.assigned ? (
                     <div className="text-center py-6">
                       <Avatar
-                        name={assignment.giftee?.name || 'Unknown'}
+                        name={assignment.giftee?.name || "Unknown"}
                         src={assignment.giftee?.avatarUrl}
                         size="xl"
                         className="mx-auto mb-4"
@@ -585,21 +655,38 @@ export default function TeamPage() {
 
                       {/* Gift Status */}
                       <div className="flex justify-center gap-2 mb-6">
-                        {(['pending', 'purchased', 'shipped', 'delivered'] as const).map((status) => (
+                        {(
+                          [
+                            "pending",
+                            "purchased",
+                            "shipped",
+                            "delivered",
+                          ] as const
+                        ).map((status) => (
                           <button
                             key={status}
-                            onClick={() => updateGiftStatusMutation.mutate(status)}
+                            onClick={() =>
+                              updateGiftStatusMutation.mutate(status)
+                            }
                             className={cn(
-                              'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                               assignment.giftStatus === status
-                                ? 'bg-gradient-gold text-midnight'
-                                : 'bg-midnight-50 text-cream/60 hover:text-cream'
+                                ? "bg-gradient-gold text-midnight"
+                                : "bg-midnight-50 text-cream/60 hover:text-cream"
                             )}
                           >
-                            {status === 'pending' && <Clock className="w-4 h-4 inline mr-1" />}
-                            {status === 'purchased' && <Package className="w-4 h-4 inline mr-1" />}
-                            {status === 'shipped' && <Truck className="w-4 h-4 inline mr-1" />}
-                            {status === 'delivered' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                            {status === "pending" && (
+                              <Clock className="w-4 h-4 inline mr-1" />
+                            )}
+                            {status === "purchased" && (
+                              <Package className="w-4 h-4 inline mr-1" />
+                            )}
+                            {status === "shipped" && (
+                              <Truck className="w-4 h-4 inline mr-1" />
+                            )}
+                            {status === "delivered" && (
+                              <CheckCircle className="w-4 h-4 inline mr-1" />
+                            )}
                             {status.charAt(0).toUpperCase() + status.slice(1)}
                           </button>
                         ))}
@@ -614,7 +701,8 @@ export default function TeamPage() {
                         Assignments Not Ready Yet
                       </h3>
                       <p className="text-cream/60">
-                        The team admin will assign Secret Santas once everyone is ready.
+                        The team admin will assign Secret Santas once everyone
+                        is ready.
                       </p>
                     </div>
                   )}
@@ -628,7 +716,8 @@ export default function TeamPage() {
                     <CardTitle>{assignment.giftee?.name}'s Wishlist</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {gifteeWishlist.wishlist?.items && gifteeWishlist.wishlist.items.length > 0 ? (
+                    {gifteeWishlist.wishlist?.items &&
+                    gifteeWishlist.wishlist.items.length > 0 ? (
                       <div className="space-y-3">
                         {gifteeWishlist.wishlist.items.map((item) => (
                           <div
@@ -637,12 +726,18 @@ export default function TeamPage() {
                           >
                             <div className="flex items-start justify-between">
                               <div>
-                                <h4 className="font-medium text-cream">{item.title}</h4>
+                                <h4 className="font-medium text-cream">
+                                  {item.title}
+                                </h4>
                                 {item.description && (
-                                  <p className="text-cream/60 text-sm mt-1">{item.description}</p>
+                                  <p className="text-cream/60 text-sm mt-1">
+                                    {item.description}
+                                  </p>
                                 )}
                                 {item.priceEstimate && (
-                                  <p className="text-gold text-sm mt-2">~${item.priceEstimate}</p>
+                                  <p className="text-gold text-sm mt-2">
+                                    ~${item.priceEstimate}
+                                  </p>
                                 )}
                               </div>
                               {item.url && (
@@ -677,19 +772,29 @@ export default function TeamPage() {
                   <CardContent>
                     {gifteeAddress.address ? (
                       <div className="p-4 rounded-lg bg-midnight-50">
-                        <p className="text-cream">{gifteeAddress.giftee.name}</p>
-                        <p className="text-cream/70">{gifteeAddress.address.streetLine1}</p>
+                        <p className="text-cream">
+                          {gifteeAddress.giftee.name}
+                        </p>
+                        <p className="text-cream/70">
+                          {gifteeAddress.address.streetLine1}
+                        </p>
                         {gifteeAddress.address.streetLine2 && (
-                          <p className="text-cream/70">{gifteeAddress.address.streetLine2}</p>
+                          <p className="text-cream/70">
+                            {gifteeAddress.address.streetLine2}
+                          </p>
                         )}
                         <p className="text-cream/70">
-                          {gifteeAddress.address.city}, {gifteeAddress.address.state} {gifteeAddress.address.postalCode}
+                          {gifteeAddress.address.city},{" "}
+                          {gifteeAddress.address.state}{" "}
+                          {gifteeAddress.address.postalCode}
                         </p>
-                        <p className="text-cream/70">{gifteeAddress.address.country}</p>
+                        <p className="text-cream/70">
+                          {gifteeAddress.address.country}
+                        </p>
                       </div>
                     ) : (
                       <p className="text-cream/60 text-center py-4">
-                        {gifteeAddress.message || 'Address not provided yet.'}
+                        {gifteeAddress.message || "Address not provided yet."}
                       </p>
                     )}
                   </CardContent>
@@ -706,13 +811,18 @@ export default function TeamPage() {
         onClose={() => setIsInviteModalOpen(false)}
         title="Invite Members"
       >
-        <form onSubmit={inviteForm.handleSubmit(handleInvite)} className="space-y-4">
+        <form
+          onSubmit={inviteForm.handleSubmit(handleInvite)}
+          className="space-y-4"
+        >
           <Textarea
-            {...inviteForm.register('emails')}
+            {...inviteForm.register("emails")}
             label="Email Addresses"
             placeholder="Enter emails separated by commas or new lines"
             className="min-h-[120px]"
-            error={inviteForm.formState.errors.emails?.message as string | undefined}
+            error={
+              inviteForm.formState.errors.emails?.message as string | undefined
+            }
           />
           <div className="flex justify-end gap-3">
             <Button
@@ -738,12 +848,13 @@ export default function TeamPage() {
       >
         <div className="space-y-4">
           <p className="text-cream/70">
-            Are you ready to assign Secret Santas? This will randomly match each member
-            with someone to buy a gift for.
+            Are you ready to assign Secret Santas? This will randomly match each
+            member with someone to buy a gift for.
           </p>
           <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
             <p className="text-warning text-sm">
-              ⚠️ This action cannot be undone. Make sure all members have joined before proceeding.
+              ⚠️ This action cannot be undone. Make sure all members have joined
+              before proceeding.
             </p>
           </div>
           <div className="flex justify-end gap-3">
@@ -766,4 +877,3 @@ export default function TeamPage() {
     </div>
   );
 }
-
