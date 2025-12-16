@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -15,15 +15,20 @@ function VerifyContent() {
   const { login } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
+  const hasVerified = useRef(false);
+  const token = searchParams.get('token');
 
   useEffect(() => {
-    const token = searchParams.get('token');
-
-    if (!token) {
-      setStatus('error');
-      setError('Invalid or missing token');
+    // Prevent duplicate calls
+    if (hasVerified.current || !token) {
+      if (!token) {
+        setStatus('error');
+        setError('Invalid or missing token');
+      }
       return;
     }
+
+    hasVerified.current = true;
 
     const verify = async () => {
       try {
@@ -42,7 +47,8 @@ function VerifyContent() {
     };
 
     verify();
-  }, [searchParams, login, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
