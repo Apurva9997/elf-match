@@ -315,8 +315,16 @@ export async function getTeamStatus(
       return notFound("Team not found");
     }
 
-    // Get member counts
-    const members = await db.query.teamMembers.findMany({
+    // Get all members count (accepted + pending)
+    const [allMembersCount] = await db
+      .select({ count: count() })
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, teamId));
+
+    const totalMembers = allMembersCount?.count ?? 0;
+
+    // Get accepted members for wishlist/address counts and completion percentage
+    const acceptedMembers = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
         eq(teamMembers.invitationStatus, "accepted")
@@ -332,11 +340,11 @@ export async function getTeamStatus(
       },
     });
 
-    const totalMembers = members.length;
-    const membersWithWishlist = members.filter(
+    const acceptedMembersCount = acceptedMembers.length;
+    const membersWithWishlist = acceptedMembers.filter(
       (m) => m.wishlist && m.wishlist.items.length > 0
     ).length;
-    const membersWithAddress = members.filter((m) => m.address).length;
+    const membersWithAddress = acceptedMembers.filter((m) => m.address).length;
 
     // Check if assignments exist
     const [assignmentCount] = await db
@@ -364,12 +372,12 @@ export async function getTeamStatus(
       membersWithAddress,
       pendingInvitations: pendingCount?.count ?? 0,
       hasAssignments,
-      canAssign: totalMembers >= 3 && !hasAssignments,
+      canAssign: acceptedMembersCount >= 3 && !hasAssignments,
       completionPercentage:
-        totalMembers > 0
+        acceptedMembersCount > 0
           ? Math.round(
               ((membersWithWishlist + membersWithAddress) /
-                (totalMembers * 2)) *
+                (acceptedMembersCount * 2)) *
                 100
             )
           : 0,
