@@ -19,6 +19,13 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
   avatarUrl: text("avatar_url"),
+  preferences: jsonb("preferences").$type<{
+    onboarding?: {
+      new_user?: boolean;
+      admin?: boolean;
+      member?: boolean;
+    };
+  }>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

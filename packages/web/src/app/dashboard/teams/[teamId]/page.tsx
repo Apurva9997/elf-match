@@ -1,5 +1,6 @@
 "use client";
 
+import { Onboarding } from "@/components/onboarding";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import {
   Edit,
   ExternalLink,
   Gift,
+  HelpCircle,
   Loader2,
   Mail,
   MapPin,
@@ -42,7 +44,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -67,8 +69,18 @@ const addressSchema = z.object({
   country: z.string().min(1, "Country is required"),
 });
 
+const updateTeamSchema = z.object({
+  name: z.string().min(1, "Team name is required").max(255),
+  description: z.string().optional(),
+  budgetMin: z.string().optional(),
+  budgetMax: z.string().optional(),
+  exchangeDate: z.string().optional(),
+  wishlistDeadline: z.string().optional(),
+});
+
 type WishItemForm = z.infer<typeof wishItemSchema>;
 type AddressForm = z.infer<typeof addressSchema>;
+type UpdateTeamForm = z.infer<typeof updateTeamSchema>;
 
 export default function TeamPage() {
   const params = useParams();
@@ -82,9 +94,23 @@ export default function TeamPage() {
   >("overview");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [wishItems, setWishItems] = useState<WishItemForm[]>([]);
-  const [isEditingWishlist, setIsEditingWishlist] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+
+  // Team edit form
+  const teamEditForm = useForm<UpdateTeamForm>({
+    resolver: zodResolver(updateTeamSchema),
+  });
+  const [quickAddTitle, setQuickAddTitle] = useState("");
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+  const pincodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Queries
   const { data: team, isLoading: teamLoading } = useQuery({
@@ -180,6 +206,27 @@ export default function TeamPage() {
     },
   });
 
+  const updateTeamMutation = useMutation({
+    mutationFn: (data: UpdateTeamForm) =>
+      api.updateTeam(teamId, {
+        name: data.name,
+        description: data.description || undefined,
+        budgetMin: data.budgetMin ? parseFloat(data.budgetMin) : undefined,
+        budgetMax: data.budgetMax ? parseFloat(data.budgetMax) : undefined,
+        exchangeDate: data.exchangeDate || undefined,
+        wishlistDeadline: data.wishlistDeadline || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      setIsEditTeamModalOpen(false);
+      toast.success("Team updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update team");
+    },
+  });
+
   const triggerAssignmentMutation = useMutation({
     mutationFn: () => api.triggerAssignment(teamId),
     onSuccess: () => {
@@ -233,7 +280,7 @@ export default function TeamPage() {
 
   // Initialize wish items from query
   useEffect(() => {
-    if (wishlist?.items && !isEditingWishlist) {
+    if (wishlist?.items) {
       setWishItems(
         wishlist.items.map((item) => ({
           title: item.title,
@@ -243,7 +290,15 @@ export default function TeamPage() {
         }))
       );
     }
-  }, [wishlist, isEditingWishlist]);
+  }, [wishlist]);
+
+  // Show form by default when no address exists
+  useEffect(() => {
+    if (!address) {
+      setIsEditingAddress(true);
+    }
+    // Don't set to false when address exists - let user control via Edit button
+  }, [address]);
 
   // Initialize address form when address data loads
   useEffect(() => {
@@ -268,16 +323,162 @@ export default function TeamPage() {
     inviteForm.reset();
   };
 
+  // Debounced auto-save function
+  const debouncedSave = useCallback(
+    (items: WishItemForm[]) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      setSaveStatus("saving");
+      saveTimeoutRef.current = setTimeout(async () => {
+        const validItems = items.filter((item) => item.title.trim());
+        try {
+          await updateWishlistMutation.mutateAsync(validItems);
+          setSaveStatus("saved");
+          setTimeout(() => setSaveStatus("idle"), 2000);
+        } catch (error) {
+          setSaveStatus("idle");
+        }
+      }, 1000);
+    },
+    [updateWishlistMutation]
+  );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pincodeTimeoutRef.current) {
+        clearTimeout(pincodeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Function to fetch pincode details from Indian pincode API
+  const fetchPincodeDetails = async (pincode: string) => {
+    // Indian pincodes are 6 digits
+    if (!/^\d{6}$/.test(pincode)) {
+      return null;
+    }
+
+    try {
+      setIsFetchingPincode(true);
+      // Using PostalPinCode API - free, no API key required
+      // Response format: { "Status": "Success", "PostOffice": [{ "Name": "...", "District": "...", "State": "..." }] }
+      const response = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch pincode details");
+      }
+
+      const data = await response.json();
+
+      // Check if API returned valid data
+      if (
+        data &&
+        data[0] &&
+        data[0].Status === "Success" &&
+        data[0].PostOffice &&
+        data[0].PostOffice.length > 0
+      ) {
+        const firstResult = data[0].PostOffice[0];
+        return {
+          city: firstResult.District || firstResult.Name || "",
+          state: firstResult.State || "",
+          country: "India",
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error fetching pincode details:", error);
+      return null;
+    } finally {
+      setIsFetchingPincode(false);
+    }
+  };
+
+  // Handle postal code change with debounce
+  const handlePostalCodeChange = (value: string) => {
+    // Clear existing timeout
+    if (pincodeTimeoutRef.current) {
+      clearTimeout(pincodeTimeoutRef.current);
+    }
+
+    // Only fetch if it's a 6-digit number (Indian pincode format)
+    if (/^\d{6}$/.test(value)) {
+      // Debounce the API call
+      pincodeTimeoutRef.current = setTimeout(async () => {
+        const details = await fetchPincodeDetails(value);
+        if (details) {
+          // Auto-populate city, state, and country
+          if (details.city) {
+            addressForm.setValue("city", details.city, {
+              shouldValidate: true,
+            });
+          }
+          if (details.state) {
+            addressForm.setValue("state", details.state, {
+              shouldValidate: true,
+            });
+          }
+          if (details.country) {
+            addressForm.setValue("country", details.country, {
+              shouldValidate: true,
+            });
+          }
+        }
+      }, 500); // Wait 500ms after user stops typing
+    }
+  };
+
+  const handleQuickAdd = () => {
+    if (!quickAddTitle.trim()) return;
+    const newItem: WishItemForm = {
+      title: quickAddTitle.trim(),
+      description: "",
+      url: "",
+      priceEstimate: "",
+    };
+    const updated = [...wishItems, newItem];
+    setWishItems(updated);
+    setQuickAddTitle("");
+    debouncedSave(updated);
+  };
+
   const handleAddWishItem = () => {
-    setWishItems([
-      ...wishItems,
-      { title: "", description: "", url: "", priceEstimate: "" },
-    ]);
+    const newItem: WishItemForm = {
+      title: "",
+      description: "",
+      url: "",
+      priceEstimate: "",
+    };
+    const updated = [...wishItems, newItem];
+    setWishItems(updated);
+    // Expand the new item for editing
+    setExpandedItems(new Set([...expandedItems, updated.length - 1]));
   };
 
   const handleRemoveWishItem = async (index: number) => {
     const updatedItems = wishItems.filter((_, i) => i !== index);
     setWishItems(updatedItems);
+    // Remove from expanded set
+    const newExpanded = new Set(expandedItems);
+    newExpanded.delete(index);
+    // Adjust indices for items after the deleted one
+    const adjustedExpanded = new Set<number>();
+    newExpanded.forEach((idx) => {
+      if (idx > index) {
+        adjustedExpanded.add(idx - 1);
+      } else {
+        adjustedExpanded.add(idx);
+      }
+    });
+    setExpandedItems(adjustedExpanded);
     // Save immediately to persist the deletion
     const validItems = updatedItems.filter((item) => item.title.trim());
     await updateWishlistMutation.mutateAsync(validItems);
@@ -291,27 +492,17 @@ export default function TeamPage() {
     const updated = [...wishItems];
     updated[index] = { ...updated[index], [field]: value };
     setWishItems(updated);
+    debouncedSave(updated);
   };
 
-  const handleSaveWishlist = async () => {
-    const validItems = wishItems.filter((item) => item.title.trim());
-    await updateWishlistMutation.mutateAsync(validItems);
-    setIsEditingWishlist(false);
-  };
-
-  const handleCancelEditWishlist = () => {
-    // Reset to saved state
-    if (wishlist?.items) {
-      setWishItems(
-        wishlist.items.map((item) => ({
-          title: item.title,
-          description: item.description || "",
-          url: item.url || "",
-          priceEstimate: item.priceEstimate || "",
-        }))
-      );
+  const toggleItemExpand = (index: number) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
     }
-    setIsEditingWishlist(false);
+    setExpandedItems(newExpanded);
   };
 
   const handleSaveAddress = async (data: AddressForm) => {
@@ -349,6 +540,29 @@ export default function TeamPage() {
       });
     }
     setIsEditingAddress(true);
+  };
+
+  const handleStartEditTeam = () => {
+    // Initialize form with current team data
+    if (team) {
+      teamEditForm.reset({
+        name: team.name,
+        description: team.description || "",
+        budgetMin: team.budgetMin || "",
+        budgetMax: team.budgetMax || "",
+        exchangeDate: team.exchangeDate
+          ? new Date(team.exchangeDate).toISOString().split("T")[0]
+          : "",
+        wishlistDeadline: team.wishlistDeadline
+          ? new Date(team.wishlistDeadline).toISOString().split("T")[0]
+          : "",
+      });
+    }
+    setIsEditTeamModalOpen(true);
+  };
+
+  const handleUpdateTeam = async (data: UpdateTeamForm) => {
+    await updateTeamMutation.mutateAsync(data);
   };
 
   const isAdmin = team?.role === "admin";
@@ -396,38 +610,52 @@ export default function TeamPage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Link>
-            {isAdmin && (
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsInviteModalOpen(true)}
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Invite
-                </Button>
-                {status?.canAssign ? (
-                  <Button size="sm" onClick={() => setIsAssignModalOpen(true)}>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Assign Santas
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOnboardingOpen(true)}
+                className="text-cream/70 hover:text-cream"
+              >
+                <HelpCircle className="w-4 h-4 mr-2" />
+                How to
+              </Button>
+              {isAdmin && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsInviteModalOpen(true)}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Invite
                   </Button>
-                ) : (
-                  status &&
-                  !status.hasAssignments && (
-                    <span className="text-cream/50 text-xs hidden sm:inline">
-                      Need{" "}
-                      {Math.max(
-                        0,
-                        3 -
-                          (status.totalMembers -
-                            (status.pendingInvitations || 0))
-                      )}{" "}
-                      more members to assign
-                    </span>
-                  )
-                )}
-              </div>
-            )}
+                  {status?.canAssign ? (
+                    <Button
+                      size="sm"
+                      onClick={() => setIsAssignModalOpen(true)}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Assign Santas
+                    </Button>
+                  ) : (
+                    status &&
+                    !status.hasAssignments && (
+                      <span className="text-cream/50 text-xs hidden sm:inline">
+                        Need{" "}
+                        {Math.max(
+                          0,
+                          3 -
+                            (status.totalMembers -
+                              (status.pendingInvitations || 0))
+                        )}{" "}
+                        more members to assign
+                      </span>
+                    )
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -441,10 +669,22 @@ export default function TeamPage() {
           className="mb-8"
         >
           <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-display font-bold text-cream mb-2">
-                {team.name}
-              </h1>
+            <div className="flex-1">
+              <div className="flex items-start gap-3 mb-2">
+                <h1 className="text-3xl font-display font-bold text-cream">
+                  {team.name}
+                </h1>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditTeam}
+                    className="mt-1"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
               {team.description && (
                 <p className="text-cream/60 mb-4">{team.description}</p>
               )}
@@ -471,7 +711,7 @@ export default function TeamPage() {
                 )}
                 {team.budgetMin && team.budgetMax && (
                   <span className="text-cream/50 text-sm">
-                    Budget: ${team.budgetMin} - ${team.budgetMax}
+                    Budget: ₹{team.budgetMin} - ₹{team.budgetMax}
                   </span>
                 )}
               </div>
@@ -626,166 +866,196 @@ export default function TeamPage() {
                       Add items you&apos;d love to receive
                     </CardDescription>
                   </div>
-                  {!isEditingWishlist && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setIsEditingWishlist(true)}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
+                  {saveStatus === "saving" && (
+                    <div className="flex items-center gap-2 text-cream/60 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </div>
+                  )}
+                  {saveStatus === "saved" && (
+                    <div className="flex items-center gap-2 text-gold text-sm">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Saved</span>
+                    </div>
                   )}
                 </div>
               </CardHeader>
               <CardContent>
-                {isEditingWishlist ? (
-                  <div className="space-y-4">
-                    {wishItems.map((item, index) => (
-                      <div
-                        key={index}
-                        className="p-4 rounded-lg bg-midnight-50 space-y-3"
-                      >
-                        <div className="flex items-start justify-between">
-                          <Input
-                            value={item.title}
-                            onChange={(e) =>
-                              handleWishItemChange(
-                                index,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Item name"
-                            className="flex-1"
-                          />
-                          <button
-                            onClick={() => handleRemoveWishItem(index)}
-                            className="ml-2 p-2 text-error/70 hover:text-error transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <Textarea
-                          value={item.description}
-                          onChange={(e) =>
-                            handleWishItemChange(
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Description (optional)"
-                          className="min-h-[60px]"
-                        />
-                        <div className="grid grid-cols-2 gap-3">
-                          <Input
-                            value={item.url}
-                            onChange={(e) =>
-                              handleWishItemChange(index, "url", e.target.value)
-                            }
-                            placeholder="Link (optional)"
-                          />
-                          <Input
-                            value={item.priceEstimate}
-                            onChange={(e) =>
-                              handleWishItemChange(
-                                index,
-                                "priceEstimate",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Price estimate"
-                            type="number"
-                          />
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={handleSaveWishlist}
-                        isLoading={updateWishlistMutation.isPending}
-                        className="flex-1"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={handleCancelEditWishlist}
-                        disabled={updateWishlistMutation.isPending}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </div>
-
+                <div className="space-y-4">
+                  {/* Quick-add input - always visible */}
+                  <div className="flex gap-2">
+                    <Input
+                      value={quickAddTitle}
+                      onChange={(e) => setQuickAddTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleQuickAdd();
+                        }
+                      }}
+                      placeholder="Quick add: e.g., Amazon Gift Card, Book, Headphones..."
+                      className="flex-1"
+                    />
                     <Button
-                      variant="secondary"
-                      onClick={handleAddWishItem}
-                      className="w-full border-dashed border-2 border-cream/20 hover:border-cream/40"
+                      onClick={handleQuickAdd}
+                      disabled={!quickAddTitle.trim()}
+                      size="sm"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Another Item
+                      <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {wishlist?.items && wishlist.items.length > 0 ? (
-                      wishlist.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="p-4 rounded-lg bg-midnight-50"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-cream text-lg mb-1">
-                                {item.title}
-                              </h4>
-                              {item.description && (
-                                <p className="text-cream/60 text-sm mb-2">
-                                  {item.description}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-4 mt-2">
-                                {item.priceEstimate && (
-                                  <span className="text-gold text-sm font-medium">
-                                    ~${item.priceEstimate}
-                                  </span>
-                                )}
-                                {item.url && (
-                                  <a
-                                    href={item.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-gold hover:text-gold-light transition-colors text-sm flex items-center gap-1"
-                                  >
-                                    <ExternalLink className="w-4 h-4" />
-                                    View Link
-                                  </a>
+
+                  {/* Add Another Item button - always visible at top */}
+                  <Button
+                    variant="secondary"
+                    onClick={handleAddWishItem}
+                    className="w-full border-dashed border-2 border-cream/20 hover:border-cream/40"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Another Item
+                  </Button>
+
+                  {/* Wishlist items */}
+                  {wishItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {wishItems.map((item, index) => {
+                        const isExpanded = expandedItems.has(index);
+                        const hasDetails =
+                          item.description || item.url || item.priceEstimate;
+
+                        return (
+                          <div
+                            key={index}
+                            className="p-4 rounded-lg bg-midnight-50 space-y-3"
+                          >
+                            {/* Collapsed/Header view */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 flex items-center gap-3">
+                                <button
+                                  onClick={() => toggleItemExpand(index)}
+                                  className="text-cream/60 hover:text-cream transition-colors"
+                                >
+                                  {isExpanded ? (
+                                    <X className="w-4 h-4" />
+                                  ) : (
+                                    <Edit className="w-4 h-4" />
+                                  )}
+                                </button>
+                                {!isExpanded ? (
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-cream text-lg">
+                                      {item.title || "Untitled item"}
+                                    </h4>
+                                    {hasDetails && (
+                                      <div className="flex items-center gap-4 mt-1">
+                                        {item.priceEstimate && (
+                                          <span className="text-gold text-sm font-medium">
+                                            ~₹{item.priceEstimate}
+                                          </span>
+                                        )}
+                                        {item.url && (
+                                          <a
+                                            href={item.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-gold hover:text-gold-light transition-colors text-sm flex items-center gap-1"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <ExternalLink className="w-4 h-4" />
+                                            Link
+                                          </a>
+                                        )}
+                                        {item.description && (
+                                          <span className="text-cream/50 text-sm">
+                                            {item.description.length > 50
+                                              ? `${item.description.substring(0, 50)}...`
+                                              : item.description}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex-1 space-y-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <Input
+                                        value={item.title}
+                                        onChange={(e) =>
+                                          handleWishItemChange(
+                                            index,
+                                            "title",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="e.g., Amazon Gift Card, Book - 'The Palace of Illusions'"
+                                        className="flex-1"
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          handleRemoveWishItem(index)
+                                        }
+                                        className="p-2 text-error/70 hover:text-error transition-colors"
+                                        title="Delete item"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    <Textarea
+                                      value={item.description}
+                                      onChange={(e) =>
+                                        handleWishItemChange(
+                                          index,
+                                          "description",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="Description (optional) - e.g., Size, color, preferred brand..."
+                                      className="min-h-[60px]"
+                                    />
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <Input
+                                        value={item.url}
+                                        onChange={(e) =>
+                                          handleWishItemChange(
+                                            index,
+                                            "url",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Link (optional) - Amazon, Flipkart, etc."
+                                      />
+                                      <Input
+                                        value={item.priceEstimate}
+                                        onChange={(e) =>
+                                          handleWishItemChange(
+                                            index,
+                                            "priceEstimate",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Price estimate (₹)"
+                                        type="number"
+                                      />
+                                    </div>
+                                  </div>
                                 )}
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-cream/60">
-                        <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>No wishlist items yet.</p>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setIsEditingWishlist(true)}
-                          className="mt-4"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Your First Item
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-cream/60">
+                      <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No wishlist items yet.</p>
+                      <p className="text-sm mt-2">
+                        Use the quick-add above or click &quot;Add Another
+                        Item&quot; to get started.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -811,16 +1081,6 @@ export default function TeamPage() {
                       Edit
                     </Button>
                   )}
-                  {!isEditingAddress && !address && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleStartEditAddress}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Address
-                    </Button>
-                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -832,43 +1092,57 @@ export default function TeamPage() {
                     <Input
                       {...addressForm.register("streetLine1")}
                       label="Street Address"
-                      placeholder="123 Main St"
+                      placeholder="123, MG Road, Near Metro Station"
                       error={addressForm.formState.errors.streetLine1?.message}
                       defaultValue={address?.streetLine1}
                     />
                     <Input
                       {...addressForm.register("streetLine2")}
-                      label="Apt, Suite, etc. (optional)"
-                      placeholder="Apt 4B"
+                      label="Apartment, Floor, etc. (optional)"
+                      placeholder="Flat 4B, 2nd Floor"
                       defaultValue={address?.streetLine2 || ""}
                     />
                     <div className="grid grid-cols-2 gap-4">
                       <Input
                         {...addressForm.register("city")}
                         label="City"
-                        placeholder="New York"
+                        placeholder="Mumbai"
                         error={addressForm.formState.errors.city?.message}
                         defaultValue={address?.city}
                       />
                       <Input
                         {...addressForm.register("state")}
-                        label="State/Province"
-                        placeholder="NY"
+                        label="State"
+                        placeholder="Maharashtra"
                         defaultValue={address?.state || ""}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        {...addressForm.register("postalCode")}
-                        label="Postal Code"
-                        placeholder="10001"
-                        error={addressForm.formState.errors.postalCode?.message}
-                        defaultValue={address?.postalCode}
-                      />
+                      <div>
+                        <Input
+                          {...addressForm.register("postalCode", {
+                            onChange: (e) =>
+                              handlePostalCodeChange(e.target.value),
+                          })}
+                          label="Pincode"
+                          placeholder="400001"
+                          error={
+                            addressForm.formState.errors.postalCode?.message
+                          }
+                          defaultValue={address?.postalCode}
+                          disabled={isFetchingPincode}
+                        />
+                        {isFetchingPincode && (
+                          <p className="text-xs text-cream/50 mt-1 flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Looking up pincode...
+                          </p>
+                        )}
+                      </div>
                       <Input
                         {...addressForm.register("country")}
                         label="Country"
-                        placeholder="United States"
+                        placeholder="India"
                         error={addressForm.formState.errors.country?.message}
                         defaultValue={address?.country}
                       />
@@ -877,20 +1151,22 @@ export default function TeamPage() {
                       <Button
                         type="submit"
                         isLoading={updateAddressMutation.isPending}
-                        className="flex-1"
+                        className={address ? "flex-1" : "w-full"}
                       >
                         <Save className="w-4 h-4 mr-2" />
                         Save Address
                       </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleCancelEditAddress}
-                        disabled={updateAddressMutation.isPending}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
+                      {address && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleCancelEditAddress}
+                          disabled={updateAddressMutation.isPending}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                      )}
                     </div>
                   </form>
                 ) : address ? (
@@ -1043,7 +1319,7 @@ export default function TeamPage() {
                                 )}
                                 {item.priceEstimate && (
                                   <p className="text-gold text-sm mt-2">
-                                    ~${item.priceEstimate}
+                                    ~₹{item.priceEstimate}
                                   </p>
                                 )}
                               </div>
@@ -1147,6 +1423,76 @@ export default function TeamPage() {
         </form>
       </Modal>
 
+      {/* Edit Team Modal */}
+      {isAdmin && (
+        <Modal
+          isOpen={isEditTeamModalOpen}
+          onClose={() => setIsEditTeamModalOpen(false)}
+          title="Edit Team Details"
+          size="lg"
+        >
+          <form
+            onSubmit={teamEditForm.handleSubmit(handleUpdateTeam)}
+            className="space-y-4"
+          >
+            <Input
+              {...teamEditForm.register("name")}
+              label="Team Name"
+              placeholder="e.g., Office Secret Santa 2024"
+              error={teamEditForm.formState.errors.name?.message}
+              autoFocus
+            />
+
+            <Textarea
+              {...teamEditForm.register("description")}
+              label="Description (optional)"
+              placeholder="Our annual office gift exchange..."
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                {...teamEditForm.register("budgetMin")}
+                type="number"
+                label="Min Budget (₹)"
+                placeholder="500"
+              />
+              <Input
+                {...teamEditForm.register("budgetMax")}
+                type="number"
+                label="Max Budget (₹)"
+                placeholder="2000"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                {...teamEditForm.register("wishlistDeadline")}
+                type="date"
+                label="Wishlist Deadline"
+              />
+              <Input
+                {...teamEditForm.register("exchangeDate")}
+                type="date"
+                label="Exchange Date"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsEditTeamModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" isLoading={updateTeamMutation.isPending}>
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* Assign Modal */}
       <Modal
         isOpen={isAssignModalOpen}
@@ -1181,6 +1527,23 @@ export default function TeamPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Onboarding Modal */}
+      <Onboarding
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onCreateTeam={() => {
+          setIsOnboardingOpen(false);
+          router.push("/dashboard");
+        }}
+        onGoToTeam={(id) => {
+          setIsOnboardingOpen(false);
+          router.push(`/dashboard/teams/${id}`);
+        }}
+        persona={isAdmin ? "admin" : "member"}
+        firstTeamId={teamId}
+        firstTeamName={team?.name}
+      />
     </div>
   );
 }

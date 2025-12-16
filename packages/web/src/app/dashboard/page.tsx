@@ -1,5 +1,6 @@
 "use client";
 
+import { Onboarding } from "@/components/onboarding";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -96,6 +97,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoading: authLoading, logout } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [processingInvitation, setProcessingInvitation] = useState<
     string | null
   >(null);
@@ -190,6 +192,91 @@ export default function DashboardPage() {
     router.push("/");
   };
 
+  // Check if user needs onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (!authLoading && !teamsLoading && user && teams) {
+        try {
+          // Get user preferences from backend
+          const preferencesData = await api.getUserPreferences();
+          const preferences = preferencesData.preferences || {};
+
+          // Determine persona
+          if (teams.length === 0) {
+            // New user with no teams
+            if (!preferences.onboarding?.new_user) {
+              setIsOnboardingOpen(true);
+            }
+          } else {
+            // User has teams - check if they're admin or member
+            const firstTeam = teams[0];
+            const persona = firstTeam.role === "admin" ? "admin" : "member";
+
+            // Check if they've seen onboarding for this persona
+            const hasSeenPersonaOnboarding =
+              persona === "admin"
+                ? preferences.onboarding?.admin
+                : preferences.onboarding?.member;
+
+            if (!hasSeenPersonaOnboarding) {
+              setIsOnboardingOpen(true);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to get user preferences:", error);
+          // Fallback: show onboarding if we can't fetch preferences
+          if (teams.length === 0) {
+            setIsOnboardingOpen(true);
+          }
+        }
+      }
+    };
+
+    checkOnboarding();
+  }, [authLoading, teamsLoading, user, teams]);
+
+  const handleOnboardingClose = async () => {
+    setIsOnboardingOpen(false);
+
+    try {
+      // Mark onboarding as seen for the appropriate persona
+      const persona = getOnboardingPersona();
+      const updateData: { onboarding: Record<string, boolean> } = {
+        onboarding: {},
+      };
+
+      if (persona === "new_user") {
+        updateData.onboarding.new_user = true;
+      } else if (persona === "admin") {
+        updateData.onboarding.admin = true;
+      } else if (persona === "member") {
+        updateData.onboarding.member = true;
+      }
+
+      await api.updateUserPreferences(updateData);
+    } catch (error) {
+      console.error("Failed to update user preferences:", error);
+      // Continue even if update fails
+    }
+  };
+
+  const handleOnboardingCreateTeam = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleOnboardingGoToTeam = (teamId: string) => {
+    router.push(`/dashboard/teams/${teamId}`);
+  };
+
+  // Determine persona for onboarding
+  const getOnboardingPersona = (): "new_user" | "admin" | "member" => {
+    if (!teams || teams.length === 0) {
+      return "new_user";
+    }
+    const firstTeam = teams[0];
+    return firstTeam.role === "admin" ? "admin" : "member";
+  };
+
   // Redirect if not authenticated
   if (!authLoading && !user) {
     router.push("/auth/login");
@@ -206,6 +293,17 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Onboarding */}
+      <Onboarding
+        isOpen={isOnboardingOpen}
+        onClose={handleOnboardingClose}
+        onCreateTeam={handleOnboardingCreateTeam}
+        onGoToTeam={handleOnboardingGoToTeam}
+        persona={getOnboardingPersona()}
+        firstTeamId={teams && teams.length > 0 ? teams[0].id : undefined}
+        firstTeamName={teams && teams.length > 0 ? teams[0].name : undefined}
+      />
+
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -397,7 +495,7 @@ export default function DashboardPage() {
           <Input
             {...register("name")}
             label="Team Name"
-            placeholder="Family Christmas 2024"
+            placeholder="e.g., Office Secret Santa 2024, Family Gift Exchange"
             error={errors.name?.message}
             autoFocus
           />
@@ -412,14 +510,14 @@ export default function DashboardPage() {
             <Input
               {...register("budgetMin")}
               type="number"
-              label="Min Budget ($)"
-              placeholder="20"
+              label="Min Budget (₹)"
+              placeholder="500"
             />
             <Input
               {...register("budgetMax")}
               type="number"
-              label="Max Budget ($)"
-              placeholder="50"
+              label="Max Budget (₹)"
+              placeholder="2000"
             />
           </div>
 

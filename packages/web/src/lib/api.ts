@@ -91,6 +91,18 @@ class ApiClient {
     return this.request<User>("/auth/me");
   }
 
+  // User Preferences
+  async getUserPreferences() {
+    return this.request<{ preferences: UserPreferences }>("/user/preferences");
+  }
+
+  async updateUserPreferences(preferences: Partial<UserPreferences>) {
+    return this.request<{ preferences: UserPreferences }>("/user/preferences", {
+      method: "PATCH",
+      body: JSON.stringify(preferences),
+    });
+  }
+
   // Teams
   async createTeam(data: CreateTeamInput) {
     return this.request<Team>("/teams", {
@@ -269,11 +281,20 @@ class ApiClient {
 export const api = new ApiClient();
 
 // Types
+export interface UserPreferences {
+  onboarding?: {
+    new_user?: boolean;
+    admin?: boolean;
+    member?: boolean;
+  };
+}
+
 export interface User {
   id: string;
   email: string;
   name: string | null;
   avatarUrl: string | null;
+  preferences?: UserPreferences;
 }
 
 export interface Team {
