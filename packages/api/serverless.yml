@@ -62,6 +62,7 @@ custom:
     target: "node20"
     platform: "node"
     format: "esm"
+    outputFileExtension: ".mjs"
     mainFields:
       - module
       - main
