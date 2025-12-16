@@ -8,8 +8,12 @@ import { storage } from "@/lib/storage";
 import { motion } from "framer-motion";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
+
+// Module-level Set to track tokens currently being verified.
+// This persists across React Strict Mode's unmount/remount cycle.
+const verifyingTokens = new Set<string>();
 
 function VerifyContent() {
   const router = useRouter();
@@ -19,33 +23,30 @@ function VerifyContent() {
     "loading"
   );
   const [error, setError] = useState("");
-  const hasVerified = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const token = searchParams.get("token");
 
   useEffect(() => {
-    // Prevent duplicate calls - check ref, status, and token
-    if (hasVerified.current || status !== "loading" || !token) {
-      if (!token && status === "loading") {
-        setStatus("error");
-        setError("Invalid or missing token");
-      }
+    if (!token) {
+      setStatus("error");
+      setError("Invalid or missing token");
       return;
     }
 
-    // Mark as verified immediately to prevent concurrent calls
-    hasVerified.current = true;
+    // Prevent duplicate calls - if this token is already being verified, skip
+    if (verifyingTokens.has(token)) {
+      return;
+    }
 
-    // Create abort controller for this request
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+    // Mark token as being verified
+    verifyingTokens.add(token);
+
+    let isCancelled = false;
 
     const verify = async () => {
       try {
         const data = await api.verifyMagicLink(token);
 
-        // Check if request was aborted
-        if (abortController.signal.aborted) {
+        if (isCancelled) {
           return;
         }
 
@@ -66,20 +67,21 @@ function VerifyContent() {
           }, 1500);
         }
       } catch (err) {
-        // Don't update state if request was aborted
-        if (abortController.signal.aborted) {
+        if (isCancelled) {
           return;
         }
         setStatus("error");
         setError(err instanceof Error ? err.message : "Failed to verify link");
+      } finally {
+        // Clean up: remove token from Set after verification completes
+        verifyingTokens.delete(token);
       }
     };
 
     verify();
 
-    // Cleanup: abort request if effect re-runs or component unmounts
     return () => {
-      abortController.abort();
+      isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
