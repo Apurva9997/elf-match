@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Gift, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function InvitePage() {
   const params = useParams();
@@ -36,6 +37,7 @@ export default function InvitePage() {
         const result = await api.acceptInvitation(token);
         setTeamName(result.team.name);
         setStatus("success");
+        toast.success(`Joined ${result.team.name}!`);
 
         // Redirect after a brief delay
         setTimeout(() => {
@@ -43,9 +45,10 @@ export default function InvitePage() {
         }, 2000);
       } catch (err) {
         setStatus("error");
-        setError(
-          err instanceof Error ? err.message : "Failed to accept invitation"
-        );
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to accept invitation";
+        setError(errorMessage);
+        toast.error(errorMessage);
       }
     };
 
@@ -65,15 +68,19 @@ export default function InvitePage() {
             const result = await api.acceptInvitation(token);
             setTeamName(result.team.name);
             setStatus("success");
+            toast.success(`Joined ${result.team.name}!`);
 
             setTimeout(() => {
               router.push(`/dashboard/teams/${result.team.id}`);
             }, 2000);
           } catch (err) {
             setStatus("error");
-            setError(
-              err instanceof Error ? err.message : "Failed to accept invitation"
-            );
+            const errorMessage =
+              err instanceof Error
+                ? err.message
+                : "Failed to accept invitation";
+            setError(errorMessage);
+            toast.error(errorMessage);
           }
         }
       };
