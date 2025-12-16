@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Providers } from "./providers";
+import Script from "next/script";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Secret Santa | Gift Exchange Made Magical",
@@ -19,6 +20,30 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
+        <Script
+          src="https://cdn.amplitude.com/libs/analytics-browser-2.11.1-min.js.gz"
+          strategy="afterInteractive"
+        />
+        <Script
+          src="https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.25.0-min.js.gz"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="amplitude-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (window.amplitude && window.sessionReplay) {
+                window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+                window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
+                  autocapture: {
+                    elementInteractions: true
+                  }
+                });
+              }
+            `,
+          }}
+        />
         <Providers>
           {/* Background gradient */}
           <div className="fixed inset-0 bg-gradient-radial from-midnight-50 via-midnight to-midnight -z-10" />
