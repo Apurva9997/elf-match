@@ -172,6 +172,13 @@ class ApiClient {
     );
   }
 
+  async resendInvitation(teamId: string, memberId: string) {
+    return this.request<{ message: string }>(
+      `/teams/${teamId}/members/${memberId}/resend`,
+      { method: "POST" }
+    );
+  }
+
   // Wishlists
   async getWishlist(teamId: string) {
     return this.request<Wishlist>(`/teams/${teamId}/wishlist`);

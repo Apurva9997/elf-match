@@ -460,3 +460,82 @@ export async function declineInvitationDirect(
     return serverError("Failed to decline invitation");
   }
 }
+
+export async function resendInvitation(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResult> {
+  try {
+    const user = await getUserFromEvent(event);
+    if (!user) return unauthorized();
+
+    const teamId = event.pathParameters?.teamId;
+    const memberId = event.pathParameters?.memberId;
+    if (!teamId || !memberId)
+      return error("Team ID and Member ID required", 400);
+
+    // Check admin membership
+    const adminMembership = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, user.id),
+        eq(teamMembers.invitationStatus, "accepted"),
+        eq(teamMembers.role, "admin")
+      ),
+    });
+
+    if (!adminMembership) {
+      return forbidden("Only admins can resend invitations");
+    }
+
+    // Find the pending member
+    const pendingMember = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.id, memberId),
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.invitationStatus, "pending")
+      ),
+    });
+
+    if (!pendingMember) {
+      return notFound("Pending invitation not found");
+    }
+
+    if (!pendingMember.invitedEmail) {
+      return error("No email address for this invitation", 400);
+    }
+
+    // Get team details for email
+    const team = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+    });
+
+    if (!team) {
+      return notFound("Team not found");
+    }
+
+    // Generate a new token and update the invitation
+    const token = uuidv4();
+    const tokenHash = hashToken(token);
+
+    await db
+      .update(teamMembers)
+      .set({
+        invitationToken: tokenHash,
+        invitedAt: new Date(),
+      })
+      .where(eq(teamMembers.id, memberId));
+
+    // Send the invitation email
+    await sendInvitationEmail(
+      pendingMember.invitedEmail,
+      team.name,
+      user.name || user.email,
+      token
+    );
+
+    return success({ message: "Invitation resent successfully" });
+  } catch (err) {
+    console.error("Error resending invitation:", err);
+    return serverError("Failed to resend invitation");
+  }
+}
