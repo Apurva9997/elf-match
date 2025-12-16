@@ -1,31 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Plus,
-  Users,
-  Gift,
-  Calendar,
-  ChevronRight,
-  Loader2,
-  LogOut,
-} from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
-import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type TeamWithRole } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { formatShortDate } from "@/lib/utils";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import {
+  Calendar,
+  Check,
+  ChevronRight,
+  Gift,
+  Loader2,
+  LogOut,
+  Mail,
+  Plus,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const createTeamSchema = z.object({
@@ -93,16 +95,54 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoading: authLoading, logout } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [processingInvitation, setProcessingInvitation] = useState<
+    string | null
+  >(null);
 
   const {
     data: teams,
     isLoading: teamsLoading,
-    refetch,
+    refetch: refetchTeams,
   } = useQuery({
     queryKey: ["teams"],
     queryFn: () => api.listTeams(),
     enabled: !!user,
   });
+
+  const {
+    data: pendingInvitations,
+    isLoading: invitationsLoading,
+    refetch: refetchInvitations,
+  } = useQuery({
+    queryKey: ["pendingInvitations"],
+    queryFn: () => api.listPendingInvitations(),
+    enabled: !!user,
+  });
+
+  const handleAcceptInvitation = async (invitationId: string) => {
+    setProcessingInvitation(invitationId);
+    try {
+      const result = await api.acceptInvitationDirect(invitationId);
+      await Promise.all([refetchTeams(), refetchInvitations()]);
+      router.push(`/dashboard/teams/${result.team.id}`);
+    } catch (error) {
+      console.error("Failed to accept invitation:", error);
+    } finally {
+      setProcessingInvitation(null);
+    }
+  };
+
+  const handleDeclineInvitation = async (invitationId: string) => {
+    setProcessingInvitation(invitationId);
+    try {
+      await api.declineInvitationDirect(invitationId);
+      await refetchInvitations();
+    } catch (error) {
+      console.error("Failed to decline invitation:", error);
+    } finally {
+      setProcessingInvitation(null);
+    }
+  };
 
   const {
     register,
@@ -125,7 +165,7 @@ export default function DashboardPage() {
       });
       setIsCreateModalOpen(false);
       reset();
-      refetch();
+      refetchTeams();
       router.push(`/dashboard/teams/${team.id}`);
     } catch (error) {
       console.error("Failed to create team:", error);
@@ -143,7 +183,7 @@ export default function DashboardPage() {
     return null;
   }
 
-  if (authLoading || teamsLoading) {
+  if (authLoading || teamsLoading || invitationsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -180,6 +220,96 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Pending Invitations */}
+        {pendingInvitations && pendingInvitations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-8"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Mail className="w-5 h-5 text-gold" />
+              <h2 className="text-xl font-display font-semibold text-cream">
+                Pending Invitations
+              </h2>
+              <Badge variant="gold" className="ml-2">
+                {pendingInvitations.length}
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {pendingInvitations.map((invitation, index) => (
+                <motion.div
+                  key={invitation.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <Card className="border-gold/30 bg-midnight/50">
+                    <CardContent className="py-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-cream">
+                            {invitation.teamName}
+                          </h3>
+                          {invitation.teamDescription && (
+                            <p className="text-cream/60 text-sm mt-1 line-clamp-1">
+                              {invitation.teamDescription}
+                            </p>
+                          )}
+                          <p className="text-cream/50 text-xs mt-2">
+                            Invited by{" "}
+                            <span className="text-cream/70">
+                              {invitation.invitedBy?.name ||
+                                invitation.invitedBy?.email ||
+                                "Unknown"}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                              handleDeclineInvitation(invitation.id)
+                            }
+                            disabled={processingInvitation === invitation.id}
+                          >
+                            {processingInvitation === invitation.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <X className="w-4 h-4 mr-1" />
+                                Decline
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              handleAcceptInvitation(invitation.id)
+                            }
+                            disabled={processingInvitation === invitation.id}
+                          >
+                            {processingInvitation === invitation.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Check className="w-4 h-4 mr-1" />
+                                Join Team
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>

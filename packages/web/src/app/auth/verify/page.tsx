@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { storage } from "@/lib/storage";
 import { motion } from "framer-motion";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -51,10 +52,10 @@ function VerifyContent() {
         setStatus("success");
 
         // Check for pending invitation before redirecting
-        const pendingInvitation = sessionStorage.getItem("pendingInvitation");
+        const pendingInvitation = await storage.getItem("pendingInvitation");
         if (pendingInvitation) {
-          setTimeout(() => {
-            sessionStorage.removeItem("pendingInvitation");
+          setTimeout(async () => {
+            await storage.removeItem("pendingInvitation");
             router.push(`/invite/${pendingInvitation}`);
           }, 1500);
         } else {

@@ -1,19 +1,19 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
-import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { db, teams, teamMembers, users } from "../db/index.js";
+import { z } from "zod";
+import { db, teamMembers, teams, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
+import { hashToken } from "../lib/encryption.js";
 import {
-  success,
   error,
-  unauthorized,
   forbidden,
   notFound,
   serverError,
+  success,
+  unauthorized,
 } from "../lib/response.js";
-import { hashToken } from "../lib/encryption.js";
 
 const inviteMembersSchema = z.object({
   emails: z.array(z.string().email()).min(1).max(50),
@@ -305,5 +305,158 @@ export async function removeMember(
   } catch (err) {
     console.error("Error removing member:", err);
     return serverError("Failed to remove member");
+  }
+}
+
+export async function listPendingInvitations(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResult> {
+  try {
+    const user = await getUserFromEvent(event);
+    if (!user) return unauthorized();
+
+    // Find pending invitations where:
+    // 1. invitedEmail matches user's email, OR
+    // 2. userId matches user's id (for cases where user was known at invite time)
+    const pendingInvitations = await db.query.teamMembers.findMany({
+      where: and(
+        eq(teamMembers.invitationStatus, "pending"),
+        or(
+          eq(teamMembers.invitedEmail, user.email.toLowerCase()),
+          eq(teamMembers.userId, user.id)
+        )
+      ),
+      with: {
+        team: {
+          with: {
+            creator: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const invitations = pendingInvitations.map((inv) => ({
+      id: inv.id,
+      teamId: inv.teamId,
+      teamName: inv.team.name,
+      teamDescription: inv.team.description,
+      invitedAt: inv.invitedAt,
+      invitedBy: inv.team.creator,
+    }));
+
+    return success(invitations);
+  } catch (err) {
+    console.error("Error listing pending invitations:", err);
+    return serverError("Failed to list pending invitations");
+  }
+}
+
+export async function acceptInvitationDirect(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResult> {
+  try {
+    const user = await getUserFromEvent(event);
+    if (!user) return unauthorized();
+
+    const invitationId = event.pathParameters?.invitationId;
+    if (!invitationId) return error("Invitation ID required", 400);
+
+    // Find the invitation
+    const invitation = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.id, invitationId),
+        eq(teamMembers.invitationStatus, "pending"),
+        or(
+          eq(teamMembers.invitedEmail, user.email.toLowerCase()),
+          eq(teamMembers.userId, user.id)
+        )
+      ),
+      with: {
+        team: true,
+      },
+    });
+
+    if (!invitation) {
+      return notFound("Invitation not found or not for this user");
+    }
+
+    // Check if user is already a member through another invitation
+    const existingMembership = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.teamId, invitation.teamId),
+        eq(teamMembers.userId, user.id),
+        eq(teamMembers.invitationStatus, "accepted")
+      ),
+    });
+
+    if (existingMembership) {
+      // Delete the pending invitation since user is already a member
+      await db.delete(teamMembers).where(eq(teamMembers.id, invitation.id));
+      return success({ team: invitation.team, message: "Already a member" });
+    }
+
+    // Accept the invitation
+    await db
+      .update(teamMembers)
+      .set({
+        userId: user.id,
+        invitationStatus: "accepted",
+        invitationToken: null,
+        joinedAt: new Date(),
+      })
+      .where(eq(teamMembers.id, invitation.id));
+
+    return success({ team: invitation.team, message: "Invitation accepted" });
+  } catch (err) {
+    console.error("Error accepting invitation directly:", err);
+    return serverError("Failed to accept invitation");
+  }
+}
+
+export async function declineInvitationDirect(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResult> {
+  try {
+    const user = await getUserFromEvent(event);
+    if (!user) return unauthorized();
+
+    const invitationId = event.pathParameters?.invitationId;
+    if (!invitationId) return error("Invitation ID required", 400);
+
+    // Find the invitation
+    const invitation = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.id, invitationId),
+        eq(teamMembers.invitationStatus, "pending"),
+        or(
+          eq(teamMembers.invitedEmail, user.email.toLowerCase()),
+          eq(teamMembers.userId, user.id)
+        )
+      ),
+    });
+
+    if (!invitation) {
+      return notFound("Invitation not found or not for this user");
+    }
+
+    // Update status to declined
+    await db
+      .update(teamMembers)
+      .set({
+        invitationStatus: "declined",
+        invitationToken: null,
+      })
+      .where(eq(teamMembers.id, invitation.id));
+
+    return success({ message: "Invitation declined" });
+  } catch (err) {
+    console.error("Error declining invitation directly:", err);
+    return serverError("Failed to decline invitation");
   }
 }
