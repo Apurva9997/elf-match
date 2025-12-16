@@ -126,6 +126,7 @@ export async function verifyMagicLink(
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        preferences: user.preferences || {},
       },
       ...tokens,
     });
@@ -171,6 +172,7 @@ export async function refreshToken(
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        preferences: user.preferences || {},
       },
       ...tokens,
     });
@@ -195,6 +197,7 @@ export async function getMe(
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
+      preferences: user.preferences || {},
     });
   } catch (err) {
     console.error("Error getting user:", err);

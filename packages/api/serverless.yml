@@ -107,6 +107,20 @@ functions:
           path: /auth/me
           method: get
 
+  getUserPreferences:
+    handler: src/handlers/user-preferences.getUserPreferences
+    events:
+      - httpApi:
+          path: /user/preferences
+          method: get
+
+  updateUserPreferences:
+    handler: src/handlers/user-preferences.updateUserPreferences
+    events:
+      - httpApi:
+          path: /user/preferences
+          method: patch
+
   # Teams
   createTeam:
     handler: src/handlers/teams.createTeam
