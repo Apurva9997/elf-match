@@ -1,9 +1,16 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from 'aws-lambda';
-import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
-import { db, teamMembers, exclusions, assignments } from '../db/index.js';
-import { getUserFromEvent } from '../lib/auth.js';
-import { success, error, unauthorized, forbidden, notFound, serverError } from '../lib/response.js';
+import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { z } from "zod";
+import { eq, and } from "drizzle-orm";
+import { db, teamMembers, exclusions, assignments } from "../db/index.js";
+import { getUserFromEvent } from "../lib/auth.js";
+import {
+  success,
+  error,
+  unauthorized,
+  forbidden,
+  notFound,
+  serverError,
+} from "../lib/response.js";
 
 const addExclusionSchema = z.object({
   member1Id: z.string().uuid(),
@@ -17,8 +24,8 @@ async function isTeamAdmin(userId: string, teamId: string) {
     where: and(
       eq(teamMembers.teamId, teamId),
       eq(teamMembers.userId, userId),
-      eq(teamMembers.invitationStatus, 'accepted'),
-      eq(teamMembers.role, 'admin')
+      eq(teamMembers.invitationStatus, "accepted"),
+      eq(teamMembers.role, "admin")
     ),
   });
   return !!membership;
@@ -32,10 +39,10 @@ export async function listExclusions(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     if (!(await isTeamAdmin(user.id, teamId))) {
-      return forbidden('Only admins can view exclusions');
+      return forbidden("Only admins can view exclusions");
     }
 
     const teamExclusions = await db.query.exclusions.findMany({
@@ -68,8 +75,8 @@ export async function listExclusions(
 
     return success(teamExclusions);
   } catch (err) {
-    console.error('Error listing exclusions:', err);
-    return serverError('Failed to list exclusions');
+    console.error("Error listing exclusions:", err);
+    return serverError("Failed to list exclusions");
   }
 }
 
@@ -81,10 +88,10 @@ export async function addExclusion(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     if (!(await isTeamAdmin(user.id, teamId))) {
-      return forbidden('Only admins can add exclusions');
+      return forbidden("Only admins can add exclusions");
     }
 
     // Check if assignments already exist
@@ -93,20 +100,23 @@ export async function addExclusion(
     });
 
     if (existingAssignments.length > 0) {
-      return error('Cannot add exclusions after assignments have been made', 400);
+      return error(
+        "Cannot add exclusions after assignments have been made",
+        400
+      );
     }
 
-    const body = JSON.parse(event.body || '{}');
+    const body = JSON.parse(event.body || "{}");
     const parsed = addExclusionSchema.safeParse(body);
 
     if (!parsed.success) {
-      return error('Invalid exclusion data', 400, 'VALIDATION_ERROR');
+      return error("Invalid exclusion data", 400, "VALIDATION_ERROR");
     }
 
     const { member1Id, member2Id, reason, bidirectional } = parsed.data;
 
     if (member1Id === member2Id) {
-      return error('Cannot exclude a member from themselves', 400);
+      return error("Cannot exclude a member from themselves", 400);
     }
 
     // Verify both members belong to this team
@@ -114,7 +124,7 @@ export async function addExclusion(
       where: and(
         eq(teamMembers.id, member1Id),
         eq(teamMembers.teamId, teamId),
-        eq(teamMembers.invitationStatus, 'accepted')
+        eq(teamMembers.invitationStatus, "accepted")
       ),
     });
 
@@ -122,12 +132,12 @@ export async function addExclusion(
       where: and(
         eq(teamMembers.id, member2Id),
         eq(teamMembers.teamId, teamId),
-        eq(teamMembers.invitationStatus, 'accepted')
+        eq(teamMembers.invitationStatus, "accepted")
       ),
     });
 
     if (!member1 || !member2) {
-      return error('One or both members not found in this team', 400);
+      return error("One or both members not found in this team", 400);
     }
 
     // Check if exclusion already exists
@@ -140,7 +150,7 @@ export async function addExclusion(
     });
 
     if (existing) {
-      return error('This exclusion already exists', 400);
+      return error("This exclusion already exists", 400);
     }
 
     const [exclusion] = await db
@@ -156,8 +166,8 @@ export async function addExclusion(
 
     return success(exclusion, 201);
   } catch (err) {
-    console.error('Error adding exclusion:', err);
-    return serverError('Failed to add exclusion');
+    console.error("Error adding exclusion:", err);
+    return serverError("Failed to add exclusion");
   }
 }
 
@@ -170,10 +180,11 @@ export async function removeExclusion(
 
     const teamId = event.pathParameters?.teamId;
     const exclusionId = event.pathParameters?.exclusionId;
-    if (!teamId || !exclusionId) return error('Team ID and Exclusion ID required', 400);
+    if (!teamId || !exclusionId)
+      return error("Team ID and Exclusion ID required", 400);
 
     if (!(await isTeamAdmin(user.id, teamId))) {
-      return forbidden('Only admins can remove exclusions');
+      return forbidden("Only admins can remove exclusions");
     }
 
     // Check if assignments already exist
@@ -182,26 +193,25 @@ export async function removeExclusion(
     });
 
     if (existingAssignments.length > 0) {
-      return error('Cannot remove exclusions after assignments have been made', 400);
+      return error(
+        "Cannot remove exclusions after assignments have been made",
+        400
+      );
     }
 
     const exclusion = await db.query.exclusions.findFirst({
-      where: and(
-        eq(exclusions.id, exclusionId),
-        eq(exclusions.teamId, teamId)
-      ),
+      where: and(eq(exclusions.id, exclusionId), eq(exclusions.teamId, teamId)),
     });
 
     if (!exclusion) {
-      return notFound('Exclusion not found');
+      return notFound("Exclusion not found");
     }
 
     await db.delete(exclusions).where(eq(exclusions.id, exclusionId));
 
-    return success({ message: 'Exclusion removed' });
+    return success({ message: "Exclusion removed" });
   } catch (err) {
-    console.error('Error removing exclusion:', err);
-    return serverError('Failed to remove exclusion');
+    console.error("Error removing exclusion:", err);
+    return serverError("Failed to remove exclusion");
   }
 }
-

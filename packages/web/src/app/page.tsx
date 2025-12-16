@@ -1,31 +1,34 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Gift, Users, Sparkles, Heart, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth-context';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Gift, Users, Sparkles, Heart, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 const features = [
   {
     icon: Users,
-    title: 'Create Your Team',
-    description: 'Invite friends, family, or coworkers to join your Secret Santa exchange.',
+    title: "Create Your Team",
+    description:
+      "Invite friends, family, or coworkers to join your Secret Santa exchange.",
   },
   {
     icon: Gift,
-    title: 'Build Wishlists',
-    description: 'Share what you\'d love to receive. Add links, descriptions, and priorities.',
+    title: "Build Wishlists",
+    description:
+      "Share what you'd love to receive. Add links, descriptions, and priorities.",
   },
   {
     icon: Sparkles,
-    title: 'Magic Matching',
-    description: 'Our algorithm ensures fair, random assignments with exclusion rules.',
+    title: "Magic Matching",
+    description:
+      "Our algorithm ensures fair, random assignments with exclusion rules.",
   },
   {
     icon: Heart,
-    title: 'Spread Joy',
-    description: 'Track gift status and make someone\'s holiday season magical.',
+    title: "Spread Joy",
+    description: "Track gift status and make someone's holiday season magical.",
   },
 ];
 
@@ -74,12 +77,12 @@ export default function HomePage() {
           >
             <span className="text-6xl mb-6 block animate-float">🎁</span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-cream mb-6">
-              Make Gift-Giving{' '}
+              Make Gift-Giving{" "}
               <span className="text-gradient-gold">Magical</span>
             </h1>
             <p className="text-lg sm:text-xl text-cream/70 mb-8 max-w-2xl mx-auto">
-              Organize your Secret Santa exchange effortlessly. Create teams, share wishlists,
-              and let the holiday magic unfold.
+              Organize your Secret Santa exchange effortlessly. Create teams,
+              share wishlists, and let the holiday magic unfold.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/auth/login">
@@ -89,7 +92,11 @@ export default function HomePage() {
                 </Button>
               </Link>
               <Link href="#features">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                >
                   Learn More
                 </Button>
               </Link>
@@ -132,9 +139,7 @@ export default function HomePage() {
                 <h3 className="text-lg font-display font-semibold text-cream mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-cream/60 text-sm">
-                  {feature.description}
-                </p>
+                <p className="text-cream/60 text-sm">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -153,15 +158,15 @@ export default function HomePage() {
           >
             {/* Background glow */}
             <div className="absolute inset-0 bg-gradient-glow opacity-50" />
-            
+
             <div className="relative z-10">
               <span className="text-5xl mb-6 block">✨</span>
               <h2 className="text-2xl sm:text-3xl font-display font-bold text-cream mb-4">
                 Ready to Spread Some Holiday Cheer?
               </h2>
               <p className="text-cream/70 mb-8 max-w-xl mx-auto">
-                Join thousands of teams already using Secret Santa to make their gift exchanges
-                memorable and stress-free.
+                Join thousands of teams already using Secret Santa to make their
+                gift exchanges memorable and stress-free.
               </p>
               <Link href="/auth/login">
                 <Button size="lg">
@@ -189,4 +194,3 @@ export default function HomePage() {
     </div>
   );
 }
-

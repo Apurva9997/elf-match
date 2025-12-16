@@ -1,19 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0F1419;
-  --bg-secondary: #1A2332;
-  --bg-card: #232D3F;
-  --accent-gold: #D4A853;
-  --accent-copper: #B87333;
-  --accent-cream: #FFF8E7;
-  --success: #4ADE80;
-  --warning: #FBBF24;
-  --error: #F87171;
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2332;
+  --bg-card: #232d3f;
+  --accent-gold: #d4a853;
+  --accent-copper: #b87333;
+  --accent-cream: #fff8e7;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87171;
 }
 
 @layer base {
@@ -21,7 +21,12 @@
     @apply bg-midnight text-cream font-sans antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display;
   }
 
@@ -161,4 +166,3 @@
   @apply fixed text-white/20 text-2xl pointer-events-none;
   animation: snow linear infinite;
 }
-

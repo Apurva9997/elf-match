@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { forwardRef, type TextareaHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
+import { forwardRef, type TextareaHTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -10,7 +10,7 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, label, error, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
     return (
       <div className="w-full">
@@ -23,21 +23,18 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'input-field min-h-[100px] resize-y',
-            error && 'border-error/50 focus:border-error focus:ring-error/10',
+            "input-field min-h-[100px] resize-y",
+            error && "border-error/50 focus:border-error focus:ring-error/10",
             className
           )}
           {...props}
         />
-        {error && (
-          <p className="mt-1.5 text-sm text-error">{error}</p>
-        )}
+        {error && <p className="mt-1.5 text-sm text-error">{error}</p>}
       </div>
     );
   }
 );
 
-Textarea.displayName = 'Textarea';
+Textarea.displayName = "Textarea";
 
 export { Textarea };
-

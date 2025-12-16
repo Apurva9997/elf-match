@@ -1,29 +1,31 @@
-'use client';
+"use client";
 
-import { useEffect, useState, Suspense, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { api } from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import { useEffect, useState, Suspense, useRef } from "react";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading"
+  );
+  const [error, setError] = useState("");
   const hasVerified = useRef(false);
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
   useEffect(() => {
     // Prevent duplicate calls
     if (hasVerified.current || !token) {
       if (!token) {
-        setStatus('error');
-        setError('Invalid or missing token');
+        setStatus("error");
+        setError("Invalid or missing token");
       }
       return;
     }
@@ -34,15 +36,15 @@ function VerifyContent() {
       try {
         const data = await api.verifyMagicLink(token);
         login(data.accessToken, data.refreshToken, data.user);
-        setStatus('success');
-        
+        setStatus("success");
+
         // Redirect after a brief delay
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push("/dashboard");
         }, 1500);
       } catch (err) {
-        setStatus('error');
-        setError(err instanceof Error ? err.message : 'Failed to verify link');
+        setStatus("error");
+        setError(err instanceof Error ? err.message : "Failed to verify link");
       }
     };
 
@@ -60,7 +62,7 @@ function VerifyContent() {
       >
         <Card className="text-center">
           <CardContent className="pt-8 pb-6">
-            {status === 'loading' && (
+            {status === "loading" && (
               <>
                 <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
                   <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -74,7 +76,7 @@ function VerifyContent() {
               </>
             )}
 
-            {status === 'success' && (
+            {status === "success" && (
               <>
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-8 h-8 text-success" />
@@ -88,7 +90,7 @@ function VerifyContent() {
               </>
             )}
 
-            {status === 'error' && (
+            {status === "error" && (
               <>
                 <div className="w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mx-auto mb-6">
                   <XCircle className="w-8 h-8 text-error" />
@@ -97,7 +99,10 @@ function VerifyContent() {
                   Verification Failed
                 </h1>
                 <p className="text-cream/70 mb-6">{error}</p>
-                <Button onClick={() => router.push('/auth/login')} className="w-full">
+                <Button
+                  onClick={() => router.push("/auth/login")}
+                  className="w-full"
+                >
                   Try Again
                 </Button>
               </>
@@ -122,4 +127,3 @@ export default function VerifyPage() {
     </Suspense>
   );
 }
-

@@ -1,4 +1,9 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  scryptSync,
+} from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
@@ -138,7 +143,9 @@ export function hashToken(token: string): string {
 
   const secret = process.env.ENCRYPTION_SECRET || process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error("ENCRYPTION_SECRET or JWT_SECRET environment variable is required");
+    throw new Error(
+      "ENCRYPTION_SECRET or JWT_SECRET environment variable is required"
+    );
   }
 
   // Use scrypt for secure hashing
@@ -168,7 +175,7 @@ export function encryptAddress<
     city?: string | null;
     state?: string | null;
     postalCode?: string | null;
-  }
+  },
 >(address: T): T {
   const result = { ...address };
 
@@ -191,7 +198,7 @@ export function decryptAddress<
     city?: string | null;
     state?: string | null;
     postalCode?: string | null;
-  }
+  },
 >(address: T | null | undefined): T | null | undefined {
   if (!address) return address;
 
@@ -205,4 +212,3 @@ export function decryptAddress<
 
   return result;
 }
-

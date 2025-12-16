@@ -1,13 +1,26 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from 'aws-lambda';
-import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
-import { db, teams, teamMembers, assignments, exclusions } from '../db/index.js';
-import { getUserFromEvent } from '../lib/auth.js';
-import { sendAssignmentEmail } from '../lib/email.js';
-import { success, error, unauthorized, forbidden, notFound, serverError } from '../lib/response.js';
+import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { z } from "zod";
+import { eq, and } from "drizzle-orm";
+import {
+  db,
+  teams,
+  teamMembers,
+  assignments,
+  exclusions,
+} from "../db/index.js";
+import { getUserFromEvent } from "../lib/auth.js";
+import { sendAssignmentEmail } from "../lib/email.js";
+import {
+  success,
+  error,
+  unauthorized,
+  forbidden,
+  notFound,
+  serverError,
+} from "../lib/response.js";
 
 const updateAssignmentSchema = z.object({
-  giftStatus: z.enum(['pending', 'purchased', 'shipped', 'delivered']),
+  giftStatus: z.enum(["pending", "purchased", "shipped", "delivered"]),
 });
 
 async function getMembershipForTeam(userId: string, teamId: string) {
@@ -15,7 +28,7 @@ async function getMembershipForTeam(userId: string, teamId: string) {
     where: and(
       eq(teamMembers.teamId, teamId),
       eq(teamMembers.userId, userId),
-      eq(teamMembers.invitationStatus, 'accepted')
+      eq(teamMembers.invitationStatus, "accepted")
     ),
   });
 }
@@ -36,41 +49,44 @@ function generateAssignments(
   exclusionPairs: Set<string>
 ): Map<string, string> | null {
   const maxAttempts = 1000;
-  
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const givers = [...memberIds];
     const receivers = shuffle([...memberIds]);
-    
+
     let valid = true;
     const assignments = new Map<string, string>();
-    
+
     for (let i = 0; i < givers.length; i++) {
       const giver = givers[i];
       const receiver = receivers[i];
-      
+
       // Check if giver is assigned to themselves
       if (giver === receiver) {
         valid = false;
         break;
       }
-      
+
       // Check exclusion rules
       const exclusionKey1 = `${giver}:${receiver}`;
       const exclusionKey2 = `${receiver}:${giver}`;
-      
-      if (exclusionPairs.has(exclusionKey1) || exclusionPairs.has(exclusionKey2)) {
+
+      if (
+        exclusionPairs.has(exclusionKey1) ||
+        exclusionPairs.has(exclusionKey2)
+      ) {
         valid = false;
         break;
       }
-      
+
       assignments.set(giver, receiver);
     }
-    
+
     if (valid) {
       return assignments;
     }
   }
-  
+
   return null; // Could not find valid assignment
 }
 
@@ -82,20 +98,20 @@ export async function triggerAssignment(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     // Check admin membership
     const adminMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
         eq(teamMembers.userId, user.id),
-        eq(teamMembers.invitationStatus, 'accepted'),
-        eq(teamMembers.role, 'admin')
+        eq(teamMembers.invitationStatus, "accepted"),
+        eq(teamMembers.role, "admin")
       ),
     });
 
     if (!adminMembership) {
-      return forbidden('Only admins can trigger assignments');
+      return forbidden("Only admins can trigger assignments");
     }
 
     // Check if assignments already exist
@@ -104,14 +120,14 @@ export async function triggerAssignment(
     });
 
     if (existingAssignments.length > 0) {
-      return error('Assignments have already been made for this team', 400);
+      return error("Assignments have already been made for this team", 400);
     }
 
     // Get all accepted members
     const members = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
-        eq(teamMembers.invitationStatus, 'accepted')
+        eq(teamMembers.invitationStatus, "accepted")
       ),
       with: {
         user: true,
@@ -119,7 +135,7 @@ export async function triggerAssignment(
     });
 
     if (members.length < 3) {
-      return error('Need at least 3 members to create assignments', 400);
+      return error("Need at least 3 members to create assignments", 400);
     }
 
     // Get exclusions
@@ -142,7 +158,7 @@ export async function triggerAssignment(
 
     if (!assignmentMap) {
       return error(
-        'Could not generate valid assignments. This may happen if exclusion rules are too restrictive.',
+        "Could not generate valid assignments. This may happen if exclusion rules are too restrictive.",
         400
       );
     }
@@ -153,7 +169,7 @@ export async function triggerAssignment(
     });
 
     if (!team) {
-      return notFound('Team not found');
+      return notFound("Team not found");
     }
 
     // Save assignments and send emails
@@ -181,7 +197,10 @@ export async function triggerAssignment(
             receiver.user.name
           );
         } catch (emailErr) {
-          console.error(`Failed to send assignment email to ${giver.user.email}:`, emailErr);
+          console.error(
+            `Failed to send assignment email to ${giver.user.email}:`,
+            emailErr
+          );
         }
       }
     }
@@ -189,16 +208,16 @@ export async function triggerAssignment(
     // Update team status
     await db
       .update(teams)
-      .set({ status: 'assigned', updatedAt: new Date() })
+      .set({ status: "assigned", updatedAt: new Date() })
       .where(eq(teams.id, teamId));
 
     return success({
-      message: 'Assignments created successfully',
+      message: "Assignments created successfully",
       count: assignmentRecords.length,
     });
   } catch (err) {
-    console.error('Error triggering assignment:', err);
-    return serverError('Failed to create assignments');
+    console.error("Error triggering assignment:", err);
+    return serverError("Failed to create assignments");
   }
 }
 
@@ -210,11 +229,11 @@ export async function getAssignment(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
     if (!membership) {
-      return forbidden('You are not a member of this team');
+      return forbidden("You are not a member of this team");
     }
 
     // Find the assignment where this user is the giver
@@ -241,22 +260,22 @@ export async function getAssignment(
     if (!assignment) {
       return success({
         assigned: false,
-        message: 'Assignments have not been made yet.',
+        message: "Assignments have not been made yet.",
       });
     }
 
     return success({
       assigned: true,
       giftee: {
-        name: assignment.receiver.user?.name || 'Unknown',
+        name: assignment.receiver.user?.name || "Unknown",
         avatarUrl: assignment.receiver.user?.avatarUrl,
       },
       giftStatus: assignment.giftStatus,
       revealedAt: assignment.revealedAt,
     });
   } catch (err) {
-    console.error('Error getting assignment:', err);
-    return serverError('Failed to get assignment');
+    console.error("Error getting assignment:", err);
+    return serverError("Failed to get assignment");
   }
 }
 
@@ -268,18 +287,18 @@ export async function updateAssignment(
     if (!user) return unauthorized();
 
     const teamId = event.pathParameters?.teamId;
-    if (!teamId) return error('Team ID required', 400);
+    if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
     if (!membership) {
-      return forbidden('You are not a member of this team');
+      return forbidden("You are not a member of this team");
     }
 
-    const body = JSON.parse(event.body || '{}');
+    const body = JSON.parse(event.body || "{}");
     const parsed = updateAssignmentSchema.safeParse(body);
 
     if (!parsed.success) {
-      return error('Invalid assignment data', 400, 'VALIDATION_ERROR');
+      return error("Invalid assignment data", 400, "VALIDATION_ERROR");
     }
 
     const { giftStatus } = parsed.data;
@@ -293,7 +312,7 @@ export async function updateAssignment(
     });
 
     if (!assignment) {
-      return notFound('Assignment not found');
+      return notFound("Assignment not found");
     }
 
     const [updated] = await db
@@ -304,8 +323,7 @@ export async function updateAssignment(
 
     return success(updated);
   } catch (err) {
-    console.error('Error updating assignment:', err);
-    return serverError('Failed to update assignment');
+    console.error("Error updating assignment:", err);
+    return serverError("Failed to update assignment");
   }
 }
-

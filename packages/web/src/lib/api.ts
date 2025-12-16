@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -15,16 +15,16 @@ class ApiClient {
   setAccessToken(token: string | null) {
     this.accessToken = token;
     if (token) {
-      localStorage.setItem('accessToken', token);
+      localStorage.setItem("accessToken", token);
     } else {
-      localStorage.removeItem('accessToken');
+      localStorage.removeItem("accessToken");
     }
   }
 
   getAccessToken(): string | null {
     if (this.accessToken) return this.accessToken;
-    if (typeof window !== 'undefined') {
-      this.accessToken = localStorage.getItem('accessToken');
+    if (typeof window !== "undefined") {
+      this.accessToken = localStorage.getItem("accessToken");
     }
     return this.accessToken;
   }
@@ -37,7 +37,7 @@ class ApiClient {
     const token = this.getAccessToken();
 
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     };
@@ -45,13 +45,13 @@ class ApiClient {
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include',
+      credentials: "include",
     });
 
     const data: ApiResponse<T> = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || 'Something went wrong');
+      throw new Error(data.error?.message || "Something went wrong");
     }
 
     return data.data as T;
@@ -59,8 +59,8 @@ class ApiClient {
 
   // Auth
   async sendMagicLink(email: string) {
-    return this.request<{ message: string }>('/auth/magic-link', {
-      method: 'POST',
+    return this.request<{ message: string }>("/auth/magic-link", {
+      method: "POST",
       body: JSON.stringify({ email }),
     });
   }
@@ -70,8 +70,8 @@ class ApiClient {
       user: User;
       accessToken: string;
       refreshToken: string;
-    }>('/auth/verify', {
-      method: 'POST',
+    }>("/auth/verify", {
+      method: "POST",
       body: JSON.stringify({ token, name }),
     });
   }
@@ -81,26 +81,26 @@ class ApiClient {
       user: User;
       accessToken: string;
       refreshToken: string;
-    }>('/auth/refresh', {
-      method: 'POST',
+    }>("/auth/refresh", {
+      method: "POST",
       body: JSON.stringify({ refreshToken }),
     });
   }
 
   async getMe() {
-    return this.request<User>('/auth/me');
+    return this.request<User>("/auth/me");
   }
 
   // Teams
   async createTeam(data: CreateTeamInput) {
-    return this.request<Team>('/teams', {
-      method: 'POST',
+    return this.request<Team>("/teams", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   async listTeams() {
-    return this.request<TeamWithRole[]>('/teams');
+    return this.request<TeamWithRole[]>("/teams");
   }
 
   async getTeam(teamId: string) {
@@ -109,14 +109,14 @@ class ApiClient {
 
   async updateTeam(teamId: string, data: Partial<CreateTeamInput>) {
     return this.request<Team>(`/teams/${teamId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   }
 
   async deleteTeam(teamId: string) {
     return this.request<{ message: string }>(`/teams/${teamId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -129,7 +129,7 @@ class ApiClient {
     return this.request<{
       results: Array<{ email: string; status: string; error?: string }>;
     }>(`/teams/${teamId}/invite`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ emails }),
     });
   }
@@ -137,20 +137,20 @@ class ApiClient {
   async acceptInvitation(token: string) {
     return this.request<{ team: Team; message: string }>(
       `/invitations/${token}/accept`,
-      { method: 'POST' }
+      { method: "POST" }
     );
   }
 
   async declineInvitation(token: string) {
     return this.request<{ message: string }>(`/invitations/${token}/decline`, {
-      method: 'POST',
+      method: "POST",
     });
   }
 
   async removeMember(teamId: string, memberId: string) {
     return this.request<{ message: string }>(
       `/teams/${teamId}/members/${memberId}`,
-      { method: 'DELETE' }
+      { method: "DELETE" }
     );
   }
 
@@ -161,7 +161,7 @@ class ApiClient {
 
   async updateWishlist(teamId: string, items: WishItemInput[]) {
     return this.request<Wishlist>(`/teams/${teamId}/wishlist`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify({ items }),
     });
   }
@@ -181,7 +181,7 @@ class ApiClient {
 
   async updateAddress(teamId: string, address: AddressInput) {
     return this.request<Address>(`/teams/${teamId}/address`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(address),
     });
   }
@@ -198,7 +198,7 @@ class ApiClient {
   async triggerAssignment(teamId: string) {
     return this.request<{ message: string; count: number }>(
       `/teams/${teamId}/assign`,
-      { method: 'POST' }
+      { method: "POST" }
     );
   }
 
@@ -208,7 +208,7 @@ class ApiClient {
 
   async updateAssignment(teamId: string, giftStatus: string) {
     return this.request<Assignment>(`/teams/${teamId}/assignment`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify({ giftStatus }),
     });
   }
@@ -220,7 +220,7 @@ class ApiClient {
 
   async addExclusion(teamId: string, data: ExclusionInput) {
     return this.request<Exclusion>(`/teams/${teamId}/exclusions`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
@@ -228,7 +228,7 @@ class ApiClient {
   async removeExclusion(teamId: string, exclusionId: string) {
     return this.request<{ message: string }>(
       `/teams/${teamId}/exclusions/${exclusionId}`,
-      { method: 'DELETE' }
+      { method: "DELETE" }
     );
   }
 
@@ -237,7 +237,7 @@ class ApiClient {
     return this.request<{
       message: string;
       results: Array<{ email: string; sent: boolean; missingItems: string[] }>;
-    }>(`/teams/${teamId}/reminders`, { method: 'POST' });
+    }>(`/teams/${teamId}/reminders`, { method: "POST" });
   }
 }
 
@@ -388,4 +388,3 @@ export interface ExclusionInput {
   reason?: string;
   bidirectional?: boolean;
 }
-
