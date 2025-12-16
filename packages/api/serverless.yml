@@ -158,6 +158,13 @@ functions:
           path: /teams/{teamId}/invite
           method: post
 
+  listPendingInvitations:
+    handler: src/handlers/invitations.listPendingInvitations
+    events:
+      - httpApi:
+          path: /invitations/pending
+          method: get
+
   acceptInvitation:
     handler: src/handlers/invitations.acceptInvitation
     events:
@@ -165,11 +172,25 @@ functions:
           path: /invitations/{token}/accept
           method: post
 
+  acceptInvitationDirect:
+    handler: src/handlers/invitations.acceptInvitationDirect
+    events:
+      - httpApi:
+          path: /invitations/{invitationId}/accept-direct
+          method: post
+
   declineInvitation:
     handler: src/handlers/invitations.declineInvitation
     events:
       - httpApi:
           path: /invitations/{token}/decline
+          method: post
+
+  declineInvitationDirect:
+    handler: src/handlers/invitations.declineInvitationDirect
+    events:
+      - httpApi:
+          path: /invitations/{invitationId}/decline-direct
           method: post
 
   removeMember:

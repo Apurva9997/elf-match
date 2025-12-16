@@ -147,6 +147,24 @@ class ApiClient {
     });
   }
 
+  async listPendingInvitations() {
+    return this.request<PendingInvitation[]>("/invitations/pending");
+  }
+
+  async acceptInvitationDirect(invitationId: string) {
+    return this.request<{ team: Team; message: string }>(
+      `/invitations/${invitationId}/accept-direct`,
+      { method: "POST" }
+    );
+  }
+
+  async declineInvitationDirect(invitationId: string) {
+    return this.request<{ message: string }>(
+      `/invitations/${invitationId}/decline-direct`,
+      { method: "POST" }
+    );
+  }
+
   async removeMember(teamId: string, memberId: string) {
     return this.request<{ message: string }>(
       `/teams/${teamId}/members/${memberId}`,
@@ -387,4 +405,17 @@ export interface ExclusionInput {
   member2Id: string;
   reason?: string;
   bidirectional?: boolean;
+}
+
+export interface PendingInvitation {
+  id: string;
+  teamId: string;
+  teamName: string;
+  teamDescription: string | null;
+  invitedAt: string;
+  invitedBy: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
 }

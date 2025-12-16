@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { useParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle, XCircle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { storage } from "@/lib/storage";
+import { motion } from "framer-motion";
+import { CheckCircle, Gift, Loader2, XCircle } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function InvitePage() {
   const params = useParams();
@@ -25,7 +26,7 @@ export default function InvitePage() {
 
     if (!user) {
       // Store the invitation token and redirect to login
-      sessionStorage.setItem("pendingInvitation", token);
+      storage.setItem("pendingInvitation", token);
       setStatus("needsAuth");
       return;
     }
@@ -54,12 +55,12 @@ export default function InvitePage() {
   // Check for pending invitation after login
   useEffect(() => {
     if (user && status === "needsAuth") {
-      const pendingToken = sessionStorage.getItem("pendingInvitation");
-      if (pendingToken === token) {
-        sessionStorage.removeItem("pendingInvitation");
-        setStatus("loading");
+      const checkPendingInvitation = async () => {
+        const pendingToken = await storage.getItem("pendingInvitation");
+        if (pendingToken === token) {
+          await storage.removeItem("pendingInvitation");
+          setStatus("loading");
 
-        const acceptInvitation = async () => {
           try {
             const result = await api.acceptInvitation(token);
             setTeamName(result.team.name);
@@ -74,10 +75,10 @@ export default function InvitePage() {
               err instanceof Error ? err.message : "Failed to accept invitation"
             );
           }
-        };
+        }
+      };
 
-        acceptInvitation();
-      }
+      checkPendingInvitation();
     }
   }, [user, status, token, router]);
 
