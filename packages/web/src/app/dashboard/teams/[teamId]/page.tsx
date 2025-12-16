@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Clock,
+  Edit,
   ExternalLink,
   Gift,
   Loader2,
@@ -36,6 +37,7 @@ import {
   Truck,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -80,6 +82,8 @@ export default function TeamPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [wishItems, setWishItems] = useState<WishItemForm[]>([]);
+  const [isEditingWishlist, setIsEditingWishlist] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   // Queries
   const { data: team, isLoading: teamLoading } = useQuery({
@@ -218,7 +222,7 @@ export default function TeamPage() {
 
   // Initialize wish items from query
   useEffect(() => {
-    if (wishlist?.items) {
+    if (wishlist?.items && !isEditingWishlist) {
       setWishItems(
         wishlist.items.map((item) => ({
           title: item.title,
@@ -228,7 +232,21 @@ export default function TeamPage() {
         }))
       );
     }
-  }, [wishlist]);
+  }, [wishlist, isEditingWishlist]);
+
+  // Initialize address form when address data loads
+  useEffect(() => {
+    if (address && !isEditingAddress) {
+      addressForm.reset({
+        streetLine1: address.streetLine1,
+        streetLine2: address.streetLine2 || "",
+        city: address.city,
+        state: address.state || "",
+        postalCode: address.postalCode,
+        country: address.country,
+      });
+    }
+  }, [address, isEditingAddress, addressForm]);
 
   const handleInvite = async (data: { emails: string }) => {
     const emailList = data.emails
@@ -246,8 +264,12 @@ export default function TeamPage() {
     ]);
   };
 
-  const handleRemoveWishItem = (index: number) => {
-    setWishItems(wishItems.filter((_, i) => i !== index));
+  const handleRemoveWishItem = async (index: number) => {
+    const updatedItems = wishItems.filter((_, i) => i !== index);
+    setWishItems(updatedItems);
+    // Save immediately to persist the deletion
+    const validItems = updatedItems.filter((item) => item.title.trim());
+    await updateWishlistMutation.mutateAsync(validItems);
   };
 
   const handleWishItemChange = (
@@ -260,13 +282,62 @@ export default function TeamPage() {
     setWishItems(updated);
   };
 
-  const handleSaveWishlist = () => {
+  const handleSaveWishlist = async () => {
     const validItems = wishItems.filter((item) => item.title.trim());
-    updateWishlistMutation.mutate(validItems);
+    await updateWishlistMutation.mutateAsync(validItems);
+    setIsEditingWishlist(false);
   };
 
-  const handleSaveAddress = (data: AddressForm) => {
-    updateAddressMutation.mutate(data);
+  const handleCancelEditWishlist = () => {
+    // Reset to saved state
+    if (wishlist?.items) {
+      setWishItems(
+        wishlist.items.map((item) => ({
+          title: item.title,
+          description: item.description || "",
+          url: item.url || "",
+          priceEstimate: item.priceEstimate || "",
+        }))
+      );
+    }
+    setIsEditingWishlist(false);
+  };
+
+  const handleSaveAddress = async (data: AddressForm) => {
+    await updateAddressMutation.mutateAsync(data);
+    setIsEditingAddress(false);
+  };
+
+  const handleCancelEditAddress = () => {
+    // Reset form to saved values
+    if (address) {
+      addressForm.reset({
+        streetLine1: address.streetLine1,
+        streetLine2: address.streetLine2 || "",
+        city: address.city,
+        state: address.state || "",
+        postalCode: address.postalCode,
+        country: address.country,
+      });
+    } else {
+      addressForm.reset();
+    }
+    setIsEditingAddress(false);
+  };
+
+  const handleStartEditAddress = () => {
+    // Initialize form with current address when entering edit mode
+    if (address) {
+      addressForm.reset({
+        streetLine1: address.streetLine1,
+        streetLine2: address.streetLine2 || "",
+        city: address.city,
+        state: address.state || "",
+        postalCode: address.postalCode,
+        country: address.country,
+      });
+    }
+    setIsEditingAddress(true);
   };
 
   const isAdmin = team?.role === "admin";
@@ -519,91 +590,173 @@ export default function TeamPage() {
           {activeTab === "wishlist" && (
             <Card>
               <CardHeader>
-                <CardTitle>My Wishlist</CardTitle>
-                <CardDescription>
-                  Add items you&apos;d love to receive
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>My Wishlist</CardTitle>
+                    <CardDescription>
+                      Add items you&apos;d love to receive
+                    </CardDescription>
+                  </div>
+                  {!isEditingWishlist && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsEditingWishlist(true)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {wishItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="p-4 rounded-lg bg-midnight-50 space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <Input
-                          value={item.title}
-                          onChange={(e) =>
-                            handleWishItemChange(index, "title", e.target.value)
-                          }
-                          placeholder="Item name"
-                          className="flex-1"
-                        />
-                        <button
-                          onClick={() => handleRemoveWishItem(index)}
-                          className="ml-2 p-2 text-error/70 hover:text-error transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <Textarea
-                        value={item.description}
-                        onChange={(e) =>
-                          handleWishItemChange(
-                            index,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Description (optional)"
-                        className="min-h-[60px]"
-                      />
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          value={item.url}
-                          onChange={(e) =>
-                            handleWishItemChange(index, "url", e.target.value)
-                          }
-                          placeholder="Link (optional)"
-                        />
-                        <Input
-                          value={item.priceEstimate}
+                {isEditingWishlist ? (
+                  <div className="space-y-4">
+                    {wishItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className="p-4 rounded-lg bg-midnight-50 space-y-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <Input
+                            value={item.title}
+                            onChange={(e) =>
+                              handleWishItemChange(
+                                index,
+                                "title",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Item name"
+                            className="flex-1"
+                          />
+                          <button
+                            onClick={() => handleRemoveWishItem(index)}
+                            className="ml-2 p-2 text-error/70 hover:text-error transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <Textarea
+                          value={item.description}
                           onChange={(e) =>
                             handleWishItemChange(
                               index,
-                              "priceEstimate",
+                              "description",
                               e.target.value
                             )
                           }
-                          placeholder="Price estimate"
-                          type="number"
+                          placeholder="Description (optional)"
+                          className="min-h-[60px]"
                         />
+                        <div className="grid grid-cols-2 gap-3">
+                          <Input
+                            value={item.url}
+                            onChange={(e) =>
+                              handleWishItemChange(index, "url", e.target.value)
+                            }
+                            placeholder="Link (optional)"
+                          />
+                          <Input
+                            value={item.priceEstimate}
+                            onChange={(e) =>
+                              handleWishItemChange(
+                                index,
+                                "priceEstimate",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Price estimate"
+                            type="number"
+                          />
+                        </div>
                       </div>
+                    ))}
+
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={handleSaveWishlist}
+                        isLoading={updateWishlistMutation.isPending}
+                        className="flex-1"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={handleCancelEditWishlist}
+                        disabled={updateWishlistMutation.isPending}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
                     </div>
-                  ))}
 
-                  {/* Always show save button at the top when there are items */}
-                  {wishItems.length > 0 && (
                     <Button
-                      onClick={handleSaveWishlist}
-                      isLoading={updateWishlistMutation.isPending}
-                      className="w-full"
+                      variant="secondary"
+                      onClick={handleAddWishItem}
+                      className="w-full border-dashed border-2 border-cream/20 hover:border-cream/40"
                     >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Another Item
                     </Button>
-                  )}
-
-                  <Button
-                    variant="secondary"
-                    onClick={handleAddWishItem}
-                    className="w-full border-dashed border-2 border-cream/20 hover:border-cream/40"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Another Item
-                  </Button>
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {wishlist?.items && wishlist.items.length > 0 ? (
+                      wishlist.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-4 rounded-lg bg-midnight-50"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-cream text-lg mb-1">
+                                {item.title}
+                              </h4>
+                              {item.description && (
+                                <p className="text-cream/60 text-sm mb-2">
+                                  {item.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-4 mt-2">
+                                {item.priceEstimate && (
+                                  <span className="text-gold text-sm font-medium">
+                                    ~${item.priceEstimate}
+                                  </span>
+                                )}
+                                {item.url && (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gold hover:text-gold-light transition-colors text-sm flex items-center gap-1"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                    View Link
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-cream/60">
+                        <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No wishlist items yet.</p>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setIsEditingWishlist(true)}
+                          className="mt-4"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Your First Item
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -612,68 +765,133 @@ export default function TeamPage() {
           {activeTab === "address" && (
             <Card>
               <CardHeader>
-                <CardTitle>Shipping Address</CardTitle>
-                <CardDescription>
-                  Where should your Secret Santa send your gift?
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Shipping Address</CardTitle>
+                    <CardDescription>
+                      Where should your Secret Santa send your gift?
+                    </CardDescription>
+                  </div>
+                  {!isEditingAddress && address && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleStartEditAddress}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                  {!isEditingAddress && !address && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleStartEditAddress}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Address
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <form
-                  onSubmit={addressForm.handleSubmit(handleSaveAddress)}
-                  className="space-y-4"
-                >
-                  <Input
-                    {...addressForm.register("streetLine1")}
-                    label="Street Address"
-                    placeholder="123 Main St"
-                    error={addressForm.formState.errors.streetLine1?.message}
-                    defaultValue={address?.streetLine1}
-                  />
-                  <Input
-                    {...addressForm.register("streetLine2")}
-                    label="Apt, Suite, etc. (optional)"
-                    placeholder="Apt 4B"
-                    defaultValue={address?.streetLine2 || ""}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      {...addressForm.register("city")}
-                      label="City"
-                      placeholder="New York"
-                      error={addressForm.formState.errors.city?.message}
-                      defaultValue={address?.city}
-                    />
-                    <Input
-                      {...addressForm.register("state")}
-                      label="State/Province"
-                      placeholder="NY"
-                      defaultValue={address?.state || ""}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      {...addressForm.register("postalCode")}
-                      label="Postal Code"
-                      placeholder="10001"
-                      error={addressForm.formState.errors.postalCode?.message}
-                      defaultValue={address?.postalCode}
-                    />
-                    <Input
-                      {...addressForm.register("country")}
-                      label="Country"
-                      placeholder="United States"
-                      error={addressForm.formState.errors.country?.message}
-                      defaultValue={address?.country}
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    isLoading={updateAddressMutation.isPending}
-                    className="w-full"
+                {isEditingAddress ? (
+                  <form
+                    onSubmit={addressForm.handleSubmit(handleSaveAddress)}
+                    className="space-y-4"
                   >
-                    Save Address
-                  </Button>
-                </form>
+                    <Input
+                      {...addressForm.register("streetLine1")}
+                      label="Street Address"
+                      placeholder="123 Main St"
+                      error={addressForm.formState.errors.streetLine1?.message}
+                      defaultValue={address?.streetLine1}
+                    />
+                    <Input
+                      {...addressForm.register("streetLine2")}
+                      label="Apt, Suite, etc. (optional)"
+                      placeholder="Apt 4B"
+                      defaultValue={address?.streetLine2 || ""}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input
+                        {...addressForm.register("city")}
+                        label="City"
+                        placeholder="New York"
+                        error={addressForm.formState.errors.city?.message}
+                        defaultValue={address?.city}
+                      />
+                      <Input
+                        {...addressForm.register("state")}
+                        label="State/Province"
+                        placeholder="NY"
+                        defaultValue={address?.state || ""}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input
+                        {...addressForm.register("postalCode")}
+                        label="Postal Code"
+                        placeholder="10001"
+                        error={addressForm.formState.errors.postalCode?.message}
+                        defaultValue={address?.postalCode}
+                      />
+                      <Input
+                        {...addressForm.register("country")}
+                        label="Country"
+                        placeholder="United States"
+                        error={addressForm.formState.errors.country?.message}
+                        defaultValue={address?.country}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        type="submit"
+                        isLoading={updateAddressMutation.isPending}
+                        className="flex-1"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Address
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleCancelEditAddress}
+                        disabled={updateAddressMutation.isPending}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                ) : address ? (
+                  <div className="p-4 rounded-lg bg-midnight-50">
+                    <div className="space-y-1 text-cream">
+                      <p className="font-medium">{address.streetLine1}</p>
+                      {address.streetLine2 && (
+                        <p className="text-cream/70">{address.streetLine2}</p>
+                      )}
+                      <p className="text-cream/70">
+                        {address.city}
+                        {address.state && `, ${address.state}`}{" "}
+                        {address.postalCode}
+                      </p>
+                      <p className="text-cream/70">{address.country}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-cream/60">
+                    <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="mb-4">No address saved yet.</p>
+                    <Button
+                      variant="secondary"
+                      onClick={handleStartEditAddress}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Address
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
