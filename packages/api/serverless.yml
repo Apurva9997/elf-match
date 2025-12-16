@@ -200,6 +200,13 @@ functions:
           path: /teams/{teamId}/members/{memberId}
           method: delete
 
+  resendInvitation:
+    handler: src/handlers/invitations.resendInvitation
+    events:
+      - httpApi:
+          path: /teams/{teamId}/members/{memberId}/resend
+          method: post
+
   # Wishlists
   getWishlist:
     handler: src/handlers/wishlists.getWishlist

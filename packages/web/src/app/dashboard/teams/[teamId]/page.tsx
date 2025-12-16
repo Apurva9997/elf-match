@@ -31,6 +31,7 @@ import {
   MapPin,
   Package,
   Plus,
+  RefreshCw,
   Save,
   Sparkles,
   Trash2,
@@ -208,6 +209,16 @@ export default function TeamPage() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update gift status");
+    },
+  });
+
+  const resendInvitationMutation = useMutation({
+    mutationFn: (memberId: string) => api.resendInvitation(teamId, memberId),
+    onSuccess: () => {
+      toast.success("Invitation email resent successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to resend invitation");
     },
   });
 
@@ -576,7 +587,25 @@ export default function TeamPage() {
                           <Badge variant="gold">Admin</Badge>
                         )}
                         {member.invitationStatus === "pending" && (
-                          <Badge variant="warning">Pending</Badge>
+                          <>
+                            <Badge variant="warning">Pending</Badge>
+                            {isAdmin && (
+                              <button
+                                onClick={() =>
+                                  resendInvitationMutation.mutate(member.id)
+                                }
+                                disabled={resendInvitationMutation.isPending}
+                                className="p-1.5 text-cream/50 hover:text-gold transition-colors disabled:opacity-50"
+                                title="Resend invitation email"
+                              >
+                                {resendInvitationMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
