@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn, getInitials } from "@/lib/utils";
 
 interface AvatarProps {
@@ -21,9 +22,11 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={name}
+        width={size === "xl" ? 64 : size === "lg" ? 48 : size === "md" ? 40 : 32}
+        height={size === "xl" ? 64 : size === "lg" ? 48 : size === "md" ? 40 : 32}
         className={cn(
           "rounded-full object-cover border-2 border-gold/20",
           sizes[size],

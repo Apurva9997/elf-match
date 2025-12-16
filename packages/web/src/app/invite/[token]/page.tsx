@@ -112,7 +112,7 @@ export default function InvitePage() {
                   <Gift className="w-8 h-8 text-gold" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  You're Invited!
+                  You&apos;re Invited!
                 </h1>
                 <p className="text-cream/70 mb-6">
                   Sign in to accept this Secret Santa invitation.
@@ -135,7 +135,7 @@ export default function InvitePage() {
                   Welcome to the Team!
                 </h1>
                 <p className="text-cream/70">
-                  You've joined{" "}
+                  You&apos;ve joined{" "}
                   <span className="text-gold font-medium">{teamName}</span>.
                   Redirecting...
                 </p>

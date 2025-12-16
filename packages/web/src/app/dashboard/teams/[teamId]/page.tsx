@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -77,11 +77,6 @@ export default function TeamPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [wishItems, setWishItems] = useState<WishItemForm[]>([]);
-
-  if (!authLoading && !user) {
-    router.push("/auth/login");
-    return null;
-  }
 
   // Queries
   const { data: team, isLoading: teamLoading } = useQuery({
@@ -191,7 +186,7 @@ export default function TeamPage() {
   });
 
   // Initialize wish items from query
-  useState(() => {
+  useEffect(() => {
     if (wishlist?.items) {
       setWishItems(
         wishlist.items.map((item) => ({
@@ -202,7 +197,7 @@ export default function TeamPage() {
         }))
       );
     }
-  });
+  }, [wishlist]);
 
   const handleInvite = async (data: { emails: string }) => {
     const emailList = data.emails
@@ -244,6 +239,13 @@ export default function TeamPage() {
   };
 
   const isAdmin = team?.role === "admin";
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login");
+    }
+  }, [authLoading, user, router]);
 
   if (authLoading || teamLoading) {
     return (
@@ -474,7 +476,7 @@ export default function TeamPage() {
               <CardHeader>
                 <CardTitle>My Wishlist</CardTitle>
                 <CardDescription>
-                  Add items you'd love to receive
+                  Add items you&apos;d love to receive
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -650,7 +652,7 @@ export default function TeamPage() {
                         {assignment.giftee?.name}
                       </h3>
                       <p className="text-cream/60 mb-6">
-                        You're getting a gift for this person!
+                        You&apos;re getting a gift for this person!
                       </p>
 
                       {/* Gift Status */}
@@ -713,7 +715,7 @@ export default function TeamPage() {
               {assignment?.assigned && gifteeWishlist && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>{assignment.giftee?.name}'s Wishlist</CardTitle>
+                    <CardTitle>{assignment.giftee?.name}&apos;s Wishlist</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {gifteeWishlist.wishlist?.items &&
