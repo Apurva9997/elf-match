@@ -1,23 +1,15 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { and, count, eq, or } from "drizzle-orm";
 import { z } from "zod";
-import { eq, and, or, count, isNotNull } from "drizzle-orm";
-import {
-  db,
-  teams,
-  teamMembers,
-  users,
-  wishlists,
-  addresses,
-  assignments,
-} from "../db/index.js";
+import { assignments, db, teamMembers, teams } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import {
-  success,
   error,
-  unauthorized,
   forbidden,
   notFound,
   serverError,
+  success,
+  unauthorized,
 } from "../lib/response.js";
 
 const createTeamSchema = z.object({
@@ -171,7 +163,6 @@ export async function getTeam(
           },
         },
         members: {
-          where: eq(teamMembers.invitationStatus, "accepted"),
           with: {
             user: {
               columns: {
