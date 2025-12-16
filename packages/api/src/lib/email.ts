@@ -1,7 +1,7 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
 const ses = new SESClient({ region: process.env.AWS_REGION || "ap-south-1" });
-const FROM_EMAIL = process.env.SES_FROM_EMAIL || "noreply@secretsanta.app";
+const FROM_EMAIL = process.env.SES_FROM_EMAIL || "info@giftwhisper.online";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 interface EmailOptions {

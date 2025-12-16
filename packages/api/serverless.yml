@@ -11,13 +11,21 @@ provider:
   region: ${opt:region, 'ap-south-1'}
   memorySize: 256
   timeout: 30
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: "*"
   environment:
     DATABASE_URL: ${env:DATABASE_URL}
     JWT_SECRET: ${env:JWT_SECRET}
     ENCRYPTION_SECRET: ${env:ENCRYPTION_SECRET}
     ENCRYPTION_SALT: ${env:ENCRYPTION_SALT, 'secret-santa-salt-v1'}
     FRONTEND_URL: ${env:FRONTEND_URL, 'http://localhost:3000'}
-    SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'noreply@secretsanta.app'}
+    SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'info@giftwhisper.online'}
     STAGE: ${self:provider.stage}
   httpApi:
     cors:
