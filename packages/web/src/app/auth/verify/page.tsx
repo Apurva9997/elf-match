@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 function VerifyContent() {
   const router = useRouter();
@@ -50,6 +51,7 @@ function VerifyContent() {
 
         login(data.accessToken, data.refreshToken, data.user);
         setStatus("success");
+        toast.success("Welcome back!");
 
         // Check for pending invitation before redirecting
         const pendingInvitation = await storage.getItem("pendingInvitation");

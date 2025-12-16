@@ -29,6 +29,8 @@ import {
   Mail,
   MapPin,
   Package,
+  Plus,
+  Save,
   Sparkles,
   Trash2,
   Truck,
@@ -39,6 +41,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const inviteSchema = z.object({
@@ -124,10 +127,16 @@ export default function TeamPage() {
   // Mutations
   const inviteMutation = useMutation({
     mutationFn: (emails: string[]) => api.inviteMembers(teamId, emails),
-    onSuccess: () => {
+    onSuccess: (_, emails) => {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       setIsInviteModalOpen(false);
+      toast.success(
+        `Invitation${emails.length > 1 ? "s" : ""} sent successfully!`
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to send invitations");
     },
   });
 
@@ -147,6 +156,10 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
+      toast.success("Wishlist saved!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to save wishlist");
     },
   });
 
@@ -155,6 +168,10 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["address", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
+      toast.success("Address saved!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to save address");
     },
   });
 
@@ -165,14 +182,28 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
       setIsAssignModalOpen(false);
+      toast.success("Secret Santas assigned! Everyone will receive an email.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to assign Secret Santas");
     },
   });
 
   const updateGiftStatusMutation = useMutation({
     mutationFn: (giftStatus: string) =>
       api.updateAssignment(teamId, giftStatus),
-    onSuccess: () => {
+    onSuccess: (_, giftStatus) => {
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
+      const statusMessages: Record<string, string> = {
+        pending: "Status reset to pending",
+        purchased: "Gift marked as purchased!",
+        shipped: "Gift marked as shipped!",
+        delivered: "Gift marked as delivered!",
+      };
+      toast.success(statusMessages[giftStatus] || "Status updated!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update gift status");
     },
   });
 
@@ -293,11 +324,25 @@ export default function TeamPage() {
                   <UserPlus className="w-4 h-4 mr-2" />
                   Invite
                 </Button>
-                {status?.canAssign && (
+                {status?.canAssign ? (
                   <Button size="sm" onClick={() => setIsAssignModalOpen(true)}>
                     <Sparkles className="w-4 h-4 mr-2" />
                     Assign Santas
                   </Button>
+                ) : (
+                  status &&
+                  !status.hasAssignments && (
+                    <span className="text-cream/50 text-xs hidden sm:inline">
+                      Need{" "}
+                      {Math.max(
+                        0,
+                        3 -
+                          (status.totalMembers -
+                            (status.pendingInvitations || 0))
+                      )}{" "}
+                      more members to assign
+                    </span>
+                  )
                 )}
               </div>
             )}
@@ -538,24 +583,26 @@ export default function TeamPage() {
                     </div>
                   ))}
 
-                  <Button
-                    variant="secondary"
-                    onClick={handleAddWishItem}
-                    className="w-full"
-                  >
-                    <Gift className="w-4 h-4 mr-2" />
-                    Add Item
-                  </Button>
-
+                  {/* Always show save button at the top when there are items */}
                   {wishItems.length > 0 && (
                     <Button
                       onClick={handleSaveWishlist}
                       isLoading={updateWishlistMutation.isPending}
                       className="w-full"
                     >
-                      Save Wishlist
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
                     </Button>
                   )}
+
+                  <Button
+                    variant="secondary"
+                    onClick={handleAddWishItem}
+                    className="w-full border-dashed border-2 border-cream/20 hover:border-cream/40"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Another Item
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -702,10 +749,19 @@ export default function TeamPage() {
                       <h3 className="text-xl font-display font-semibold text-cream mb-2">
                         Assignments Not Ready Yet
                       </h3>
-                      <p className="text-cream/60">
-                        The team admin will assign Secret Santas once everyone
-                        is ready.
+                      <p className="text-cream/60 mb-4">
+                        {isAdmin
+                          ? status?.canAssign
+                            ? "You can now assign Secret Santas! Click the button above."
+                            : `You need at least 3 accepted members to assign Secret Santas. Currently have ${status?.totalMembers ? status.totalMembers - (status.pendingInvitations || 0) : 0} accepted members.`
+                          : "The team admin will assign Secret Santas once everyone is ready."}
                       </p>
+                      {isAdmin && status?.canAssign && (
+                        <Button onClick={() => setIsAssignModalOpen(true)}>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Assign Secret Santas
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -715,7 +771,9 @@ export default function TeamPage() {
               {assignment?.assigned && gifteeWishlist && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>{assignment.giftee?.name}&apos;s Wishlist</CardTitle>
+                    <CardTitle>
+                      {assignment.giftee?.name}&apos;s Wishlist
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {gifteeWishlist.wishlist?.items &&

@@ -28,6 +28,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const createTeamSchema = z.object({
@@ -124,9 +125,13 @@ export default function DashboardPage() {
     try {
       const result = await api.acceptInvitationDirect(invitationId);
       await Promise.all([refetchTeams(), refetchInvitations()]);
+      toast.success(`Joined ${result.team.name}!`);
       router.push(`/dashboard/teams/${result.team.id}`);
     } catch (error) {
       console.error("Failed to accept invitation:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to accept invitation"
+      );
     } finally {
       setProcessingInvitation(null);
     }
@@ -137,8 +142,12 @@ export default function DashboardPage() {
     try {
       await api.declineInvitationDirect(invitationId);
       await refetchInvitations();
+      toast.success("Invitation declined");
     } catch (error) {
       console.error("Failed to decline invitation:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to decline invitation"
+      );
     } finally {
       setProcessingInvitation(null);
     }
@@ -166,9 +175,13 @@ export default function DashboardPage() {
       setIsCreateModalOpen(false);
       reset();
       refetchTeams();
+      toast.success(`Team "${team.name}" created!`);
       router.push(`/dashboard/teams/${team.id}`);
     } catch (error) {
       console.error("Failed to create team:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create team"
+      );
     }
   };
 

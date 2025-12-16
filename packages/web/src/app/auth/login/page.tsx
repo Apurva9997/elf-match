@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
+import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@/lib/api";
 
 const schema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -39,6 +40,9 @@ export default function LoginPage() {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Failed to send magic link:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send magic link"
+      );
     }
   };
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -52,6 +53,17 @@ export default function RootLayout({
           <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-glow -z-10 opacity-50" />
 
           {children}
+
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: "#1a1f2e",
+                border: "1px solid rgba(212, 175, 55, 0.2)",
+                color: "#f5f0e8",
+              },
+            }}
+          />
         </Providers>
       </body>
     </html>
