@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, Suspense, useRef } from "react";
-import { motion } from "framer-motion";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { motion } from "framer-motion";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function VerifyContent() {
   const router = useRouter();
@@ -18,23 +18,35 @@ function VerifyContent() {
   );
   const [error, setError] = useState("");
   const hasVerified = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const token = searchParams.get("token");
 
   useEffect(() => {
-    // Prevent duplicate calls
-    if (hasVerified.current || !token) {
-      if (!token) {
+    // Prevent duplicate calls - check ref, status, and token
+    if (hasVerified.current || status !== "loading" || !token) {
+      if (!token && status === "loading") {
         setStatus("error");
         setError("Invalid or missing token");
       }
       return;
     }
 
+    // Mark as verified immediately to prevent concurrent calls
     hasVerified.current = true;
+
+    // Create abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     const verify = async () => {
       try {
         const data = await api.verifyMagicLink(token);
+
+        // Check if request was aborted
+        if (abortController.signal.aborted) {
+          return;
+        }
+
         login(data.accessToken, data.refreshToken, data.user);
         setStatus("success");
 
@@ -43,12 +55,21 @@ function VerifyContent() {
           router.push("/dashboard");
         }, 1500);
       } catch (err) {
+        // Don't update state if request was aborted
+        if (abortController.signal.aborted) {
+          return;
+        }
         setStatus("error");
         setError(err instanceof Error ? err.message : "Failed to verify link");
       }
     };
 
     verify();
+
+    // Cleanup: abort request if effect re-runs or component unmounts
+    return () => {
+      abortController.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
