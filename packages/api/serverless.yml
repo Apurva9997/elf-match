@@ -316,3 +316,10 @@ functions:
       - httpApi:
           path: /teams/{teamId}/reminders
           method: post
+
+  changeUserEmail:
+    handler: src/handlers/admin.changeUserEmail
+    events:
+      - httpApi:
+          path: /teams/{teamId}/users/{userId}/email
+          method: patch

@@ -276,6 +276,16 @@ class ApiClient {
       results: Array<{ email: string; sent: boolean; missingItems: string[] }>;
     }>(`/teams/${teamId}/reminders`, { method: "POST" });
   }
+
+  async changeUserEmail(teamId: string, userId: string, newEmail: string) {
+    return this.request<{
+      message: string;
+      user: { id: string; email: string; name: string | null };
+    }>(`/teams/${teamId}/users/${userId}/email`, {
+      method: "PATCH",
+      body: JSON.stringify({ newEmail }),
+    });
+  }
 }
 
 export const api = new ApiClient();
