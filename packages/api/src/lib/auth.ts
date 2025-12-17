@@ -1,11 +1,13 @@
-import * as jose from "jose";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { db, users } from "../db/index.js";
 import { eq } from "drizzle-orm";
+import * as jose from "jose";
+import { db, users } from "../db/index.js";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-secret-change-me"
-);
+const jwtSecretValue = process.env.JWT_SECRET;
+if (!jwtSecretValue) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+const JWT_SECRET = new TextEncoder().encode(jwtSecretValue);
 const TOKEN_EXPIRY = "7d";
 const REFRESH_TOKEN_EXPIRY = "30d";
 

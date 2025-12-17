@@ -1,15 +1,15 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
-import { db, teamMembers, exclusions, assignments } from "../db/index.js";
+import { assignments, db, exclusions, teamMembers } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import {
-  success,
   error,
-  unauthorized,
   forbidden,
   notFound,
   serverError,
+  success,
+  unauthorized,
 } from "../lib/response.js";
 
 const addExclusionSchema = z.object({
@@ -54,7 +54,6 @@ export async function listExclusions(
               columns: {
                 id: true,
                 name: true,
-                email: true,
               },
             },
           },
@@ -65,7 +64,6 @@ export async function listExclusions(
               columns: {
                 id: true,
                 name: true,
-                email: true,
               },
             },
           },

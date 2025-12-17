@@ -106,7 +106,6 @@ export async function listTeams(
               columns: {
                 id: true,
                 name: true,
-                email: true,
               },
             },
           },
@@ -159,7 +158,6 @@ export async function getTeam(
           columns: {
             id: true,
             name: true,
-            email: true,
           },
         },
         members: {
@@ -168,7 +166,6 @@ export async function getTeam(
               columns: {
                 id: true,
                 name: true,
-                email: true,
                 avatarUrl: true,
               },
             },

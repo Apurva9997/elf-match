@@ -354,7 +354,6 @@ export interface TeamWithRole extends Team {
   creator?: {
     id: string;
     name: string | null;
-    email: string;
   };
 }
 
@@ -369,7 +368,6 @@ export interface TeamMember {
   user: {
     id: string;
     name: string | null;
-    email: string;
     avatarUrl: string | null;
   } | null;
 }
@@ -472,13 +470,11 @@ export interface AssignmentPreviewItem {
   giver: {
     id: string;
     name: string;
-    email: string;
     avatarUrl?: string | null;
   };
   receiver: {
     id: string;
     name: string;
-    email: string;
     avatarUrl?: string | null;
   };
 }
@@ -516,6 +512,5 @@ export interface PendingInvitation {
   invitedBy: {
     id: string;
     name: string | null;
-    email: string;
   } | null;
 }

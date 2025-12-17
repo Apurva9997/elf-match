@@ -7,8 +7,6 @@ import {
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
-const SALT_LENGTH = 32;
 
 // Get encryption key from environment or derive from secret
 function getEncryptionKey(): Buffer {
@@ -16,10 +14,10 @@ function getEncryptionKey(): Buffer {
   if (!secret) {
     throw new Error("ENCRYPTION_SECRET environment variable is required");
   }
-
-  // Use a fixed salt for key derivation (stored separately or derived from secret)
-  // In production, you might want to store this salt securely
-  const salt = process.env.ENCRYPTION_SALT || "secret-santa-salt-v1";
+  const salt = process.env.ENCRYPTION_SALT;
+  if (!salt) {
+    throw new Error("ENCRYPTION_SALT environment variable is required");
+  }
   return scryptSync(secret, salt, 32);
 }
 
@@ -162,8 +160,21 @@ export const ENCRYPTED_ADDRESS_FIELDS = [
   "postalCode",
 ] as const;
 
-// Fields that should be encrypted in other tables (for future use)
-export const ENCRYPTED_USER_FIELDS = [] as const; // Email is needed for lookups, so we don't encrypt it
+export const ENCRYPTED_USER_FIELDS = ["mobile"] as const; // Email is needed for lookups, so we don't encrypt it
+
+export function encryptMobile(
+  mobile: string | null | undefined
+): string | null {
+  if (!mobile) return null;
+  return encrypt(mobile);
+}
+
+export function decryptMobile(
+  encryptedMobile: string | null | undefined
+): string | null {
+  if (!encryptedMobile) return null;
+  return decrypt(encryptedMobile);
+}
 
 /**
  * Encrypts address data before storing

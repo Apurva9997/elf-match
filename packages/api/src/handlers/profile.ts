@@ -3,7 +3,12 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, userAddresses, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
-import { decryptAddress, encryptAddress } from "../lib/encryption.js";
+import {
+  decryptAddress,
+  decryptMobile,
+  encryptAddress,
+  encryptMobile,
+} from "../lib/encryption.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
 
 const profileUpdateSchema = z.object({
@@ -40,14 +45,14 @@ export async function getProfile(
       return unauthorized("User not found");
     }
 
-    // Decrypt address data before returning
     const decryptedAddress = decryptAddress(userWithAddress.address);
+    const decryptedMobile = decryptMobile(userWithAddress.mobile);
 
     return success({
       id: userWithAddress.id,
       email: userWithAddress.email,
       name: userWithAddress.name,
-      mobile: userWithAddress.mobile,
+      mobile: decryptedMobile,
       avatarUrl: userWithAddress.avatarUrl,
       address: decryptedAddress
         ? {
@@ -93,7 +98,8 @@ export async function updateProfile(
         updatedAt: new Date(),
       };
       if (name !== undefined) updateData.name = name;
-      if (mobile !== undefined) updateData.mobile = mobile;
+
+      if (mobile !== undefined) updateData.mobile = encryptMobile(mobile);
 
       await db.update(users).set(updateData).where(eq(users.id, user.id));
     }
@@ -158,12 +164,13 @@ export async function updateProfile(
     }
 
     const decryptedAddress = decryptAddress(updatedUser.address);
+    const decryptedMobileUpdated = decryptMobile(updatedUser.mobile);
 
     return success({
       id: updatedUser.id,
       email: updatedUser.email,
       name: updatedUser.name,
-      mobile: updatedUser.mobile,
+      mobile: decryptedMobileUpdated,
       avatarUrl: updatedUser.avatarUrl,
       address: decryptedAddress
         ? {
@@ -182,4 +189,3 @@ export async function updateProfile(
     return serverError("Failed to update profile");
   }
 }
-
