@@ -13,18 +13,22 @@ import { hashToken } from "../lib/encryption.js";
 import { wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const sendMagicLinkSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().transform(sanitizeTransform("email")),
 });
 
 const verifyMagicLinkSchema = z.object({
-  token: z.string().min(1),
-  name: z.string().optional(),
+  token: z.string().min(1).transform(sanitizeTransform("text")),
+  name: z
+    .string()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
 });
 
 const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1),
+  refreshToken: z.string().min(1).transform(sanitizeTransform("text")),
 });
 
 async function _sendMagicLink(

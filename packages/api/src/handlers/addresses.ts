@@ -10,6 +10,8 @@ import {
 } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import { decryptAddress, encryptAddress } from "../lib/encryption.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
   forbidden,
@@ -17,17 +19,24 @@ import {
   serverError,
   success,
   unauthorized,
-  } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
-import { rateLimiters } from "../lib/rate-limit.js";
+} from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const addressSchema = z.object({
-  streetLine1: z.string().min(1).max(255),
-  streetLine2: z.string().max(255).optional(),
-  city: z.string().min(1).max(100),
-  state: z.string().max(100).optional(),
-  postalCode: z.string().min(1).max(20),
-  country: z.string().min(1).max(100),
+  streetLine1: z.string().min(1).max(255).transform(sanitizeTransform("text")),
+  streetLine2: z
+    .string()
+    .max(255)
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  city: z.string().min(1).max(100).transform(sanitizeTransform("text")),
+  state: z
+    .string()
+    .max(100)
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  postalCode: z.string().min(1).max(20).transform(sanitizeTransform("text")),
+  country: z.string().min(1).max(100).transform(sanitizeTransform("text")),
 });
 
 async function getMembershipForTeam(userId: string, teamId: string) {

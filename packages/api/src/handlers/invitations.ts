@@ -16,9 +16,13 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const inviteMembersSchema = z.object({
-  emails: z.array(z.string().email()).min(1).max(50),
+  emails: z
+    .array(z.string().email().transform(sanitizeTransform("email")))
+    .min(1)
+    .max(50),
 });
 
 async function _inviteMembers(
