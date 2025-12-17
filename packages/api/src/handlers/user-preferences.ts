@@ -3,12 +3,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
-import {
-  success,
-  error,
-  unauthorized,
-  serverError,
-} from "../lib/response.js";
+import { error, serverError, success, unauthorized } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const updatePreferencesSchema = z.object({
   onboarding: z
@@ -20,7 +16,7 @@ const updatePreferencesSchema = z.object({
     .optional(),
 });
 
-export async function getUserPreferences(
+async function _getUserPreferences(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -46,7 +42,7 @@ export async function getUserPreferences(
   }
 }
 
-export async function updateUserPreferences(
+async function _updateUserPreferences(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -102,3 +98,6 @@ export async function updateUserPreferences(
   }
 }
 
+// Export wrapped handlers
+export const getUserPreferences = wrapHandler(_getUserPreferences);
+export const updateUserPreferences = wrapHandler(_updateUserPreferences);

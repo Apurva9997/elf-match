@@ -14,12 +14,13 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const inviteMembersSchema = z.object({
   emails: z.array(z.string().email()).min(1).max(50),
 });
 
-export async function inviteMembers(
+async function _inviteMembers(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -138,7 +139,7 @@ export async function inviteMembers(
   }
 }
 
-export async function acceptInvitation(
+async function _acceptInvitation(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -207,7 +208,7 @@ export async function acceptInvitation(
   }
 }
 
-export async function declineInvitation(
+async function _declineInvitation(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -245,7 +246,7 @@ export async function declineInvitation(
   }
 }
 
-export async function removeMember(
+async function _removeMember(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -308,7 +309,7 @@ export async function removeMember(
   }
 }
 
-export async function listPendingInvitations(
+async function _listPendingInvitations(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -356,7 +357,7 @@ export async function listPendingInvitations(
   }
 }
 
-export async function acceptInvitationDirect(
+async function _acceptInvitationDirect(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -418,7 +419,7 @@ export async function acceptInvitationDirect(
   }
 }
 
-export async function declineInvitationDirect(
+async function _declineInvitationDirect(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -460,7 +461,7 @@ export async function declineInvitationDirect(
   }
 }
 
-export async function resendInvitation(
+async function _resendInvitation(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -538,3 +539,13 @@ export async function resendInvitation(
     return serverError("Failed to resend invitation");
   }
 }
+
+// Export wrapped handlers
+export const inviteMembers = wrapHandler(_inviteMembers);
+export const acceptInvitation = wrapHandler(_acceptInvitation);
+export const declineInvitation = wrapHandler(_declineInvitation);
+export const removeMember = wrapHandler(_removeMember);
+export const listPendingInvitations = wrapHandler(_listPendingInvitations);
+export const acceptInvitationDirect = wrapHandler(_acceptInvitationDirect);
+export const declineInvitationDirect = wrapHandler(_declineInvitationDirect);
+export const resendInvitation = wrapHandler(_resendInvitation);

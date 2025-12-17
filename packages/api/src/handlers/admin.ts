@@ -12,6 +12,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 async function isTeamAdmin(userId: string, teamId: string) {
   const membership = await db.query.teamMembers.findFirst({
@@ -25,7 +26,7 @@ async function isTeamAdmin(userId: string, teamId: string) {
   return !!membership;
 }
 
-export async function sendReminders(
+async function _sendReminders(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -138,7 +139,7 @@ const changeUserEmailSchema = z.object({
   newEmail: z.string().email(),
 });
 
-export async function changeUserEmail(
+async function _changeUserEmail(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -226,3 +227,7 @@ export async function changeUserEmail(
     return serverError("Failed to change user email");
   }
 }
+
+// Export wrapped handlers
+export const sendReminders = wrapHandler(_sendReminders);
+export const changeUserEmail = wrapHandler(_changeUserEmail);

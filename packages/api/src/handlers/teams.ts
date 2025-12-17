@@ -11,6 +11,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const createTeamSchema = z.object({
   name: z.string().min(1).max(255),
@@ -30,7 +31,7 @@ const updateTeamSchema = z.object({
   wishlistDeadline: z.string().nullable().optional(),
 });
 
-export async function createTeam(
+async function _createTeam(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -83,7 +84,7 @@ export async function createTeam(
   }
 }
 
-export async function listTeams(
+async function _listTeams(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -127,7 +128,7 @@ export async function listTeams(
   }
 }
 
-export async function getTeam(
+async function _getTeam(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -189,7 +190,7 @@ export async function getTeam(
   }
 }
 
-export async function updateTeam(
+async function _updateTeam(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -247,7 +248,7 @@ export async function updateTeam(
   }
 }
 
-export async function deleteTeam(
+async function _deleteTeam(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -280,7 +281,7 @@ export async function deleteTeam(
   }
 }
 
-export async function getTeamStatus(
+async function _getTeamStatus(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -384,3 +385,11 @@ export async function getTeamStatus(
     return serverError("Failed to get team status");
   }
 }
+
+// Export wrapped handlers
+export const createTeam = wrapHandler(_createTeam);
+export const listTeams = wrapHandler(_listTeams);
+export const getTeam = wrapHandler(_getTeam);
+export const updateTeam = wrapHandler(_updateTeam);
+export const deleteTeam = wrapHandler(_deleteTeam);
+export const getTeamStatus = wrapHandler(_getTeamStatus);

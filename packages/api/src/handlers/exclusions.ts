@@ -11,6 +11,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const addExclusionSchema = z.object({
   member1Id: z.string().uuid(),
@@ -31,7 +32,7 @@ async function isTeamAdmin(userId: string, teamId: string) {
   return !!membership;
 }
 
-export async function listExclusions(
+async function _listExclusions(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -78,7 +79,7 @@ export async function listExclusions(
   }
 }
 
-export async function addExclusion(
+async function _addExclusion(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -169,7 +170,7 @@ export async function addExclusion(
   }
 }
 
-export async function removeExclusion(
+async function _removeExclusion(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -213,3 +214,8 @@ export async function removeExclusion(
     return serverError("Failed to remove exclusion");
   }
 }
+
+// Export wrapped handlers
+export const listExclusions = wrapHandler(_listExclusions);
+export const addExclusion = wrapHandler(_addExclusion);
+export const removeExclusion = wrapHandler(_removeExclusion);

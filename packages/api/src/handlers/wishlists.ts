@@ -17,6 +17,7 @@ import {
   notFound,
   serverError,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const wishItemSchema = z.object({
   title: z.string().min(1).max(255),
@@ -40,7 +41,7 @@ async function getMembershipForTeam(userId: string, teamId: string) {
   });
 }
 
-export async function getWishlist(
+async function _getWishlist(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -82,7 +83,7 @@ export async function getWishlist(
   }
 }
 
-export async function updateWishlist(
+async function _updateWishlist(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -158,7 +159,7 @@ export async function updateWishlist(
   }
 }
 
-export async function getGifteeWishlist(
+async function _getGifteeWishlist(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -228,3 +229,8 @@ export async function getGifteeWishlist(
     return serverError("Failed to get giftee wishlist");
   }
 }
+
+// Export wrapped handlers
+export const getWishlist = wrapHandler(_getWishlist);
+export const updateWishlist = wrapHandler(_updateWishlist);
+export const getGifteeWishlist = wrapHandler(_getGifteeWishlist);
