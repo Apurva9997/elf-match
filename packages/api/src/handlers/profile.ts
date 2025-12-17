@@ -182,3 +182,4 @@ export async function updateProfile(
     return serverError("Failed to update profile");
   }
 }
+

@@ -321,12 +321,15 @@ export default function DashboardPage() {
               </span>
             </Link>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
+              <Link
+                href="/dashboard/profile"
+                className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+              >
                 <Avatar name={user?.name || user?.email || "U"} size="sm" />
                 <span className="text-cream/70 text-sm hidden sm:block">
                   {user?.name || user?.email}
                 </span>
-              </div>
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
               </Button>

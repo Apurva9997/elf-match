@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Gift, MapPin, UserPlus, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Gift, MapPin, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
 
 type OnboardingPersona = "new_user" | "admin" | "member";
@@ -162,6 +162,15 @@ export function Onboarding({
   const steps = getStepsForPersona();
 
   const handleNext = () => {
+    const currentStepData = steps[currentStep];
+    
+    // If current step has an action, trigger it
+    if (currentStepData.action) {
+      currentStepData.action.onClick();
+      return;
+    }
+    
+    // Otherwise, go to next step or close
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -249,43 +258,29 @@ export function Onboarding({
                     </p>
                   </div>
 
-                  {/* Action buttons */}
-                  <div className="flex flex-col gap-3">
-                    {step.action && (
-                      <Button onClick={step.action.onClick} className="w-full">
-                        {step.action.label}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    )}
-
-                    <div className="flex gap-3">
-                      {!isFirstStep && (
-                        <Button
-                          variant="secondary"
-                          onClick={handlePrevious}
-                          className="flex-1"
-                        >
-                          Previous
-                        </Button>
+                  {/* Navigation arrows */}
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handlePrevious}
+                      disabled={isFirstStep}
+                      className={cn(
+                        "p-2 rounded-full transition-colors",
+                        isFirstStep
+                          ? "text-cream/20 cursor-not-allowed"
+                          : "text-cream/60 hover:text-cream hover:bg-cream/10"
                       )}
-                      <Button
-                        onClick={isLastStep ? handleSkip : handleNext}
-                        className={isFirstStep ? "w-full" : "flex-1"}
-                      >
-                        {isLastStep ? "Get Started" : "Next"}
-                        {!isLastStep && <ArrowRight className="w-4 h-4 ml-2" />}
-                      </Button>
-                    </div>
+                    >
+                      <ArrowLeft className="w-6 h-6" />
+                    </button>
 
-                    {!isLastStep && (
-                      <Button
-                        variant="ghost"
-                        onClick={handleSkip}
-                        className="w-full text-cream/60 hover:text-cream"
-                      >
-                        Skip onboarding
-                      </Button>
-                    )}
+                    <button
+                      onClick={isLastStep ? handleSkip : handleNext}
+                      className={cn(
+                        "p-2 rounded-full transition-colors text-cream/60 hover:text-cream hover:bg-cream/10"
+                      )}
+                    >
+                      <ArrowRight className="w-6 h-6" />
+                    </button>
                   </div>
                 </CardContent>
               </Card>
