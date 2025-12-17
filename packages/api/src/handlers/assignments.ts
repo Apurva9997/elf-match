@@ -479,13 +479,11 @@ export async function previewAssignment(
         giver: {
           id: giverId,
           name: giver?.user?.name || giver?.invitedEmail || "Unknown",
-          email: giver?.user?.email || giver?.invitedEmail,
           avatarUrl: giver?.user?.avatarUrl,
         },
         receiver: {
           id: receiverId,
           name: receiver?.user?.name || receiver?.invitedEmail || "Unknown",
-          email: receiver?.user?.email || receiver?.invitedEmail,
           avatarUrl: receiver?.user?.avatarUrl,
         },
       });

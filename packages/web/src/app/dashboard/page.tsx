@@ -380,9 +380,7 @@ export default function DashboardPage() {
                           <p className="text-cream/50 text-xs mt-2">
                             Invited by{" "}
                             <span className="text-cream/70">
-                              {invitation.invitedBy?.name ||
-                                invitation.invitedBy?.email ||
-                                "Unknown"}
+                              {invitation.invitedBy?.name || "Unknown"}
                             </span>
                           </p>
                         </div>

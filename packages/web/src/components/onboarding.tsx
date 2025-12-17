@@ -1,10 +1,17 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Gift, MapPin, UserPlus, Users, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Gift,
+  MapPin,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 
 type OnboardingPersona = "new_user" | "admin" | "member";
@@ -163,13 +170,13 @@ export function Onboarding({
 
   const handleNext = () => {
     const currentStepData = steps[currentStep];
-    
+
     // If current step has an action, trigger it
     if (currentStepData.action) {
       currentStepData.action.onClick();
       return;
     }
-    
+
     // Otherwise, go to next step or close
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);

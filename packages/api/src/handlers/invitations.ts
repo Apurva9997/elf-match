@@ -333,7 +333,6 @@ export async function listPendingInvitations(
               columns: {
                 id: true,
                 name: true,
-                email: true,
               },
             },
           },

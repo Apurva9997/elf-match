@@ -117,13 +117,11 @@ export default function TeamPage() {
       giver: {
         id: string;
         name: string;
-        email: string;
         avatarUrl?: string | null;
       };
       receiver: {
         id: string;
         name: string;
-        email: string;
         avatarUrl?: string | null;
       };
     }>;
@@ -971,9 +969,12 @@ export default function TeamPage() {
                           <div className="text-cream font-medium">
                             {member.user?.name || member.invitedEmail}
                           </div>
-                          <div className="text-cream/50 text-sm">
-                            {member.user?.email || member.invitedEmail}
-                          </div>
+                          {member.invitationStatus === "pending" &&
+                            member.invitedEmail && (
+                              <div className="text-cream/50 text-sm">
+                                {member.invitedEmail}
+                              </div>
+                            )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -1964,9 +1965,6 @@ export default function TeamPage() {
                       <p className="text-cream font-medium text-sm">
                         {pair.giver.name}
                       </p>
-                      <p className="text-cream/50 text-xs">
-                        {pair.giver.email}
-                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-gold">
@@ -1977,9 +1975,6 @@ export default function TeamPage() {
                     <div className="text-right">
                       <p className="text-cream font-medium text-sm">
                         {pair.receiver.name}
-                      </p>
-                      <p className="text-cream/50 text-xs">
-                        {pair.receiver.email}
                       </p>
                     </div>
                     <Avatar
