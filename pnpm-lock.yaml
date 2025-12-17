@@ -16,9 +16,6 @@ importers:
       '@sentry/aws-serverless':
         specifier: ^10.31.0
         version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))
-      '@sentry/profiling-node':
-        specifier: ^10.31.0
-        version: 10.31.0
       drizzle-orm:
         specifier: ^0.33.0
         version: 0.33.0(@opentelemetry/api@1.9.0)(@types/pg@8.16.0)(@types/react@18.3.27)(pg@8.16.3)(react@18.3.1)
@@ -1687,10 +1684,6 @@ packages:
     resolution: {integrity: sha512-uLmh6n0Ax/yjVO4FROpeVqzEJVMgIxDsnmKlAoQ4/HYmc2wQQbJmdIgjzZN2ruelaYEaQV7iouSYLZv4wdujOQ==}
     engines: {node: '>=18'}
 
-  '@sentry-internal/node-cpu-profiler@2.2.0':
-    resolution: {integrity: sha512-oLHVYurqZfADPh5hvmQYS5qx8t0UZzT2u6+/68VXsFruQEOnYJTODKgU3BVLmemRs3WE6kCJjPeFdHVYOQGSzQ==}
-    engines: {node: '>=18'}
-
   '@sentry-internal/replay-canvas@10.31.0':
     resolution: {integrity: sha512-mR6t6YNMLKndn1FvaDoOTWA15LfatcC/RMXkKYggULJWxMOs1/TCowjVidPXb/2JtfeHQvbJg5dH/hM+wW5c1Q==}
     engines: {node: '>=18'}
@@ -1802,11 +1795,6 @@ packages:
       '@opentelemetry/core': ^1.30.1 || ^2.1.0 || ^2.2.0
       '@opentelemetry/sdk-trace-base': ^1.30.1 || ^2.1.0 || ^2.2.0
       '@opentelemetry/semantic-conventions': ^1.37.0
-
-  '@sentry/profiling-node@10.31.0':
-    resolution: {integrity: sha512-xDR60KzKioPOOnsnnWjAYur0NbI3AY2pgoiH/GU5PFt06HsZB1ZG5PHDOCZ6e8OvUbxnn1YGz1sQ17E+hZLGRQ==}
-    engines: {node: '>=18'}
-    hasBin: true
 
   '@sentry/react@10.31.0':
     resolution: {integrity: sha512-1Y+K/s64f/UBH4guU0F5T+b9nWT2AoRd1nlQShGlGBT2WEihIcnnftSb3Wdl9/zLO2kzbXjc63G0D4dx6sUY/w==}
@@ -3102,10 +3090,6 @@ packages:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
     hasBin: true
-
-  detect-libc@2.1.2:
-    resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
-    engines: {node: '>=8'}
 
   dezalgo@1.0.4:
     resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
@@ -4575,10 +4559,6 @@ packages:
 
   nice-try@1.0.5:
     resolution: {integrity: sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==}
-
-  node-abi@3.85.0:
-    resolution: {integrity: sha512-zsFhmbkAzwhTft6nd3VxcG0cvJsT70rL+BIGHWVq5fi6MwGrHwzqKaxXE+Hl2GmnGItnDKPPkO5/LQqjVkIdFg==}
-    engines: {node: '>=10'}
 
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
@@ -8222,11 +8202,6 @@ snapshots:
     dependencies:
       '@sentry/core': 10.31.0
 
-  '@sentry-internal/node-cpu-profiler@2.2.0':
-    dependencies:
-      detect-libc: 2.1.2
-      node-abi: 3.85.0
-
   '@sentry-internal/replay-canvas@10.31.0':
     dependencies:
       '@sentry-internal/replay': 10.31.0
@@ -8414,14 +8389,6 @@ snapshots:
       '@opentelemetry/sdk-trace-base': 2.2.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.38.0
       '@sentry/core': 10.31.0
-
-  '@sentry/profiling-node@10.31.0':
-    dependencies:
-      '@sentry-internal/node-cpu-profiler': 2.2.0
-      '@sentry/core': 10.31.0
-      '@sentry/node': 10.31.0
-    transitivePeerDependencies:
-      - supports-color
 
   '@sentry/react@10.31.0(react@18.3.1)':
     dependencies:
@@ -10166,8 +10133,6 @@ snapshots:
 
   detect-libc@1.0.3: {}
 
-  detect-libc@2.1.2: {}
-
   dezalgo@1.0.4:
     dependencies:
       asap: 2.0.6
@@ -11884,10 +11849,6 @@ snapshots:
       - babel-plugin-macros
 
   nice-try@1.0.5: {}
-
-  node-abi@3.85.0:
-    dependencies:
-      semver: 7.7.3
 
   node-addon-api@7.1.1: {}
 
