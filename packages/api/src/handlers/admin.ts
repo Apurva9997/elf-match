@@ -1,15 +1,16 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
-import { eq, and } from "drizzle-orm";
-import { db, teams, teamMembers, wishlists, addresses } from "../db/index.js";
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
+import { db, teamMembers, teams, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import { sendReminderEmail } from "../lib/email.js";
 import {
-  success,
   error,
-  unauthorized,
   forbidden,
   notFound,
   serverError,
+  success,
+  unauthorized,
 } from "../lib/response.js";
 
 async function isTeamAdmin(userId: string, teamId: string) {
@@ -130,5 +131,98 @@ export async function sendReminders(
   } catch (err) {
     console.error("Error sending reminders:", err);
     return serverError("Failed to send reminders");
+  }
+}
+
+const changeUserEmailSchema = z.object({
+  newEmail: z.string().email(),
+});
+
+export async function changeUserEmail(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResult> {
+  try {
+    const user = await getUserFromEvent(event);
+    if (!user) return unauthorized();
+
+    const teamId = event.pathParameters?.teamId;
+    const userId = event.pathParameters?.userId;
+    if (!teamId || !userId) {
+      return error("Team ID and User ID required", 400);
+    }
+
+    if (!(await isTeamAdmin(user.id, teamId))) {
+      return forbidden("Only admins can change user emails");
+    }
+
+    // Verify the user is a member of this team
+    const targetMember = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, userId),
+        eq(teamMembers.invitationStatus, "accepted")
+      ),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!targetMember || !targetMember.user) {
+      return notFound("User not found in this team");
+    }
+
+    const body = JSON.parse(event.body || "{}");
+    const parsed = changeUserEmailSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return error("Invalid email address", 400, "VALIDATION_ERROR");
+    }
+
+    const { newEmail } = parsed.data;
+    const normalizedNewEmail = newEmail.toLowerCase();
+
+    // Check if new email is already taken by another user
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.email, normalizedNewEmail),
+    });
+
+    if (existingUser && existingUser.id !== userId) {
+      return error("Email address already in use", 400);
+    }
+
+    // Update user email
+    await db
+      .update(users)
+      .set({
+        email: normalizedNewEmail,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // Update any pending invitations for this user in this team
+    await db
+      .update(teamMembers)
+      .set({
+        invitedEmail: normalizedNewEmail,
+      })
+      .where(
+        and(
+          eq(teamMembers.teamId, teamId),
+          eq(teamMembers.userId, userId),
+          eq(teamMembers.invitationStatus, "pending")
+        )
+      );
+
+    return success({
+      message: "User email updated successfully",
+      user: {
+        id: targetMember.user.id,
+        email: normalizedNewEmail,
+        name: targetMember.user.name,
+      },
+    });
+  } catch (err) {
+    console.error("Error changing user email:", err);
+    return serverError("Failed to change user email");
   }
 }
