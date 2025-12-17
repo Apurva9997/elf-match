@@ -10,8 +10,9 @@ import {
   serverError,
   success,
   unauthorized,
-} from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+  } from "../lib/response.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const addExclusionSchema = z.object({
   member1Id: z.string().uuid(),
@@ -215,7 +216,18 @@ async function _removeExclusion(
   }
 }
 
-// Export wrapped handlers
-export const listExclusions = wrapHandler(_listExclusions);
-export const addExclusion = wrapHandler(_addExclusion);
-export const removeExclusion = wrapHandler(_removeExclusion);
+// Export wrapped handlers with rate limiting
+export const listExclusions = wrapHandler(_listExclusions, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const addExclusion = wrapHandler(_addExclusion, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const removeExclusion = wrapHandler(_removeExclusion, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});

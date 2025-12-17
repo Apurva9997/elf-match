@@ -26,6 +26,8 @@ provider:
     ENCRYPTION_SALT: ${env:ENCRYPTION_SALT, 'secret-santa-salt-v1'}
     FRONTEND_URL: ${env:FRONTEND_URL, 'http://localhost:3000'}
     SES_FROM_EMAIL: ${env:SES_FROM_EMAIL, 'info@giftwhisper.online'}
+    UPSTASH_REDIS_REST_URL: ${env:UPSTASH_REDIS_REST_URL}
+    UPSTASH_REDIS_REST_TOKEN: ${env:UPSTASH_REDIS_REST_TOKEN}
     STAGE: ${self:provider.stage}
   httpApi:
     cors:

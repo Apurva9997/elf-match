@@ -4,7 +4,8 @@ import { z } from "zod";
 import { db, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const updatePreferencesSchema = z.object({
   onboarding: z
@@ -99,5 +100,12 @@ async function _updateUserPreferences(
 }
 
 // Export wrapped handlers
-export const getUserPreferences = wrapHandler(_getUserPreferences);
-export const updateUserPreferences = wrapHandler(_updateUserPreferences);
+export const getUserPreferences = wrapHandler(_getUserPreferences, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const updateUserPreferences = wrapHandler(_updateUserPreferences, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});

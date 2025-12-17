@@ -17,8 +17,9 @@ import {
   serverError,
   success,
   unauthorized,
-} from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+  } from "../lib/response.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const updateAssignmentSchema = z.object({
   giftStatus: z.enum(["pending", "purchased", "shipped", "delivered"]),
@@ -501,8 +502,23 @@ async function _previewAssignment(
   }
 }
 
-// Export wrapped handlers
-export const triggerAssignment = wrapHandler(_triggerAssignment);
-export const getAssignment = wrapHandler(_getAssignment);
-export const updateAssignment = wrapHandler(_updateAssignment);
-export const previewAssignment = wrapHandler(_previewAssignment);
+// Export wrapped handlers with rate limiting
+export const triggerAssignment = wrapHandler(_triggerAssignment, {
+  limiter: rateLimiters.assignment,
+  useUserId: true,
+});
+
+export const getAssignment = wrapHandler(_getAssignment, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const updateAssignment = wrapHandler(_updateAssignment, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const previewAssignment = wrapHandler(_previewAssignment, {
+  limiter: rateLimiters.assignment,
+  useUserId: true,
+});
