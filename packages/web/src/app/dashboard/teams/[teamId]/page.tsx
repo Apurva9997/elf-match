@@ -22,11 +22,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowRight,
   CheckCircle,
   Clock,
   Edit,
   ExternalLink,
   Gift,
+  Heart,
   HelpCircle,
   Loader2,
   Mail,
@@ -35,6 +37,7 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Shield,
   Sparkles,
   Trash2,
   Truck,
@@ -90,7 +93,7 @@ export default function TeamPage() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<
-    "overview" | "wishlist" | "address" | "assignment"
+    "overview" | "wishlist" | "address" | "assignment" | "exclusions"
   >("overview");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -98,6 +101,35 @@ export default function TeamPage() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [wishItems, setWishItems] = useState<WishItemForm[]>([]);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+
+  // Exclusion management state
+  const [isAddExclusionOpen, setIsAddExclusionOpen] = useState(false);
+  const [selectedMember1, setSelectedMember1] = useState<string>("");
+  const [selectedMember2, setSelectedMember2] = useState<string>("");
+  const [exclusionReason, setExclusionReason] = useState("");
+
+  // Assignment preview state
+  const [assignmentStep, setAssignmentStep] = useState<
+    "intro" | "preview" | "confirm"
+  >("intro");
+  const [previewData, setPreviewData] = useState<{
+    preview: Array<{
+      giver: {
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl?: string | null;
+      };
+      receiver: {
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl?: string | null;
+      };
+    }>;
+    totalAssignments: number;
+    exclusionsApplied: number;
+  } | null>(null);
 
   // Team edit form
   const teamEditForm = useForm<UpdateTeamForm>({
@@ -153,6 +185,13 @@ export default function TeamPage() {
     queryKey: ["giftee-address", teamId],
     queryFn: () => api.getGifteeAddress(teamId),
     enabled: !!user && !!assignment?.assigned,
+  });
+
+  // Exclusions query (for admins)
+  const { data: exclusions, isLoading: exclusionsLoading } = useQuery({
+    queryKey: ["exclusions", teamId],
+    queryFn: () => api.listExclusions(teamId),
+    enabled: !!user && team?.role === "admin",
   });
 
   // Mutations
@@ -228,12 +267,16 @@ export default function TeamPage() {
   });
 
   const triggerAssignmentMutation = useMutation({
-    mutationFn: () => api.triggerAssignment(teamId),
+    mutationFn: (
+      assignments?: Array<{ giverId: string; receiverId: string }>
+    ) => api.triggerAssignment(teamId, assignments),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
       setIsAssignModalOpen(false);
+      setAssignmentStep("intro");
+      setPreviewData(null);
       toast.success("Secret Santas assigned! Everyone will receive an email.");
     },
     onError: (error: Error) => {
@@ -266,6 +309,51 @@ export default function TeamPage() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to resend invitation");
+    },
+  });
+
+  // Exclusion mutations
+  const addExclusionMutation = useMutation({
+    mutationFn: (data: {
+      member1Id: string;
+      member2Id: string;
+      reason?: string;
+      bidirectional?: boolean;
+    }) => api.addExclusion(teamId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exclusions", teamId] });
+      setIsAddExclusionOpen(false);
+      setSelectedMember1("");
+      setSelectedMember2("");
+      setExclusionReason("");
+      toast.success("Exclusion added successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add exclusion");
+    },
+  });
+
+  const removeExclusionMutation = useMutation({
+    mutationFn: (exclusionId: string) =>
+      api.removeExclusion(teamId, exclusionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exclusions", teamId] });
+      toast.success("Exclusion removed");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to remove exclusion");
+    },
+  });
+
+  // Preview assignment mutation
+  const previewAssignmentMutation = useMutation({
+    mutationFn: () => api.previewAssignment(teamId),
+    onSuccess: (data) => {
+      setPreviewData(data);
+      setAssignmentStep("preview");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to generate preview");
     },
   });
 
@@ -565,7 +653,53 @@ export default function TeamPage() {
     await updateTeamMutation.mutateAsync(data);
   };
 
+  const handleAddExclusion = () => {
+    if (!selectedMember1 || !selectedMember2) {
+      toast.error("Please select both members");
+      return;
+    }
+    if (selectedMember1 === selectedMember2) {
+      toast.error("Cannot exclude the same person");
+      return;
+    }
+    addExclusionMutation.mutate({
+      member1Id: selectedMember1,
+      member2Id: selectedMember2,
+      reason: exclusionReason || undefined,
+      bidirectional: true,
+    });
+  };
+
+  const handleOpenAssignModal = () => {
+    setAssignmentStep("intro");
+    setPreviewData(null);
+    setIsAssignModalOpen(true);
+  };
+
+  const handleGeneratePreview = () => {
+    previewAssignmentMutation.mutate();
+  };
+
+  const handleConfirmAssignment = async () => {
+    if (!previewData) {
+      toast.error("No preview data available");
+      return;
+    }
+
+    // Convert preview data to the format expected by the API
+    const assignments = previewData.preview.map((pair) => ({
+      giverId: pair.giver.id,
+      receiverId: pair.receiver.id,
+    }));
+
+    await triggerAssignmentMutation.mutateAsync(assignments);
+  };
+
   const isAdmin = team?.role === "admin";
+
+  // Get accepted members for exclusion dropdown
+  const acceptedMembers =
+    team?.members.filter((m) => m.invitationStatus === "accepted") || [];
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -631,10 +765,7 @@ export default function TeamPage() {
                     Invite
                   </Button>
                   {status?.canAssign ? (
-                    <Button
-                      size="sm"
-                      onClick={() => setIsAssignModalOpen(true)}
-                    >
+                    <Button size="sm" onClick={handleOpenAssignModal}>
                       <Sparkles className="w-4 h-4 mr-2" />
                       Assign Santas
                     </Button>
@@ -755,33 +886,39 @@ export default function TeamPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex space-x-1 mb-6 p-1 bg-midnight-50 rounded-lg w-fit">
-          {(["overview", "wishlist", "address", "assignment"] as const).map(
-            (tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
-                  activeTab === tab
-                    ? "bg-gradient-gold text-midnight"
-                    : "text-cream/60 hover:text-cream"
-                )}
-              >
-                {tab === "overview" && (
-                  <Users className="w-4 h-4 inline mr-2" />
-                )}
-                {tab === "wishlist" && <Gift className="w-4 h-4 inline mr-2" />}
-                {tab === "address" && (
-                  <MapPin className="w-4 h-4 inline mr-2" />
-                )}
-                {tab === "assignment" && (
-                  <Sparkles className="w-4 h-4 inline mr-2" />
-                )}
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            )
-          )}
+        <div className="flex flex-wrap gap-1 mb-6 p-1 bg-midnight-50 rounded-lg w-fit">
+          {(isAdmin
+            ? ([
+                "overview",
+                "wishlist",
+                "address",
+                "exclusions",
+                "assignment",
+              ] as const)
+            : (["overview", "wishlist", "address", "assignment"] as const)
+          ).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                activeTab === tab
+                  ? "bg-gradient-gold text-midnight"
+                  : "text-cream/60 hover:text-cream"
+              )}
+            >
+              {tab === "overview" && <Users className="w-4 h-4 inline mr-2" />}
+              {tab === "wishlist" && <Gift className="w-4 h-4 inline mr-2" />}
+              {tab === "address" && <MapPin className="w-4 h-4 inline mr-2" />}
+              {tab === "exclusions" && (
+                <Shield className="w-4 h-4 inline mr-2" />
+              )}
+              {tab === "assignment" && (
+                <Sparkles className="w-4 h-4 inline mr-2" />
+              )}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
 
         {/* Tab Content */}
@@ -1201,6 +1338,210 @@ export default function TeamPage() {
             </Card>
           )}
 
+          {/* Exclusions Tab (Admin Only) */}
+          {activeTab === "exclusions" && isAdmin && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-gold" />
+                      Exclusion Rules
+                    </CardTitle>
+                    <CardDescription>
+                      Prevent certain pairs from being matched (e.g., couples,
+                      family members)
+                    </CardDescription>
+                  </div>
+                  {!status?.hasAssignments && (
+                    <Button
+                      size="sm"
+                      onClick={() => setIsAddExclusionOpen(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Exclusion
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {status?.hasAssignments && (
+                  <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
+                    <p className="text-warning text-sm">
+                      ⚠️ Exclusions cannot be modified after assignments have
+                      been made.
+                    </p>
+                  </div>
+                )}
+
+                {exclusionsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-gold" />
+                  </div>
+                ) : exclusions && exclusions.length > 0 ? (
+                  <div className="space-y-3">
+                    {exclusions.map((exclusion) => (
+                      <div
+                        key={exclusion.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-midnight-50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              name={
+                                exclusion.member1.user?.name ||
+                                exclusion.member1.invitedEmail ||
+                                "?"
+                              }
+                              src={exclusion.member1.user?.avatarUrl}
+                              size="sm"
+                            />
+                            <span className="text-cream font-medium">
+                              {exclusion.member1.user?.name ||
+                                exclusion.member1.invitedEmail}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-cream/50">
+                            <Heart className="w-4 h-4 text-rose-400" />
+                            <ArrowRight className="w-4 h-4" />
+                            <ArrowLeft className="w-4 h-4" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              name={
+                                exclusion.member2.user?.name ||
+                                exclusion.member2.invitedEmail ||
+                                "?"
+                              }
+                              src={exclusion.member2.user?.avatarUrl}
+                              size="sm"
+                            />
+                            <span className="text-cream font-medium">
+                              {exclusion.member2.user?.name ||
+                                exclusion.member2.invitedEmail}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {exclusion.reason && (
+                            <span className="text-cream/50 text-sm">
+                              {exclusion.reason}
+                            </span>
+                          )}
+                          {!status?.hasAssignments && (
+                            <button
+                              onClick={() =>
+                                removeExclusionMutation.mutate(exclusion.id)
+                              }
+                              disabled={removeExclusionMutation.isPending}
+                              className="p-2 text-error/70 hover:text-error transition-colors disabled:opacity-50"
+                            >
+                              {removeExclusionMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-cream/60">
+                    <Shield className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="mb-2">No exclusions set</p>
+                    <p className="text-sm">
+                      Add exclusions to prevent certain people from being
+                      matched together (e.g., couples who don&apos;t want to
+                      gift each other).
+                    </p>
+                  </div>
+                )}
+
+                {/* Add Exclusion Form */}
+                {isAddExclusionOpen && !status?.hasAssignments && (
+                  <div className="mt-6 p-4 rounded-lg border border-cream/20 bg-midnight-50">
+                    <h4 className="text-cream font-medium mb-4">
+                      Add New Exclusion
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-cream/70 text-sm mb-2">
+                            Person 1
+                          </label>
+                          <select
+                            value={selectedMember1}
+                            onChange={(e) => setSelectedMember1(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-midnight border border-cream/20 text-cream focus:border-gold focus:outline-none"
+                          >
+                            <option value="">Select a member...</option>
+                            {acceptedMembers.map((member) => (
+                              <option key={member.id} value={member.id}>
+                                {member.user?.name || member.invitedEmail}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-cream/70 text-sm mb-2">
+                            Person 2
+                          </label>
+                          <select
+                            value={selectedMember2}
+                            onChange={(e) => setSelectedMember2(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-midnight border border-cream/20 text-cream focus:border-gold focus:outline-none"
+                          >
+                            <option value="">Select a member...</option>
+                            {acceptedMembers
+                              .filter((m) => m.id !== selectedMember1)
+                              .map((member) => (
+                                <option key={member.id} value={member.id}>
+                                  {member.user?.name || member.invitedEmail}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-cream/70 text-sm mb-2">
+                          Reason (optional)
+                        </label>
+                        <Input
+                          value={exclusionReason}
+                          onChange={(e) => setExclusionReason(e.target.value)}
+                          placeholder="e.g., Couple, Family members"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setIsAddExclusionOpen(false);
+                            setSelectedMember1("");
+                            setSelectedMember2("");
+                            setExclusionReason("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleAddExclusion}
+                          isLoading={addExclusionMutation.isPending}
+                          disabled={!selectedMember1 || !selectedMember2}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Exclusion
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Assignment Tab */}
           {activeTab === "assignment" && (
             <div className="space-y-6">
@@ -1280,7 +1621,7 @@ export default function TeamPage() {
                           : "The team admin will assign Secret Santas once everyone is ready."}
                       </p>
                       {isAdmin && status?.canAssign && (
-                        <Button onClick={() => setIsAssignModalOpen(true)}>
+                        <Button onClick={handleOpenAssignModal}>
                           <Sparkles className="w-4 h-4 mr-2" />
                           Assign Secret Santas
                         </Button>
@@ -1493,39 +1834,212 @@ export default function TeamPage() {
         </Modal>
       )}
 
-      {/* Assign Modal */}
+      {/* Assign Modal - Multi-step flow */}
       <Modal
         isOpen={isAssignModalOpen}
-        onClose={() => setIsAssignModalOpen(false)}
-        title="Assign Secret Santas"
+        onClose={() => {
+          setIsAssignModalOpen(false);
+          setAssignmentStep("intro");
+          setPreviewData(null);
+        }}
+        title={
+          assignmentStep === "intro"
+            ? "Assign Secret Santas"
+            : assignmentStep === "preview"
+              ? "Review Assignments"
+              : "Confirm & Send"
+        }
+        size={assignmentStep === "preview" ? "lg" : "md"}
       >
-        <div className="space-y-4">
-          <p className="text-cream/70">
-            Are you ready to assign Secret Santas? This will randomly match each
-            member with someone to buy a gift for.
-          </p>
-          <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
-            <p className="text-warning text-sm">
-              ⚠️ This action cannot be undone. Make sure all members have joined
-              before proceeding.
+        {/* Step 1: Intro */}
+        {assignmentStep === "intro" && (
+          <div className="space-y-4">
+            <p className="text-cream/70">
+              Ready to assign Secret Santas? Here&apos;s what will happen:
             </p>
+            <ol className="list-decimal list-inside space-y-2 text-cream/70 text-sm">
+              <li>
+                We&apos;ll randomly match each member with someone to gift
+              </li>
+              <li>You&apos;ll see a preview of all assignments</li>
+              <li>You can regenerate if you&apos;re not happy</li>
+              <li>
+                Once confirmed, everyone gets an email with their assignment
+              </li>
+            </ol>
+
+            {exclusions && exclusions.length > 0 && (
+              <div className="p-3 rounded-lg bg-gold/10 border border-gold/20">
+                <p className="text-gold text-sm flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  {exclusions.length} exclusion
+                  {exclusions.length !== 1 ? "s" : ""} will be respected
+                </p>
+              </div>
+            )}
+
+            <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+              <p className="text-warning text-sm">
+                ⚠️ Make sure all members have joined before proceeding.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setIsAssignModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleGeneratePreview}
+                isLoading={previewAssignmentMutation.isPending}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Preview
+              </Button>
+            </div>
           </div>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => setIsAssignModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => triggerAssignmentMutation.mutate()}
-              isLoading={triggerAssignmentMutation.isPending}
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Assign Now
-            </Button>
+        )}
+
+        {/* Step 2: Preview */}
+        {assignmentStep === "preview" && previewData && (
+          <div className="space-y-4">
+            <p className="text-cream/70 text-sm">
+              Here&apos;s how everyone will be matched. Review the assignments
+              below.
+            </p>
+
+            {previewData.exclusionsApplied > 0 && (
+              <div className="p-2 rounded-lg bg-gold/10 border border-gold/20">
+                <p className="text-gold text-xs flex items-center gap-2">
+                  <Shield className="w-3 h-3" />
+                  {previewData.exclusionsApplied} exclusion
+                  {previewData.exclusionsApplied !== 1 ? "s" : ""} applied
+                </p>
+              </div>
+            )}
+
+            <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+              {previewData.preview.map((pair, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-lg bg-midnight-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      name={pair.giver.name}
+                      src={pair.giver.avatarUrl}
+                      size="sm"
+                    />
+                    <div>
+                      <p className="text-cream font-medium text-sm">
+                        {pair.giver.name}
+                      </p>
+                      <p className="text-cream/50 text-xs">
+                        {pair.giver.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gold">
+                    <Gift className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-cream font-medium text-sm">
+                        {pair.receiver.name}
+                      </p>
+                      <p className="text-cream/50 text-xs">
+                        {pair.receiver.email}
+                      </p>
+                    </div>
+                    <Avatar
+                      name={pair.receiver.name}
+                      src={pair.receiver.avatarUrl}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex justify-between gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setAssignmentStep("intro");
+                    setPreviewData(null);
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleGeneratePreview}
+                    isLoading={previewAssignmentMutation.isPending}
+                    variant="secondary"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Re-assign
+                  </Button>
+                  <Button onClick={() => setAssignmentStep("confirm")}>
+                    Looks Good
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-cream/50 text-xs text-center">
+                Not happy with these assignments? Click &quot;Re-assign&quot; to
+                generate a new set.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Step 3: Confirm */}
+        {assignmentStep === "confirm" && (
+          <div className="space-y-4">
+            <div className="text-center py-4">
+              <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-gold" />
+              </div>
+              <h3 className="text-xl font-display font-semibold text-cream mb-2">
+                Ready to Send!
+              </h3>
+              <p className="text-cream/70">
+                {previewData?.totalAssignments} members will receive an email
+                with their Secret Santa assignment.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-error/10 border border-error/20">
+              <p className="text-error text-sm text-center">
+                ⚠️ This action cannot be undone. Assignments are final once
+                sent.
+              </p>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setAssignmentStep("preview")}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Preview
+              </Button>
+              <Button
+                onClick={handleConfirmAssignment}
+                isLoading={triggerAssignmentMutation.isPending}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Confirm & Send Emails
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Onboarding Modal */}

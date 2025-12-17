@@ -244,10 +244,24 @@ class ApiClient {
   }
 
   // Assignments
-  async triggerAssignment(teamId: string) {
+  async previewAssignment(teamId: string) {
+    return this.request<AssignmentPreview>(`/teams/${teamId}/assign/preview`, {
+      method: "POST",
+    });
+  }
+
+  async triggerAssignment(
+    teamId: string,
+    previewAssignments?: Array<{ giverId: string; receiverId: string }>
+  ) {
     return this.request<{ message: string; count: number }>(
       `/teams/${teamId}/assign`,
-      { method: "POST" }
+      {
+        method: "POST",
+        body: JSON.stringify(
+          previewAssignments ? { assignments: previewAssignments } : {}
+        ),
+      }
     );
   }
 
@@ -452,6 +466,27 @@ export interface Assignment {
   giftStatus?: string;
   revealedAt?: string;
   message?: string;
+}
+
+export interface AssignmentPreviewItem {
+  giver: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  receiver: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+  };
+}
+
+export interface AssignmentPreview {
+  preview: AssignmentPreviewItem[];
+  totalAssignments: number;
+  exclusionsApplied: number;
 }
 
 export interface Exclusion {
