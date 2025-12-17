@@ -106,10 +106,10 @@ export default function LoginPage() {
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">🎄</span>
               <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                Welcome to Secret Santa
+                Welcome! Let&apos;s get you started
               </h1>
               <p className="text-cream/60">
-                Sign in with your email to get started
+                Enter your email to get started—no password needed
               </p>
             </div>
 
@@ -130,7 +130,7 @@ export default function LoginPage() {
             </form>
 
             <p className="text-center text-cream/50 text-sm mt-6">
-              We&apos;ll send you a secure link to sign in. No password needed!
+              We&apos;ll email you a secure sign-in link
             </p>
           </CardContent>
         </Card>

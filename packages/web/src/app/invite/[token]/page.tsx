@@ -119,16 +119,16 @@ export default function InvitePage() {
                   <Gift className="w-8 h-8 text-gold" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  You&apos;re Invited!
+                  You&apos;ve been invited!
                 </h1>
                 <p className="text-cream/70 mb-6">
-                  Sign in to accept this Secret Santa invitation.
+                  Sign in to join this Secret Santa exchange
                 </p>
                 <Button
                   onClick={() => router.push("/auth/login")}
                   className="w-full"
                 >
-                  Sign In to Accept
+                  Sign In to Join
                 </Button>
               </>
             )}
@@ -139,10 +139,10 @@ export default function InvitePage() {
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Welcome to the Team!
+                  You&apos;re in!
                 </h1>
                 <p className="text-cream/70">
-                  You&apos;ve joined{" "}
+                  Welcome to{" "}
                   <span className="text-gold font-medium">{teamName}</span>.
                   Redirecting...
                 </p>
@@ -155,7 +155,7 @@ export default function InvitePage() {
                   <XCircle className="w-8 h-8 text-error" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Oops!
+                  Something went wrong
                 </h1>
                 <p className="text-cream/70 mb-6">{error}</p>
                 <Button

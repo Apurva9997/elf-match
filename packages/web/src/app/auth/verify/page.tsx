@@ -116,7 +116,7 @@ function VerifyContent() {
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Welcome!
+                  Welcome back!
                 </h1>
                 <p className="text-cream/70">
                   You&apos;re signed in. Redirecting to dashboard...
@@ -130,7 +130,7 @@ function VerifyContent() {
                   <XCircle className="w-8 h-8 text-error" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Verification Failed
+                  Something went wrong
                 </h1>
                 <p className="text-cream/70 mb-6">{error}</p>
                 <Button

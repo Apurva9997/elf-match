@@ -226,10 +226,13 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
-      toast.success("Wishlist saved!");
+      toast.success("Wishlist updated!");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to save wishlist");
+      toast.error(
+        error.message ||
+          "Couldn't save your wishlist. Your changes are safe—try saving again."
+      );
     },
   });
 
@@ -238,10 +241,10 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["address", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
-      toast.success("Address saved!");
+      toast.success("Address saved! Your Secret Santa can now ship your gift.");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to save address");
+      toast.error(error.message || "Couldn't save address. Please try again.");
     },
   });
 
@@ -259,10 +262,12 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       setIsEditTeamModalOpen(false);
-      toast.success("Team updated successfully");
+      toast.success("Exchange updated successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update team");
+      toast.error(
+        error.message || "Couldn't update exchange. Please try again."
+      );
     },
   });
 
@@ -277,10 +282,14 @@ export default function TeamPage() {
       setIsAssignModalOpen(false);
       setAssignmentStep("intro");
       setPreviewData(null);
-      toast.success("Secret Santas assigned! Everyone will receive an email.");
+      toast.success(
+        "Assignments sent! Everyone will receive an email with their Secret Santa."
+      );
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to assign Secret Santas");
+      toast.error(
+        error.message || "Couldn't assign Secret Santas. Please try again."
+      );
     },
   });
 
@@ -290,25 +299,29 @@ export default function TeamPage() {
     onSuccess: (_, giftStatus) => {
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
       const statusMessages: Record<string, string> = {
-        pending: "Status reset to pending",
-        purchased: "Gift marked as purchased!",
-        shipped: "Gift marked as shipped!",
+        pending: "Status reset to not started",
+        purchased: "Gift marked as bought!",
+        shipped: "Gift marked as on the way!",
         delivered: "Gift marked as delivered!",
       };
       toast.success(statusMessages[giftStatus] || "Status updated!");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update gift status");
+      toast.error(
+        error.message || "Couldn't update gift status. Please try again."
+      );
     },
   });
 
   const resendInvitationMutation = useMutation({
     mutationFn: (memberId: string) => api.resendInvitation(teamId, memberId),
     onSuccess: () => {
-      toast.success("Invitation email resent successfully!");
+      toast.success("Invitation email sent!");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to resend invitation");
+      toast.error(
+        error.message || "Couldn't resend invitation. Please try again."
+      );
     },
   });
 
@@ -329,7 +342,7 @@ export default function TeamPage() {
       toast.success("Exclusion added successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to add exclusion");
+      toast.error(error.message || "Couldn't add exclusion. Please try again.");
     },
   });
 
@@ -341,7 +354,9 @@ export default function TeamPage() {
       toast.success("Exclusion removed");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to remove exclusion");
+      toast.error(
+        error.message || "Couldn't remove exclusion. Please try again."
+      );
     },
   });
 
@@ -353,7 +368,9 @@ export default function TeamPage() {
       setAssignmentStep("preview");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to generate preview");
+      toast.error(
+        error.message || "Couldn't generate preview. Please try again."
+      );
     },
   });
 
@@ -655,11 +672,11 @@ export default function TeamPage() {
 
   const handleAddExclusion = () => {
     if (!selectedMember1 || !selectedMember2) {
-      toast.error("Please select both members");
+      toast.error("Please select both members to exclude");
       return;
     }
     if (selectedMember1 === selectedMember2) {
-      toast.error("Cannot exclude the same person");
+      toast.error("Please select two different people");
       return;
     }
     addExclusionMutation.mutate({
@@ -682,7 +699,7 @@ export default function TeamPage() {
 
   const handleConfirmAssignment = async () => {
     if (!previewData) {
-      toast.error("No preview data available");
+      toast.error("Preview not available. Please try generating again.");
       return;
     }
 
@@ -780,7 +797,7 @@ export default function TeamPage() {
                             (status.totalMembers -
                               (status.pendingInvitations || 0))
                         )}{" "}
-                        more members to assign
+                        more members to start matching
                       </span>
                     )
                   )}
@@ -830,7 +847,7 @@ export default function TeamPage() {
                   }
                 >
                   {team.status === "collecting_wishes"
-                    ? "Collecting Wishes"
+                    ? "Building Wishlists"
                     : team.status === "assigned"
                       ? "Assigned"
                       : "Completed"}
@@ -1000,7 +1017,7 @@ export default function TeamPage() {
                   <div>
                     <CardTitle>My Wishlist</CardTitle>
                     <CardDescription>
-                      Add items you&apos;d love to receive
+                      Share what you&apos;d love to receive this holiday season
                     </CardDescription>
                   </div>
                   {saveStatus === "saving" && (
@@ -1030,7 +1047,7 @@ export default function TeamPage() {
                           handleQuickAdd();
                         }
                       }}
-                      placeholder="Quick add: e.g., Amazon Gift Card, Book, Headphones..."
+                      placeholder="Quick add: Gift card, book, headphones..."
                       className="flex-1"
                     />
                     <Button
@@ -1203,9 +1220,9 @@ export default function TeamPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Shipping Address</CardTitle>
+                    <CardTitle>Delivery Address</CardTitle>
                     <CardDescription>
-                      Where should your Secret Santa send your gift?
+                      Where should your gift be delivered?
                     </CardDescription>
                   </div>
                   {!isEditingAddress && address && (
@@ -1261,7 +1278,7 @@ export default function TeamPage() {
                             onChange: (e) =>
                               handlePostalCodeChange(e.target.value),
                           })}
-                          label="Pincode"
+                          label="Postal Code"
                           placeholder="400001"
                           error={
                             addressForm.formState.errors.postalCode?.message
@@ -1272,7 +1289,7 @@ export default function TeamPage() {
                         {isFetchingPincode && (
                           <p className="text-xs text-cream/50 mt-1 flex items-center gap-1">
                             <Loader2 className="w-3 h-3 animate-spin" />
-                            Looking up pincode...
+                            Looking up postal code...
                           </p>
                         )}
                       </div>
@@ -1548,7 +1565,7 @@ export default function TeamPage() {
               {/* My Assignment */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Secret Santa Assignment</CardTitle>
+                  <CardTitle>Your Secret Santa</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {assignment?.assigned ? (
@@ -1563,7 +1580,7 @@ export default function TeamPage() {
                         {assignment.giftee?.name}
                       </h3>
                       <p className="text-cream/60 mb-6">
-                        You&apos;re getting a gift for this person!
+                        You&apos;re gifting to:
                       </p>
 
                       {/* Gift Status */}
@@ -1589,18 +1606,29 @@ export default function TeamPage() {
                             )}
                           >
                             {status === "pending" && (
-                              <Clock className="w-4 h-4 inline mr-1" />
+                              <>
+                                <Clock className="w-4 h-4 inline mr-1" />
+                                Not Started
+                              </>
                             )}
                             {status === "purchased" && (
-                              <Package className="w-4 h-4 inline mr-1" />
+                              <>
+                                <Package className="w-4 h-4 inline mr-1" />
+                                Bought
+                              </>
                             )}
                             {status === "shipped" && (
-                              <Truck className="w-4 h-4 inline mr-1" />
+                              <>
+                                <Truck className="w-4 h-4 inline mr-1" />
+                                On the Way
+                              </>
                             )}
                             {status === "delivered" && (
-                              <CheckCircle className="w-4 h-4 inline mr-1" />
+                              <>
+                                <CheckCircle className="w-4 h-4 inline mr-1" />
+                                Delivered
+                              </>
                             )}
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
                           </button>
                         ))}
                       </div>
@@ -1611,14 +1639,14 @@ export default function TeamPage() {
                         <Sparkles className="w-8 h-8 text-gold" />
                       </div>
                       <h3 className="text-xl font-display font-semibold text-cream mb-2">
-                        Assignments Not Ready Yet
+                        Assignments Coming Soon
                       </h3>
                       <p className="text-cream/60 mb-4">
                         {isAdmin
                           ? status?.canAssign
                             ? "You can now assign Secret Santas! Click the button above."
-                            : `You need at least 3 accepted members to assign Secret Santas. Currently have ${status?.totalMembers ? status.totalMembers - (status.pendingInvitations || 0) : 0} accepted members.`
-                          : "The team admin will assign Secret Santas once everyone is ready."}
+                            : `You need at least 3 accepted members to start matching. Currently have ${status?.totalMembers ? status.totalMembers - (status.pendingInvitations || 0) : 0} accepted members.`
+                          : "The exchange admin will assign Secret Santas once everyone is ready."}
                       </p>
                       {isAdmin && status?.canAssign && (
                         <Button onClick={handleOpenAssignModal}>
@@ -1691,7 +1719,7 @@ export default function TeamPage() {
               {assignment?.assigned && gifteeAddress && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Shipping Address</CardTitle>
+                    <CardTitle>Delivery Address</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {gifteeAddress.address ? (
@@ -1769,7 +1797,7 @@ export default function TeamPage() {
         <Modal
           isOpen={isEditTeamModalOpen}
           onClose={() => setIsEditTeamModalOpen(false)}
-          title="Edit Team Details"
+          title="Edit Exchange Details"
           size="lg"
         >
           <form
@@ -1778,7 +1806,7 @@ export default function TeamPage() {
           >
             <Input
               {...teamEditForm.register("name")}
-              label="Team Name"
+              label="Exchange Name"
               placeholder="e.g., Office Secret Santa 2024"
               error={teamEditForm.formState.errors.name?.message}
               autoFocus
@@ -2011,7 +2039,7 @@ export default function TeamPage() {
               </h3>
               <p className="text-cream/70">
                 {previewData?.totalAssignments} members will receive an email
-                with their Secret Santa assignment.
+                with their Secret Santa.
               </p>
             </div>
 

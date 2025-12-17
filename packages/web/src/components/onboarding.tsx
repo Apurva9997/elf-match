@@ -44,7 +44,7 @@ export function Onboarding({
   const getStepsForPersona = (): OnboardingStep[] => {
     const goToTeamAction = firstTeamId
       ? {
-          label: `Go to ${firstTeamName || "Team"}`,
+          label: `Go to ${firstTeamName || "Exchange"}`,
           onClick: () => {
             onGoToTeam(firstTeamId);
             onClose();
@@ -59,17 +59,17 @@ export function Onboarding({
             id: "welcome",
             title: "Welcome to Secret Santa! 🎄",
             description:
-              "Let's get you started. We'll walk you through creating your first gift exchange in just a few steps.",
+              "Welcome! We'll help you set up your first Secret Santa exchange in 3 simple steps.",
             icon: <Gift className="w-8 h-8 text-gold" />,
           },
           {
             id: "create-team",
-            title: "Create Your First Team",
+            title: "Create Your First Exchange",
             description:
-              "Start by creating a team for your Secret Santa exchange. You can invite friends, family, or coworkers to join.",
+              "Start by creating an exchange for your Secret Santa. You can invite friends, family, or coworkers to join.",
             icon: <Users className="w-8 h-8 text-gold" />,
             action: {
-              label: "Create Team",
+              label: "Create Exchange",
               onClick: () => {
                 onCreateTeam();
                 onClose();
@@ -78,14 +78,14 @@ export function Onboarding({
           },
           {
             id: "add-address",
-            title: "Add Your Shipping Address",
+            title: "Add Your Delivery Address",
             description:
-              "Once you've created a team, add your shipping address so your Secret Santa knows where to send your gift. You can do this in the team page.",
+              "Once you've created an exchange, add your delivery address so your Secret Santa knows where to send your gift. You can do this in the exchange page.",
             icon: <MapPin className="w-8 h-8 text-gold" />,
           },
           {
             id: "add-wishlist",
-            title: "Create Your Wishlist",
+            title: "Build Your Wishlist",
             description:
               "Add items to your wishlist so your Secret Santa knows what you'd like. You can add multiple items with links and price estimates.",
             icon: <Gift className="w-8 h-8 text-gold" />,
@@ -96,9 +96,9 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: `Welcome to ${firstTeamName || "your team"}! 🎄`,
+            title: `Welcome to ${firstTeamName || "your exchange"}! 🎄`,
             description:
-              "As the team admin, here's what you need to do to get your Secret Santa exchange started.",
+              "As the exchange admin, here's what you need to do to get your Secret Santa exchange started.",
             icon: <Users className="w-8 h-8 text-gold" />,
           },
           {
@@ -111,15 +111,15 @@ export function Onboarding({
           },
           {
             id: "add-address",
-            title: "Add Your Shipping Address",
+            title: "Add Your Delivery Address",
             description:
-              "Add your shipping address so your Secret Santa knows where to send your gift. All members should add their addresses too.",
+              "Add your delivery address so your Secret Santa knows where to send your gift. All members should add their addresses too.",
             icon: <MapPin className="w-8 h-8 text-gold" />,
             action: goToTeamAction,
           },
           {
             id: "add-wishlist",
-            title: "Create Your Wishlist",
+            title: "Build Your Wishlist",
             description:
               "Add items to your wishlist so your Secret Santa knows what you'd like. Encourage other members to add their wishlists too!",
             icon: <Gift className="w-8 h-8 text-gold" />,
@@ -131,22 +131,22 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: `Welcome to ${firstTeamName || "the team"}! 🎄`,
+            title: `Welcome to ${firstTeamName || "the exchange"}! 🎄`,
             description:
               "You've been invited to join a Secret Santa exchange. Let's get you set up so you can receive your gift!",
             icon: <Gift className="w-8 h-8 text-gold" />,
           },
           {
             id: "add-address",
-            title: "Add Your Shipping Address",
+            title: "Add Your Delivery Address",
             description:
-              "First, add your shipping address so your Secret Santa knows where to send your gift. This is required to participate.",
+              "First, add your delivery address so your Secret Santa knows where to send your gift. This is required to participate.",
             icon: <MapPin className="w-8 h-8 text-gold" />,
             action: goToTeamAction,
           },
           {
             id: "add-wishlist",
-            title: "Create Your Wishlist",
+            title: "Build Your Wishlist",
             description:
               "Add items to your wishlist so your Secret Santa knows what you'd like. You can add multiple items with links and price estimates in ₹.",
             icon: <Gift className="w-8 h-8 text-gold" />,

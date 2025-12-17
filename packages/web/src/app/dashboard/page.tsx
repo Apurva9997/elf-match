@@ -51,7 +51,7 @@ function TeamCard({ team }: { team: TeamWithRole }) {
   }[team.status] as "warning" | "success" | "gold";
 
   const statusLabel = {
-    collecting_wishes: "Collecting Wishes",
+    collecting_wishes: "Building Wishlists",
     assigned: "Assigned",
     completed: "Completed",
   }[team.status];
@@ -132,7 +132,9 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Failed to accept invitation:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to accept invitation"
+        error instanceof Error
+          ? error.message
+          : "Couldn't accept invitation. Please try again."
       );
     } finally {
       setProcessingInvitation(null);
@@ -148,7 +150,9 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Failed to decline invitation:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to decline invitation"
+        error instanceof Error
+          ? error.message
+          : "Couldn't decline invitation. Please try again."
       );
     } finally {
       setProcessingInvitation(null);
@@ -177,12 +181,14 @@ export default function DashboardPage() {
       setIsCreateModalOpen(false);
       reset();
       refetchTeams();
-      toast.success(`Team "${team.name}" created!`);
+      toast.success(`Exchange "${team.name}" created!`);
       router.push(`/dashboard/teams/${team.id}`);
     } catch (error) {
       console.error("Failed to create team:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create team"
+        error instanceof Error
+          ? error.message
+          : "Couldn't create exchange. Please try again."
       );
     }
   };
@@ -425,10 +431,10 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-cream mb-1">
-              Your Teams
+              Your Gift Exchanges
             </h1>
             <p className="text-cream/60">
-              Manage your Secret Santa gift exchanges
+              All your Secret Santa exchanges in one place
             </p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -468,15 +474,15 @@ export default function DashboardPage() {
                   <Gift className="w-8 h-8 text-gold" />
                 </div>
                 <h2 className="text-xl font-display font-semibold text-cream mb-2">
-                  No teams yet
+                  No exchanges yet
                 </h2>
                 <p className="text-cream/60 mb-6 max-w-md mx-auto">
-                  Create your first Secret Santa team and invite friends,
+                  Create your first Secret Santa exchange and invite friends,
                   family, or coworkers to join the gift exchange.
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Team
+                  Create Your First Exchange
                 </Button>
               </CardContent>
             </Card>
@@ -488,13 +494,13 @@ export default function DashboardPage() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Create a New Team"
+        title="Create a New Exchange"
         size="lg"
       >
         <form onSubmit={handleSubmit(onCreateTeam)} className="space-y-4">
           <Input
             {...register("name")}
-            label="Team Name"
+            label="Exchange Name"
             placeholder="e.g., Office Secret Santa 2024, Family Gift Exchange"
             error={errors.name?.message}
             autoFocus

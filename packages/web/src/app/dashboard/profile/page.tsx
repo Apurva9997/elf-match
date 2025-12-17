@@ -153,11 +153,13 @@ export default function ProfilePage() {
       await api.updateProfile(updateData);
       await refetchProfile();
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated!");
     } catch (error) {
       console.error("Failed to update profile:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update profile"
+        error instanceof Error
+          ? error.message
+          : "Couldn't update profile. Please try again."
       );
     }
   };
@@ -210,8 +212,8 @@ export default function ProfilePage() {
               Profile Settings
             </h1>
             <p className="text-cream/60">
-              Manage your personal information and shipping address. Your
-              address is shared across all teams.
+              Manage your personal information and delivery address. Your
+              address is shared across all exchanges.
             </p>
           </div>
 
@@ -271,11 +273,11 @@ export default function ProfilePage() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-gold" />
-                  <CardTitle>Shipping Address</CardTitle>
+                  <CardTitle>Delivery Address</CardTitle>
                 </div>
                 <CardDescription>
                   Your address will be shared with your Secret Santa gifter
-                  across all teams
+                  across all exchanges
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
