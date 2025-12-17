@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
+  mobile: varchar("mobile", { length: 20 }),
   avatarUrl: text("avatar_url"),
   preferences: jsonb("preferences").$type<{
     onboarding?: {
@@ -26,6 +27,23 @@ export const users = pgTable("users", {
       member?: boolean;
     };
   }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User addresses
+export const userAddresses = pgTable("user_addresses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull()
+    .unique(),
+  streetLine1: varchar("street_line_1", { length: 255 }).notNull(),
+  streetLine2: varchar("street_line_2", { length: 255 }),
+  city: varchar("city", { length: 100 }).notNull(),
+  state: varchar("state", { length: 100 }),
+  postalCode: varchar("postal_code", { length: 500 }).notNull(),
+  country: varchar("country", { length: 100 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -183,10 +201,18 @@ export const activityLog = pgTable("activity_log", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   teamMemberships: many(teamMembers),
   createdTeams: many(teams),
   activityLogs: many(activityLog),
+  address: one(userAddresses),
+}));
+
+export const userAddressesRelations = relations(userAddresses, ({ one }) => ({
+  user: one(users, {
+    fields: [userAddresses.userId],
+    references: [users.id],
+  }),
 }));
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
@@ -284,6 +310,8 @@ export type WishItem = typeof wishItems.$inferSelect;
 export type NewWishItem = typeof wishItems.$inferInsert;
 export type Address = typeof addresses.$inferSelect;
 export type NewAddress = typeof addresses.$inferInsert;
+export type UserAddress = typeof userAddresses.$inferSelect;
+export type NewUserAddress = typeof userAddresses.$inferInsert;
 export type Assignment = typeof assignments.$inferSelect;
 export type NewAssignment = typeof assignments.$inferInsert;
 export type Exclusion = typeof exclusions.$inferSelect;

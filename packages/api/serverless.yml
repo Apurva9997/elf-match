@@ -121,6 +121,21 @@ functions:
           path: /user/preferences
           method: patch
 
+  # Profile
+  getProfile:
+    handler: src/handlers/profile.getProfile
+    events:
+      - httpApi:
+          path: /user/profile
+          method: get
+
+  updateProfile:
+    handler: src/handlers/profile.updateProfile
+    events:
+      - httpApi:
+          path: /user/profile
+          method: patch
+
   # Teams
   createTeam:
     handler: src/handlers/teams.createTeam

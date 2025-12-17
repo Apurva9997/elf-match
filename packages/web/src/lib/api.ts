@@ -103,6 +103,18 @@ class ApiClient {
     });
   }
 
+  // Profile
+  async getProfile() {
+    return this.request<UserProfile>("/user/profile");
+  }
+
+  async updateProfile(data: UserProfileInput) {
+    return this.request<UserProfile>("/user/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Teams
   async createTeam(data: CreateTeamInput) {
     return this.request<Team>("/teams", {
@@ -414,6 +426,21 @@ export interface AddressInput {
   state?: string;
   postalCode: string;
   country: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+  mobile: string | null;
+  avatarUrl: string | null;
+  address: Address | null;
+}
+
+export interface UserProfileInput {
+  name?: string;
+  mobile?: string | null;
+  address?: AddressInput;
 }
 
 export interface Assignment {

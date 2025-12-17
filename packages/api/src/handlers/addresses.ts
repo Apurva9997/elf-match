@@ -1,17 +1,23 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
-import { db, teamMembers, addresses, assignments } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
 import {
-  success,
+  addresses,
+  assignments,
+  db,
+  teamMembers,
+  userAddresses,
+} from "../db/index.js";
+import { getUserFromEvent } from "../lib/auth.js";
+import { decryptAddress, encryptAddress } from "../lib/encryption.js";
+import {
   error,
-  unauthorized,
   forbidden,
   notFound,
   serverError,
+  success,
+  unauthorized,
 } from "../lib/response.js";
-import { encryptAddress, decryptAddress } from "../lib/encryption.js";
 
 const addressSchema = z.object({
   streetLine1: z.string().min(1).max(255),
@@ -174,7 +180,6 @@ export async function getGifteeAddress(
                 name: true,
               },
             },
-            address: true,
           },
         },
       },
@@ -186,7 +191,23 @@ export async function getGifteeAddress(
       );
     }
 
-    if (!assignment.receiver.address) {
+    // Get the giftee's user-level address
+    const gifteeUserId = assignment.receiver.user?.id;
+    if (!gifteeUserId) {
+      return success({
+        giftee: {
+          name: assignment.receiver.user?.name || "Unknown",
+        },
+        address: null,
+        message: "Could not find giftee user.",
+      });
+    }
+
+    const gifteeAddress = await db.query.userAddresses.findFirst({
+      where: eq(userAddresses.userId, gifteeUserId),
+    });
+
+    if (!gifteeAddress) {
       return success({
         giftee: {
           name: assignment.receiver.user?.name || "Unknown",
@@ -197,7 +218,7 @@ export async function getGifteeAddress(
     }
 
     // Decrypt the giftee's address before returning
-    const decryptedAddress = decryptAddress(assignment.receiver.address);
+    const decryptedAddress = decryptAddress(gifteeAddress);
 
     return success({
       giftee: {
