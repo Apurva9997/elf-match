@@ -1,9 +1,9 @@
+import type { Ratelimit } from "@upstash/ratelimit";
 import type {
   APIGatewayProxyEventV2,
   APIGatewayProxyResult,
   Handler,
 } from "aws-lambda";
-import type { Ratelimit } from "@upstash/ratelimit";
 import { checkRateLimit, getIdentifier } from "./rate-limit.js";
 import { wrapHandler as wrapSentry } from "./sentry.js";
 
@@ -21,11 +21,7 @@ export function withRateLimit(
   handler: LambdaHandler,
   options: RateLimitOptions
 ): LambdaHandler {
-  return async (
-    event,
-    context,
-    callback
-  ): Promise<APIGatewayProxyResult> => {
+  return async (event, context, callback): Promise<APIGatewayProxyResult> => {
     try {
       // Get identifier
       let identifier: string;
@@ -139,4 +135,3 @@ export function wrapHandler(
 
   return wrapped;
 }
-

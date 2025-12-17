@@ -1,24 +1,24 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
 import {
+  assignments,
   db,
   teamMembers,
-  wishlists,
   wishItems,
-  assignments,
+  wishlists,
 } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 import {
-  success,
   error,
-  unauthorized,
   forbidden,
   notFound,
   serverError,
-  } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
-import { rateLimiters } from "../lib/rate-limit.js";
+  success,
+  unauthorized,
+} from "../lib/response.js";
 
 const wishItemSchema = z.object({
   title: z.string().min(1).max(255),

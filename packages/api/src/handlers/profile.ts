@@ -9,9 +9,9 @@ import {
   encryptAddress,
   encryptMobile,
 } from "../lib/encryption.js";
-import { error, serverError, success, unauthorized } from "../lib/response.js";
 import { wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
+import { error, serverError, success, unauthorized } from "../lib/response.js";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),

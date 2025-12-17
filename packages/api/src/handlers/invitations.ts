@@ -6,6 +6,8 @@ import { db, teamMembers, teams, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
   forbidden,
@@ -13,9 +15,7 @@ import {
   serverError,
   success,
   unauthorized,
-  } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
-import { rateLimiters } from "../lib/rate-limit.js";
+} from "../lib/response.js";
 
 const inviteMembersSchema = z.object({
   emails: z.array(z.string().email()).min(1).max(50),
