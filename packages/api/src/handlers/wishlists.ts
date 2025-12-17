@@ -19,11 +19,20 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const wishItemSchema = z.object({
-  title: z.string().min(1).max(255),
-  description: z.string().optional(),
-  url: z.string().url().optional().or(z.literal("")),
+  title: z.string().min(1).max(255).transform(sanitizeTransform("text")),
+  description: z
+    .string()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
+  url: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => (val ? sanitizeTransform("url")(val) : val)),
   priceEstimate: z.number().positive().optional(),
   priority: z.number().int().min(0).max(10).optional(),
 });

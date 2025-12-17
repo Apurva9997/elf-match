@@ -4,6 +4,8 @@ import { z } from "zod";
 import { db, teamMembers, teams, users } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
 import { sendReminderEmail } from "../lib/email.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
   forbidden,
@@ -12,8 +14,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
-import { rateLimiters } from "../lib/rate-limit.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 async function isTeamAdmin(userId: string, teamId: string) {
   const membership = await db.query.teamMembers.findFirst({
@@ -137,7 +138,7 @@ async function _sendReminders(
 }
 
 const changeUserEmailSchema = z.object({
-  newEmail: z.string().email(),
+  newEmail: z.string().email().transform(sanitizeTransform("email")),
 });
 
 async function _changeUserEmail(

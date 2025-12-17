@@ -12,18 +12,45 @@ import {
 import { wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const profileUpdateSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  mobile: z.string().max(20).optional().nullable(),
+  name: z
+    .string()
+    .min(1)
+    .max(255)
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  mobile: z
+    .string()
+    .max(20)
+    .optional()
+    .nullable()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
   address: z
     .object({
-      streetLine1: z.string().min(1).max(255),
-      streetLine2: z.string().max(255).optional(),
-      city: z.string().min(1).max(100),
-      state: z.string().max(100).optional(),
-      postalCode: z.string().min(1).max(20),
-      country: z.string().min(1).max(100),
+      streetLine1: z
+        .string()
+        .min(1)
+        .max(255)
+        .transform(sanitizeTransform("text")),
+      streetLine2: z
+        .string()
+        .max(255)
+        .optional()
+        .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+      city: z.string().min(1).max(100).transform(sanitizeTransform("text")),
+      state: z
+        .string()
+        .max(100)
+        .optional()
+        .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+      postalCode: z
+        .string()
+        .min(1)
+        .max(20)
+        .transform(sanitizeTransform("text")),
+      country: z.string().min(1).max(100).transform(sanitizeTransform("text")),
     })
     .optional(),
 });

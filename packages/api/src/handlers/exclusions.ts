@@ -13,11 +13,16 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const addExclusionSchema = z.object({
   member1Id: z.string().uuid(),
   member2Id: z.string().uuid(),
-  reason: z.string().max(255).optional(),
+  reason: z
+    .string()
+    .max(255)
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
   bidirectional: z.boolean().default(true),
 });
 

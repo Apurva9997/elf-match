@@ -3,6 +3,8 @@ import { and, count, eq, or } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, teamMembers, teams } from "../db/index.js";
 import { getUserFromEvent } from "../lib/auth.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
   forbidden,
@@ -10,26 +12,50 @@ import {
   serverError,
   success,
   unauthorized,
-  } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
-import { rateLimiters } from "../lib/rate-limit.js";
+} from "../lib/response.js";
+import { sanitizeTransform } from "../lib/sanitize.js";
 
 const createTeamSchema = z.object({
-  name: z.string().min(1).max(255),
-  description: z.string().optional(),
+  name: z.string().min(1).max(255).transform(sanitizeTransform("text")),
+  description: z
+    .string()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
   budgetMin: z.number().positive().optional(),
   budgetMax: z.number().positive().optional(),
-  exchangeDate: z.string().optional(),
-  wishlistDeadline: z.string().optional(),
+  exchangeDate: z
+    .string()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  wishlistDeadline: z
+    .string()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
 });
 
 const updateTeamSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  description: z.string().optional(),
+  name: z
+    .string()
+    .min(1)
+    .max(255)
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  description: z
+    .string()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
   budgetMin: z.number().positive().nullable().optional(),
   budgetMax: z.number().positive().nullable().optional(),
-  exchangeDate: z.string().nullable().optional(),
-  wishlistDeadline: z.string().nullable().optional(),
+  exchangeDate: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  wishlistDeadline: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
 });
 
 async function _createTeam(
