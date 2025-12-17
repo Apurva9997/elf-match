@@ -1,15 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { Gift, Users, Sparkles, Heart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { motion } from "framer-motion";
+import { ArrowRight, Gift, Heart, Sparkles, Users } from "lucide-react";
+import Link from "next/link";
 
 const features = [
   {
     icon: Users,
-    title: "Create Your Team",
+    title: "Create Your Exchange",
     description:
       "Invite friends, family, or coworkers to join your Secret Santa exchange.",
   },
@@ -78,16 +78,16 @@ export default function HomePage() {
             <span className="text-6xl mb-6 block animate-float">🎁</span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-cream mb-6">
               Make Gift-Giving{" "}
-              <span className="text-gradient-gold">Magical</span>
+              <span className="text-gradient-gold">Effortless & Fun</span>
             </h1>
             <p className="text-lg sm:text-xl text-cream/70 mb-8 max-w-2xl mx-auto">
-              Organize your Secret Santa exchange effortlessly. Create teams,
-              share wishlists, and let the holiday magic unfold.
+              Create your Secret Santa exchange in minutes. No spreadsheets, no
+              stress—just holiday magic.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/auth/login">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Start Your Exchange
+                  Start Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -165,12 +165,12 @@ export default function HomePage() {
                 Ready to Spread Some Holiday Cheer?
               </h2>
               <p className="text-cream/70 mb-8 max-w-xl mx-auto">
-                Join thousands of teams already using Secret Santa to make their
-                gift exchanges memorable and stress-free.
+                Join thousands of people already using Secret Santa to make
+                their gift exchanges memorable and stress-free.
               </p>
               <Link href="/auth/login">
                 <Button size="lg">
-                  Create Your Team
+                  Create Your Exchange
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
