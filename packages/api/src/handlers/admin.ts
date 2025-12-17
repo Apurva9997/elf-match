@@ -12,7 +12,8 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 async function isTeamAdmin(userId: string, teamId: string) {
   const membership = await db.query.teamMembers.findFirst({
@@ -229,5 +230,12 @@ async function _changeUserEmail(
 }
 
 // Export wrapped handlers
-export const sendReminders = wrapHandler(_sendReminders);
-export const changeUserEmail = wrapHandler(_changeUserEmail);
+export const sendReminders = wrapHandler(_sendReminders, {
+  limiter: rateLimiters.reminders,
+  useUserId: true,
+});
+
+export const changeUserEmail = wrapHandler(_changeUserEmail, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});

@@ -11,7 +11,8 @@ import {
 import { sendMagicLinkEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const sendMagicLinkSchema = z.object({
   email: z.string().email(),
@@ -206,8 +207,23 @@ async function _getMe(
   }
 }
 
-// Export wrapped handlers
-export const sendMagicLink = wrapHandler(_sendMagicLink);
-export const verifyMagicLink = wrapHandler(_verifyMagicLink);
-export const refreshToken = wrapHandler(_refreshToken);
-export const getMe = wrapHandler(_getMe);
+// Export wrapped handlers with rate limiting
+export const sendMagicLink = wrapHandler(_sendMagicLink, {
+  limiter: rateLimiters.auth,
+  useUserId: false, // Public endpoint, use IP
+});
+
+export const verifyMagicLink = wrapHandler(_verifyMagicLink, {
+  limiter: rateLimiters.authVerify,
+  useUserId: false,
+});
+
+export const refreshToken = wrapHandler(_refreshToken, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true, // Extract from token
+});
+
+export const getMe = wrapHandler(_getMe, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});

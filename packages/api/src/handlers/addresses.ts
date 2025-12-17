@@ -17,8 +17,9 @@ import {
   serverError,
   success,
   unauthorized,
-} from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+  } from "../lib/response.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const addressSchema = z.object({
   streetLine1: z.string().min(1).max(255),
@@ -234,6 +235,17 @@ async function _getGifteeAddress(
 }
 
 // Export wrapped handlers
-export const getAddress = wrapHandler(_getAddress);
-export const updateAddress = wrapHandler(_updateAddress);
-export const getGifteeAddress = wrapHandler(_getGifteeAddress);
+export const getAddress = wrapHandler(_getAddress, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const updateAddress = wrapHandler(_updateAddress, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const getGifteeAddress = wrapHandler(_getGifteeAddress, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});

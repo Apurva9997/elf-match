@@ -10,7 +10,8 @@ import {
   encryptMobile,
 } from "../lib/encryption.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -191,6 +192,13 @@ async function _updateProfile(
   }
 }
 
-// Export wrapped handlers
-export const getProfile = wrapHandler(_getProfile);
-export const updateProfile = wrapHandler(_updateProfile);
+// Export wrapped handlers with rate limiting
+export const getProfile = wrapHandler(_getProfile, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const updateProfile = wrapHandler(_updateProfile, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});

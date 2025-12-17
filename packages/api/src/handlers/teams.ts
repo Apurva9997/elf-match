@@ -10,8 +10,9 @@ import {
   serverError,
   success,
   unauthorized,
-} from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+  } from "../lib/response.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const createTeamSchema = z.object({
   name: z.string().min(1).max(255),
@@ -386,10 +387,33 @@ async function _getTeamStatus(
   }
 }
 
-// Export wrapped handlers
-export const createTeam = wrapHandler(_createTeam);
-export const listTeams = wrapHandler(_listTeams);
-export const getTeam = wrapHandler(_getTeam);
-export const updateTeam = wrapHandler(_updateTeam);
-export const deleteTeam = wrapHandler(_deleteTeam);
-export const getTeamStatus = wrapHandler(_getTeamStatus);
+// Export wrapped handlers with rate limiting
+export const createTeam = wrapHandler(_createTeam, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const listTeams = wrapHandler(_listTeams, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const getTeam = wrapHandler(_getTeam, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const updateTeam = wrapHandler(_updateTeam, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const deleteTeam = wrapHandler(_deleteTeam, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const getTeamStatus = wrapHandler(_getTeamStatus, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});

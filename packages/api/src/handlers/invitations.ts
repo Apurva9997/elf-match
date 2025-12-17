@@ -13,8 +13,9 @@ import {
   serverError,
   success,
   unauthorized,
-} from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+  } from "../lib/response.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const inviteMembersSchema = z.object({
   emails: z.array(z.string().email()).min(1).max(50),
@@ -540,12 +541,43 @@ async function _resendInvitation(
   }
 }
 
-// Export wrapped handlers
-export const inviteMembers = wrapHandler(_inviteMembers);
-export const acceptInvitation = wrapHandler(_acceptInvitation);
-export const declineInvitation = wrapHandler(_declineInvitation);
-export const removeMember = wrapHandler(_removeMember);
-export const listPendingInvitations = wrapHandler(_listPendingInvitations);
-export const acceptInvitationDirect = wrapHandler(_acceptInvitationDirect);
-export const declineInvitationDirect = wrapHandler(_declineInvitationDirect);
-export const resendInvitation = wrapHandler(_resendInvitation);
+// Export wrapped handlers with rate limiting
+export const inviteMembers = wrapHandler(_inviteMembers, {
+  limiter: rateLimiters.inviteMembers,
+  useUserId: true,
+});
+
+export const acceptInvitation = wrapHandler(_acceptInvitation, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const declineInvitation = wrapHandler(_declineInvitation, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: false, // May not have auth token
+});
+
+export const removeMember = wrapHandler(_removeMember, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const listPendingInvitations = wrapHandler(_listPendingInvitations, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const acceptInvitationDirect = wrapHandler(_acceptInvitationDirect, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const declineInvitationDirect = wrapHandler(_declineInvitationDirect, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const resendInvitation = wrapHandler(_resendInvitation, {
+  limiter: rateLimiters.inviteMembers,
+  useUserId: true,
+});

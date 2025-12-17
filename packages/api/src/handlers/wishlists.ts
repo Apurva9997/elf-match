@@ -16,8 +16,9 @@ import {
   forbidden,
   notFound,
   serverError,
-} from "../lib/response.js";
-import { wrapHandler } from "../lib/sentry.js";
+  } from "../lib/response.js";
+import { wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 
 const wishItemSchema = z.object({
   title: z.string().min(1).max(255),
@@ -231,6 +232,17 @@ async function _getGifteeWishlist(
 }
 
 // Export wrapped handlers
-export const getWishlist = wrapHandler(_getWishlist);
-export const updateWishlist = wrapHandler(_updateWishlist);
-export const getGifteeWishlist = wrapHandler(_getGifteeWishlist);
+export const getWishlist = wrapHandler(_getWishlist, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const updateWishlist = wrapHandler(_updateWishlist, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const getGifteeWishlist = wrapHandler(_getGifteeWishlist, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
