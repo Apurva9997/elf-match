@@ -10,6 +10,7 @@ import {
   encryptMobile,
 } from "../lib/encryption.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -26,7 +27,7 @@ const profileUpdateSchema = z.object({
     .optional(),
 });
 
-export async function getProfile(
+async function _getProfile(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -72,7 +73,7 @@ export async function getProfile(
   }
 }
 
-export async function updateProfile(
+async function _updateProfile(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -189,3 +190,7 @@ export async function updateProfile(
     return serverError("Failed to update profile");
   }
 }
+
+// Export wrapped handlers
+export const getProfile = wrapHandler(_getProfile);
+export const updateProfile = wrapHandler(_updateProfile);

@@ -11,6 +11,7 @@ import {
 import { sendMagicLinkEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const sendMagicLinkSchema = z.object({
   email: z.string().email(),
@@ -25,7 +26,7 @@ const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export async function sendMagicLink(
+async function _sendMagicLink(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -58,7 +59,7 @@ export async function sendMagicLink(
   }
 }
 
-export async function verifyMagicLink(
+async function _verifyMagicLink(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -136,7 +137,7 @@ export async function verifyMagicLink(
   }
 }
 
-export async function refreshToken(
+async function _refreshToken(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -182,7 +183,7 @@ export async function refreshToken(
   }
 }
 
-export async function getMe(
+async function _getMe(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -204,3 +205,9 @@ export async function getMe(
     return serverError("Failed to get user");
   }
 }
+
+// Export wrapped handlers
+export const sendMagicLink = wrapHandler(_sendMagicLink);
+export const verifyMagicLink = wrapHandler(_verifyMagicLink);
+export const refreshToken = wrapHandler(_refreshToken);
+export const getMe = wrapHandler(_getMe);

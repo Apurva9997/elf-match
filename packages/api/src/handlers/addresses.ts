@@ -18,6 +18,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const addressSchema = z.object({
   streetLine1: z.string().min(1).max(255),
@@ -38,7 +39,7 @@ async function getMembershipForTeam(userId: string, teamId: string) {
   });
 }
 
-export async function getAddress(
+async function _getAddress(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -67,7 +68,7 @@ export async function getAddress(
   }
 }
 
-export async function updateAddress(
+async function _updateAddress(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -150,7 +151,7 @@ export async function updateAddress(
   }
 }
 
-export async function getGifteeAddress(
+async function _getGifteeAddress(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -231,3 +232,8 @@ export async function getGifteeAddress(
     return serverError("Failed to get giftee address");
   }
 }
+
+// Export wrapped handlers
+export const getAddress = wrapHandler(_getAddress);
+export const updateAddress = wrapHandler(_updateAddress);
+export const getGifteeAddress = wrapHandler(_getGifteeAddress);

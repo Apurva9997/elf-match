@@ -18,6 +18,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { wrapHandler } from "../lib/sentry.js";
 
 const updateAssignmentSchema = z.object({
   giftStatus: z.enum(["pending", "purchased", "shipped", "delivered"]),
@@ -101,7 +102,7 @@ function generateAssignments(
   return null; // Could not find valid assignment
 }
 
-export async function triggerAssignment(
+async function _triggerAssignment(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -288,7 +289,7 @@ export async function triggerAssignment(
   }
 }
 
-export async function getAssignment(
+async function _getAssignment(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -346,7 +347,7 @@ export async function getAssignment(
   }
 }
 
-export async function updateAssignment(
+async function _updateAssignment(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -396,7 +397,7 @@ export async function updateAssignment(
 }
 
 // Preview assignments without saving - allows admin to review before confirming
-export async function previewAssignment(
+async function _previewAssignment(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResult> {
   try {
@@ -499,3 +500,9 @@ export async function previewAssignment(
     return serverError("Failed to preview assignments");
   }
 }
+
+// Export wrapped handlers
+export const triggerAssignment = wrapHandler(_triggerAssignment);
+export const getAssignment = wrapHandler(_getAssignment);
+export const updateAssignment = wrapHandler(_updateAssignment);
+export const previewAssignment = wrapHandler(_previewAssignment);
