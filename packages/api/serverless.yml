@@ -281,6 +281,13 @@ functions:
           method: get
 
   # Assignments
+  previewAssignment:
+    handler: src/handlers/assignments.previewAssignment
+    events:
+      - httpApi:
+          path: /teams/{teamId}/assign/preview
+          method: post
+
   triggerAssignment:
     handler: src/handlers/assignments.triggerAssignment
     events:
