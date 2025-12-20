@@ -20,6 +20,9 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }),
   mobile: varchar("mobile", { length: 20 }),
   avatarUrl: text("avatar_url"),
+  // OAuth provider info (null for magic link users)
+  oauthProvider: varchar("oauth_provider", { length: 50 }), // 'google' | 'apple' | null
+  oauthProviderId: varchar("oauth_provider_id", { length: 255 }), // Provider's user ID
   preferences: jsonb("preferences").$type<{
     onboarding?: {
       new_user?: boolean;

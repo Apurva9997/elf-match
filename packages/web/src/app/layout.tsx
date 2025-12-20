@@ -5,11 +5,87 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Secret Santa | Gift Exchange Made Magical",
+  metadataBase: new URL("https://giftwhisper.online"),
+  title: {
+    default:
+      "GiftWhisper - Free Secret Santa Generator & Gift Exchange Organizer",
+    template: "%s | GiftWhisper",
+  },
   description:
-    "Organize your Secret Santa gift exchange with ease. Create teams, make wishlists, and spread holiday joy!",
+    "Create your free Secret Santa gift exchange in 2 minutes. Organize office parties, family exchanges & friend groups with wishlists, exclusion rules & automatic matching. No signup required to start!",
+  keywords: [
+    "secret santa",
+    "secret santa generator",
+    "gift exchange",
+    "gift exchange organizer",
+    "secret santa online",
+    "free secret santa",
+    "office secret santa",
+    "family gift exchange",
+    "holiday gift exchange",
+    "christmas gift exchange",
+    "secret santa app",
+    "gift exchange app",
+    "wishlist maker",
+    "secret santa with exclusions",
+  ],
+  authors: [{ name: "GiftWhisper" }],
+  creator: "GiftWhisper",
+  publisher: "GiftWhisper",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://giftwhisper.online",
+    siteName: "GiftWhisper",
+    title:
+      "GiftWhisper - Free Secret Santa Generator & Gift Exchange Organizer",
+    description:
+      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GiftWhisper - Free Secret Santa Generator",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GiftWhisper - Free Secret Santa Generator",
+    description:
+      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
+    images: ["/og-image.png"],
+    creator: "@giftwhisper",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
+  alternates: {
+    canonical: "https://giftwhisper.online",
+  },
+  verification: {
+    // Add these after setting up Google Search Console
+    google: "SYoTE1FiGUmdNlO6Kk6B9Ex7Lc9tvNfaZjFZzM_0ldI",
   },
 };
 
