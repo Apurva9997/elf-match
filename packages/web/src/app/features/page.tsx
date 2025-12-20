@@ -14,6 +14,7 @@ import {
   Heart,
   CheckCircle,
 } from "lucide-react";
+import { PublicNav } from "@/components/public-nav";
 
 export const metadata: Metadata = {
   title: "Features - Everything You Need for Secret Santa",
@@ -120,23 +121,7 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl">🎁</span>
-              <span className="font-display text-xl font-semibold text-cream">
-                GiftWhisper
-              </span>
-            </Link>
-            <Link href="/auth/login">
-              <button className="px-4 py-2 bg-gradient-gold text-midnight font-semibold rounded-lg hover:opacity-90 transition-opacity">
-                Get Started Free
-              </button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav />
 
       <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">

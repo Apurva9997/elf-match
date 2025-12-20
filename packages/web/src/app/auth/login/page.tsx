@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import { oauthConfig } from "@/lib/oauth-config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -55,7 +56,9 @@ function AppleIcon({ className }: { className?: string }) {
 }
 
 function LoginPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated, isLoading } = useAuth();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -63,6 +66,13 @@ function LoginPageContent() {
 
   // Get redirect URL from query params (for post-login redirect)
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, isLoading, router, redirectTo]);
 
   const {
     register,
@@ -112,6 +122,15 @@ function LoginPageContent() {
       setIsAppleLoading(false);
     }
   };
+
+  // Show loading while checking auth or redirecting
+  if (isLoading || isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (isSubmitted) {
     return (
