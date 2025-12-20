@@ -99,12 +99,15 @@ async function _verifyMagicLink(
       .set({ usedAt: new Date() })
       .where(eq(magicLinks.id, magicLink.id));
 
-    // Find or create the user
+    // Find or create the user by email
+    // This ensures users can use either magic link or OAuth with the same email
+    // If user already exists (e.g., signed up with OAuth), we allow magic link login
     let user = await db.query.users.findFirst({
       where: eq(users.email, magicLink.email),
     });
 
     if (!user) {
+      // Create new user with magic link
       const [newUser] = await db
         .insert(users)
         .values({
@@ -113,14 +116,17 @@ async function _verifyMagicLink(
         })
         .returning();
       user = newUser;
-    } else if (name && !user.name) {
+    } else {
+      // User already exists (may have been created via OAuth or previous magic link)
       // Update name if provided and user doesn't have one
-      const [updatedUser] = await db
-        .update(users)
-        .set({ name, updatedAt: new Date() })
-        .where(eq(users.id, user.id))
-        .returning();
-      user = updatedUser;
+      if (name && !user.name) {
+        const [updatedUser] = await db
+          .update(users)
+          .set({ name, updatedAt: new Date() })
+          .where(eq(users.id, user.id))
+          .returning();
+        user = updatedUser;
+      }
     }
 
     // Generate tokens

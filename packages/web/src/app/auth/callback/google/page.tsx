@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
@@ -17,9 +17,17 @@ function GoogleCallbackContent() {
     "loading"
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
+    // Prevent double execution
+    if (hasProcessed.current) {
+      return;
+    }
+
     const handleCallback = async () => {
+      // Mark as processing immediately to prevent race conditions
+      hasProcessed.current = true;
       const code = searchParams.get("code");
       const state = searchParams.get("state");
       const error = searchParams.get("error");
