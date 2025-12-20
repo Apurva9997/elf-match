@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { cn, getInitials } from "@/lib/utils";
+import Image from "next/image";
+import { useState } from "react";
 
 interface AvatarProps {
   name: string;
@@ -19,32 +20,35 @@ const sizes = {
 
 export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   const initials = getInitials(name);
+  const [imageError, setImageError] = useState(false);
 
-  if (src) {
+  // If no src or image failed to load, show initials
+  if (!src || imageError) {
     return (
-      <Image
-        src={src}
-        alt={name}
-        width={size === "xl" ? 64 : size === "lg" ? 48 : size === "md" ? 40 : 32}
-        height={size === "xl" ? 64 : size === "lg" ? 48 : size === "md" ? 40 : 32}
+      <div
         className={cn(
-          "rounded-full object-cover border-2 border-gold/20",
+          "rounded-full bg-gradient-gold flex items-center justify-center font-semibold text-midnight",
           sizes[size],
           className
         )}
-      />
+      >
+        {initials}
+      </div>
     );
   }
 
   return (
-    <div
+    <Image
+      src={src}
+      alt={name}
+      width={size === "xl" ? 64 : size === "lg" ? 48 : size === "md" ? 40 : 32}
+      height={size === "xl" ? 64 : size === "lg" ? 48 : size === "md" ? 40 : 32}
       className={cn(
-        "rounded-full bg-gradient-gold flex items-center justify-center font-semibold text-midnight",
+        "rounded-full object-cover border-2 border-gold/20",
         sizes[size],
         className
       )}
-    >
-      {initials}
-    </div>
+      onError={() => setImageError(true)}
+    />
   );
 }
