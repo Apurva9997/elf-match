@@ -51,20 +51,23 @@ async function _sendReminders(
       return notFound("Team not found");
     }
 
-    // Get all accepted members with their wishlists and addresses
+    // Get all accepted members with their wishlists and user-level addresses
     const members = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
         eq(teamMembers.invitationStatus, "accepted")
       ),
       with: {
-        user: true,
+        user: {
+          with: {
+            address: true, // User-level address from userAddresses table
+          },
+        },
         wishlist: {
           with: {
             items: true,
           },
         },
-        address: true,
       },
     });
 
@@ -84,8 +87,8 @@ async function _sendReminders(
         missingItems.push("Add items to your wishlist");
       }
 
-      // Check address
-      if (!member.address) {
+      // Check user-level address
+      if (!member.user.address) {
         missingItems.push("Add your shipping address");
       }
 

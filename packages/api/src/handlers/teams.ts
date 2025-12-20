@@ -355,13 +355,16 @@ async function _getTeamStatus(
         eq(teamMembers.invitationStatus, "accepted")
       ),
       with: {
-        user: true,
+        user: {
+          with: {
+            address: true, // User-level address from userAddresses table
+          },
+        },
         wishlist: {
           with: {
             items: true,
           },
         },
-        address: true,
       },
     });
 
@@ -369,7 +372,10 @@ async function _getTeamStatus(
     const membersWithWishlist = acceptedMembers.filter(
       (m) => m.wishlist && m.wishlist.items.length > 0
     ).length;
-    const membersWithAddress = acceptedMembers.filter((m) => m.address).length;
+    // Check user-level address instead of team-level
+    const membersWithAddress = acceptedMembers.filter(
+      (m) => m.user?.address
+    ).length;
 
     // Check if assignments exist
     const [assignmentCount] = await db
