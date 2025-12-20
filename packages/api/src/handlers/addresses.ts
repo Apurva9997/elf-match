@@ -2,7 +2,6 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
-  addresses,
   assignments,
   db,
   teamMembers,
@@ -64,8 +63,9 @@ async function _getAddress(
       return forbidden("You are not a member of this team");
     }
 
-    const address = await db.query.addresses.findFirst({
-      where: eq(addresses.teamMemberId, membership.id),
+    // Get user-level address (shared across all teams)
+    const address = await db.query.userAddresses.findFirst({
+      where: eq(userAddresses.userId, user.id),
     });
 
     // Decrypt address data before returning
@@ -112,16 +112,16 @@ async function _updateAddress(
       postalCode,
     });
 
-    // Check if address exists
-    const existingAddress = await db.query.addresses.findFirst({
-      where: eq(addresses.teamMemberId, membership.id),
+    // Check if user-level address exists
+    const existingAddress = await db.query.userAddresses.findFirst({
+      where: eq(userAddresses.userId, user.id),
     });
 
     let address;
     if (existingAddress) {
-      // Update existing
+      // Update existing user-level address
       const [updated] = await db
-        .update(addresses)
+        .update(userAddresses)
         .set({
           streetLine1: encryptedData.streetLine1!,
           streetLine2: encryptedData.streetLine2,
@@ -131,15 +131,15 @@ async function _updateAddress(
           country, // Country is not encrypted (needed for shipping logistics)
           updatedAt: new Date(),
         })
-        .where(eq(addresses.id, existingAddress.id))
+        .where(eq(userAddresses.id, existingAddress.id))
         .returning();
       address = updated;
     } else {
-      // Create new
+      // Create new user-level address
       const [created] = await db
-        .insert(addresses)
+        .insert(userAddresses)
         .values({
-          teamMemberId: membership.id,
+          userId: user.id,
           streetLine1: encryptedData.streetLine1!,
           streetLine2: encryptedData.streetLine2,
           city: encryptedData.city!,

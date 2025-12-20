@@ -41,6 +41,7 @@ import {
   Sparkles,
   Trash2,
   Truck,
+  User,
   UserPlus,
   Users,
   X,
@@ -553,19 +554,6 @@ export default function TeamPage() {
     debouncedSave(updated);
   };
 
-  const handleAddWishItem = () => {
-    const newItem: WishItemForm = {
-      title: "",
-      description: "",
-      url: "",
-      priceEstimate: "",
-    };
-    const updated = [...wishItems, newItem];
-    setWishItems(updated);
-    // Expand the new item for editing
-    setExpandedItems(new Set([...expandedItems, updated.length - 1]));
-  };
-
   const handleRemoveWishItem = async (index: number) => {
     const updatedItems = wishItems.filter((_, i) => i !== index);
     setWishItems(updatedItems);
@@ -1050,7 +1038,7 @@ export default function TeamPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Quick-add input - always visible */}
+                  {/* Add item input */}
                   <div className="flex gap-2">
                     <Input
                       value={quickAddTitle}
@@ -1061,7 +1049,7 @@ export default function TeamPage() {
                           handleQuickAdd();
                         }
                       }}
-                      placeholder="Quick add: Gift card, book, headphones..."
+                      placeholder="Add item: Gift card, book, headphones..."
                       className="flex-1"
                     />
                     <Button
@@ -1072,16 +1060,6 @@ export default function TeamPage() {
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-
-                  {/* Add Another Item button - always visible at top */}
-                  <Button
-                    variant="secondary"
-                    onClick={handleAddWishItem}
-                    className="w-full border-dashed border-2 border-cream/20 hover:border-cream/40"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Another Item
-                  </Button>
 
                   {/* Wishlist items */}
                   {wishItems.length > 0 ? (
@@ -1094,121 +1072,120 @@ export default function TeamPage() {
                         return (
                           <div
                             key={index}
-                            className="p-4 rounded-lg bg-midnight-50 space-y-3"
+                            className="p-4 rounded-lg bg-midnight-50"
                           >
-                            {/* Collapsed/Header view */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 flex items-center gap-3">
-                                <button
-                                  onClick={() => toggleItemExpand(index)}
-                                  className="text-cream/60 hover:text-cream transition-colors"
-                                >
-                                  {isExpanded ? (
-                                    <X className="w-4 h-4" />
-                                  ) : (
-                                    <Edit className="w-4 h-4" />
+                            {!isExpanded ? (
+                              // Collapsed view - click anywhere to expand
+                              <div
+                                className="flex items-center justify-between cursor-pointer group"
+                                onClick={() => toggleItemExpand(index)}
+                              >
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-cream">
+                                    {item.title || "Untitled item"}
+                                  </h4>
+                                  {hasDetails && (
+                                    <div className="flex items-center gap-3 mt-1 text-sm">
+                                      {item.priceEstimate && (
+                                        <span className="text-gold font-medium">
+                                          ~₹{item.priceEstimate}
+                                        </span>
+                                      )}
+                                      {item.url && (
+                                        <a
+                                          href={item.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-gold hover:text-gold-light flex items-center gap-1"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <ExternalLink className="w-3 h-3" />
+                                          Link
+                                        </a>
+                                      )}
+                                      {item.description && (
+                                        <span className="text-cream/50 truncate max-w-[200px]">
+                                          {item.description}
+                                        </span>
+                                      )}
+                                    </div>
                                   )}
-                                </button>
-                                {!isExpanded ? (
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-cream text-lg">
-                                      {item.title || "Untitled item"}
-                                    </h4>
-                                    {hasDetails && (
-                                      <div className="flex items-center gap-4 mt-1">
-                                        {item.priceEstimate && (
-                                          <span className="text-gold text-sm font-medium">
-                                            ~₹{item.priceEstimate}
-                                          </span>
-                                        )}
-                                        {item.url && (
-                                          <a
-                                            href={item.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-gold hover:text-gold-light transition-colors text-sm flex items-center gap-1"
-                                            onClick={(e) => e.stopPropagation()}
-                                          >
-                                            <ExternalLink className="w-4 h-4" />
-                                            Link
-                                          </a>
-                                        )}
-                                        {item.description && (
-                                          <span className="text-cream/50 text-sm">
-                                            {item.description.length > 50
-                                              ? `${item.description.substring(0, 50)}...`
-                                              : item.description}
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="flex-1 space-y-3">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <Input
-                                        value={item.title}
-                                        onChange={(e) =>
-                                          handleWishItemChange(
-                                            index,
-                                            "title",
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="e.g., Amazon Gift Card, Book - 'The Palace of Illusions'"
-                                        className="flex-1"
-                                      />
-                                      <button
-                                        onClick={() =>
-                                          handleRemoveWishItem(index)
-                                        }
-                                        className="p-2 text-error/70 hover:text-error transition-colors"
-                                        title="Delete item"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <Textarea
-                                      value={item.description}
-                                      onChange={(e) =>
-                                        handleWishItemChange(
-                                          index,
-                                          "description",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Description (optional) - e.g., Size, color, preferred brand..."
-                                      className="min-h-[60px]"
-                                    />
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <Input
-                                        value={item.url}
-                                        onChange={(e) =>
-                                          handleWishItemChange(
-                                            index,
-                                            "url",
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="Link (optional) - Amazon, Flipkart, etc."
-                                      />
-                                      <Input
-                                        value={item.priceEstimate}
-                                        onChange={(e) =>
-                                          handleWishItemChange(
-                                            index,
-                                            "priceEstimate",
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="Price estimate (₹)"
-                                        type="number"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
+                                </div>
+                                <Edit className="w-4 h-4 text-cream/40 group-hover:text-cream/70 transition-colors" />
                               </div>
-                            </div>
+                            ) : (
+                              // Expanded view - edit mode
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <Input
+                                    value={item.title}
+                                    onChange={(e) =>
+                                      handleWishItemChange(
+                                        index,
+                                        "title",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Item name"
+                                    className="flex-1"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleRemoveWishItem(index)}
+                                    className="p-2 text-error/60 hover:text-error transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <Textarea
+                                  value={item.description}
+                                  onChange={(e) =>
+                                    handleWishItemChange(
+                                      index,
+                                      "description",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Notes (size, color, brand preference...)"
+                                  className="min-h-[60px]"
+                                />
+                                <div className="grid grid-cols-2 gap-3">
+                                  <Input
+                                    value={item.url}
+                                    onChange={(e) =>
+                                      handleWishItemChange(
+                                        index,
+                                        "url",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Link (optional)"
+                                  />
+                                  <Input
+                                    value={item.priceEstimate}
+                                    onChange={(e) =>
+                                      handleWishItemChange(
+                                        index,
+                                        "priceEstimate",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Price (₹)"
+                                    type="number"
+                                  />
+                                </div>
+                                <div className="flex justify-end">
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => toggleItemExpand(index)}
+                                  >
+                                    Done
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -1218,8 +1195,7 @@ export default function TeamPage() {
                       <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>No wishlist items yet.</p>
                       <p className="text-sm mt-2">
-                        Use the quick-add above or click &quot;Add Another
-                        Item&quot; to get started.
+                        Type above and press Enter to add items.
                       </p>
                     </div>
                   )}
@@ -1236,19 +1212,28 @@ export default function TeamPage() {
                   <div>
                     <CardTitle>Delivery Address</CardTitle>
                     <CardDescription>
-                      Where should your gift be delivered?
+                      Where should your gift be delivered? This address is
+                      shared across all your exchanges.
                     </CardDescription>
                   </div>
-                  {!isEditingAddress && address && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleStartEditAddress}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {!isEditingAddress && address && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleStartEditAddress}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    )}
+                    <Link href="/dashboard/profile">
+                      <Button variant="ghost" size="sm">
+                        <User className="w-4 h-4 mr-2" />
+                        Profile
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
