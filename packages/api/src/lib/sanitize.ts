@@ -1,26 +1,23 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 /**
  * Sanitize configuration for different contexts
  */
 const SANITIZE_CONFIG = {
-  // For plain text fields (names, emails, etc.)
+  // For plain text fields (names, emails, etc.) - strip all HTML, keep only text
   text: {
-    ALLOWED_TAGS: [], // Strip all HTML tags
-    ALLOWED_ATTR: [], // No attributes
-    KEEP_CONTENT: true, // Keep text content
+    allowedTags: [],
+    allowedAttributes: {},
   },
   // For rich text fields (descriptions, etc.)
   richText: {
-    ALLOWED_TAGS: ["b", "i", "em", "strong", "p", "br", "ul", "ol", "li"],
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true,
+    allowedTags: ["b", "i", "em", "strong", "p", "br", "ul", "ol", "li"],
+    allowedAttributes: {},
   },
-  // For URLs
+  // For URLs - strip all HTML, keep only text
   url: {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true,
+    allowedTags: [],
+    allowedAttributes: {},
   },
 };
 
@@ -48,7 +45,7 @@ export function sanitizeString(
       if (!["http:", "https:"].includes(url.protocol)) {
         return "";
       }
-      return DOMPurify.sanitize(trimmed, SANITIZE_CONFIG.url);
+      return sanitizeHtml(trimmed, SANITIZE_CONFIG.url);
     } catch {
       // If URL is invalid, return empty string
       return "";
@@ -56,7 +53,7 @@ export function sanitizeString(
   }
 
   // Sanitize based on type
-  return DOMPurify.sanitize(trimmed, SANITIZE_CONFIG[type]);
+  return sanitizeHtml(trimmed, SANITIZE_CONFIG[type]);
 }
 
 /**
@@ -67,7 +64,7 @@ export function sanitizeEmail(email: string | null | undefined): string {
   if (!email) return "";
 
   // Remove all HTML tags
-  const sanitized = DOMPurify.sanitize(email, SANITIZE_CONFIG.text);
+  const sanitized = sanitizeHtml(email, SANITIZE_CONFIG.text);
 
   // Trim and lowercase
   return sanitized.trim().toLowerCase();

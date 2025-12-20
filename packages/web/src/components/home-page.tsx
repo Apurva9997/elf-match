@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { PublicNav } from "@/components/public-nav";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -51,6 +52,8 @@ const benefits = [
 ];
 
 export function HomePage() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -77,9 +80,9 @@ export function HomePage() {
               ✨ 100% Free • No Credit Card Required • Works on Any Device
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/auth/login">
+              <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
                 <Button size="lg" className="w-full sm:w-auto">
-                  Create Free Exchange
+                  {isAuthenticated ? "Go to Dashboard" : "Create Free Exchange"}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -295,9 +298,11 @@ export function HomePage() {
                 Create your free Secret Santa exchange in under 2 minutes. No
                 signup fees, no credit card, no catch.
               </p>
-              <Link href="/auth/login">
+              <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
                 <Button size="lg">
-                  Create Your Free Exchange
+                  {isAuthenticated
+                    ? "Go to Dashboard"
+                    : "Create Your Free Exchange"}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
