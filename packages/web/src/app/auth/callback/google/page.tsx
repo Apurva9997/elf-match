@@ -1,13 +1,13 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
-import { api } from "@/lib/api";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense, useRef } from "react";
-import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { motion } from "framer-motion";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function GoogleCallbackContent() {
   const router = useRouter();
@@ -164,4 +164,3 @@ export default function GoogleCallbackPage() {
     </Suspense>
   );
 }
-
