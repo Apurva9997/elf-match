@@ -238,7 +238,10 @@ export default function TeamPage() {
   const updateAddressMutation = useMutation({
     mutationFn: (data: AddressForm) => api.updateAddress(teamId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["address", teamId] });
+      // Invalidate all address queries since address is shared across all teams
+      queryClient.invalidateQueries({ queryKey: ["address"] });
+      // Also invalidate profile since it shows the same address
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       toast.success("Address saved! Your Secret Santa can now ship your gift.");
     },

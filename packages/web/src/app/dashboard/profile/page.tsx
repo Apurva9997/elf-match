@@ -153,6 +153,8 @@ export default function ProfilePage() {
       await api.updateProfile(updateData);
       await refetchProfile();
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      // Invalidate all address queries since address is shared across all teams
+      queryClient.invalidateQueries({ queryKey: ["address"] });
       toast.success("Profile updated!");
     } catch (error) {
       console.error("Failed to update profile:", error);
