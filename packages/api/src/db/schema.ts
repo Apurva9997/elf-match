@@ -120,23 +120,6 @@ export const wishItems = pgTable("wish_items", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Shipping addresses
-export const addresses = pgTable("addresses", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  teamMemberId: uuid("team_member_id")
-    .references(() => teamMembers.id, { onDelete: "cascade" })
-    .notNull()
-    .unique(),
-  streetLine1: varchar("street_line_1", { length: 255 }).notNull(),
-  streetLine2: varchar("street_line_2", { length: 255 }),
-  city: varchar("city", { length: 100 }).notNull(),
-  state: varchar("state", { length: 100 }),
-  postalCode: varchar("postal_code", { length: 500 }).notNull(),
-  country: varchar("country", { length: 100 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 // Secret Santa assignments
 export const assignments = pgTable(
   "assignments",
@@ -239,7 +222,6 @@ export const teamMembersRelations = relations(teamMembers, ({ one, many }) => ({
     references: [users.id],
   }),
   wishlist: one(wishlists),
-  address: one(addresses),
   giverAssignments: many(assignments, { relationName: "giver" }),
   receiverAssignments: many(assignments, { relationName: "receiver" }),
 }));
@@ -256,13 +238,6 @@ export const wishItemsRelations = relations(wishItems, ({ one }) => ({
   wishlist: one(wishlists, {
     fields: [wishItems.wishlistId],
     references: [wishlists.id],
-  }),
-}));
-
-export const addressesRelations = relations(addresses, ({ one }) => ({
-  teamMember: one(teamMembers, {
-    fields: [addresses.teamMemberId],
-    references: [teamMembers.id],
   }),
 }));
 
@@ -311,8 +286,6 @@ export type Wishlist = typeof wishlists.$inferSelect;
 export type NewWishlist = typeof wishlists.$inferInsert;
 export type WishItem = typeof wishItems.$inferSelect;
 export type NewWishItem = typeof wishItems.$inferInsert;
-export type Address = typeof addresses.$inferSelect;
-export type NewAddress = typeof addresses.$inferInsert;
 export type UserAddress = typeof userAddresses.$inferSelect;
 export type NewUserAddress = typeof userAddresses.$inferInsert;
 export type Assignment = typeof assignments.$inferSelect;
