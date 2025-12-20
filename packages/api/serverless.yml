@@ -29,6 +29,16 @@ provider:
     UPSTASH_REDIS_REST_URL: ${env:UPSTASH_REDIS_REST_URL}
     UPSTASH_REDIS_REST_TOKEN: ${env:UPSTASH_REDIS_REST_TOKEN}
     STAGE: ${self:provider.stage}
+    # OAuth - Google
+    GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID, ''}
+    GOOGLE_CLIENT_SECRET: ${env:GOOGLE_CLIENT_SECRET, ''}
+    GOOGLE_REDIRECT_URI: ${env:GOOGLE_REDIRECT_URI, ''}
+    # OAuth - Apple
+    APPLE_CLIENT_ID: ${env:APPLE_CLIENT_ID, ''}
+    APPLE_TEAM_ID: ${env:APPLE_TEAM_ID, ''}
+    APPLE_KEY_ID: ${env:APPLE_KEY_ID, ''}
+    APPLE_PRIVATE_KEY: ${env:APPLE_PRIVATE_KEY, ''}
+    APPLE_REDIRECT_URI: ${env:APPLE_REDIRECT_URI, ''}
   httpApi:
     cors:
       allowedOrigins:
@@ -108,6 +118,36 @@ functions:
       - httpApi:
           path: /auth/me
           method: get
+
+  # OAuth - Google
+  getGoogleAuthUrl:
+    handler: src/handlers/oauth.getGoogleAuthUrl
+    events:
+      - httpApi:
+          path: /auth/google
+          method: get
+
+  handleGoogleCallback:
+    handler: src/handlers/oauth.handleGoogleCallback
+    events:
+      - httpApi:
+          path: /auth/google/callback
+          method: post
+
+  # OAuth - Apple
+  getAppleAuthUrl:
+    handler: src/handlers/oauth.getAppleAuthUrl
+    events:
+      - httpApi:
+          path: /auth/apple
+          method: get
+
+  handleAppleCallback:
+    handler: src/handlers/oauth.handleAppleCallback
+    events:
+      - httpApi:
+          path: /auth/apple/callback
+          method: post
 
   getUserPreferences:
     handler: src/handlers/user-preferences.getUserPreferences

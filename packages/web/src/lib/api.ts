@@ -91,6 +91,40 @@ class ApiClient {
     return this.request<User>("/auth/me");
   }
 
+  // OAuth - Google
+  async getGoogleAuthUrl(state?: string) {
+    const params = state ? `?state=${encodeURIComponent(state)}` : "";
+    return this.request<{ url: string }>(`/auth/google${params}`);
+  }
+
+  async handleGoogleCallback(code: string) {
+    return this.request<{
+      user: User;
+      accessToken: string;
+      refreshToken: string;
+    }>("/auth/google/callback", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+  }
+
+  // OAuth - Apple
+  async getAppleAuthUrl(state?: string) {
+    const params = state ? `?state=${encodeURIComponent(state)}` : "";
+    return this.request<{ url: string }>(`/auth/apple${params}`);
+  }
+
+  async handleAppleCallback(code: string, idToken?: string, user?: string) {
+    return this.request<{
+      user: User;
+      accessToken: string;
+      refreshToken: string;
+    }>("/auth/apple/callback", {
+      method: "POST",
+      body: JSON.stringify({ code, id_token: idToken, user }),
+    });
+  }
+
   // User Preferences
   async getUserPreferences() {
     return this.request<{ preferences: UserPreferences }>("/user/preferences");
