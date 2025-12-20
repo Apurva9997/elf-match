@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 
 function OAuthCallbackContent() {
   const router = useRouter();
@@ -17,9 +17,17 @@ function OAuthCallbackContent() {
     "loading"
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
+    // Prevent double execution
+    if (hasProcessed.current) {
+      return;
+    }
+
     const handleCallback = async () => {
+      // Mark as processing immediately to prevent race conditions
+      hasProcessed.current = true;
       const code = searchParams.get("code");
       const state = searchParams.get("state");
       const error = searchParams.get("error");

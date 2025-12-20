@@ -134,12 +134,13 @@ async function findOrCreateOAuthUser(
   providerId: string
 ) {
   // First, try to find by email (allows linking existing accounts)
+  // This ensures users can use either magic link or OAuth with the same email
   let user = await db.query.users.findFirst({
     where: eq(users.email, email.toLowerCase()),
   });
 
   if (!user) {
-    // Create new user
+    // Create new user with OAuth provider
     const [newUser] = await db
       .insert(users)
       .values({
@@ -153,6 +154,7 @@ async function findOrCreateOAuthUser(
     user = newUser;
   } else if (!user.oauthProvider) {
     // Link OAuth to existing magic link user
+    // This allows users who signed up with magic link to also use OAuth
     const [updatedUser] = await db
       .update(users)
       .set({
@@ -167,7 +169,34 @@ async function findOrCreateOAuthUser(
       .where(eq(users.id, user.id))
       .returning();
     user = updatedUser;
+  } else if (user.oauthProvider === provider) {
+    // User already has this OAuth provider - update provider ID if it changed
+    // and update profile info if needed
+    const updates: Partial<typeof users.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+    
+    if (user.oauthProviderId !== providerId) {
+      updates.oauthProviderId = providerId;
+    }
+    if (avatarUrl && !user.avatarUrl) {
+      updates.avatarUrl = avatarUrl;
+    }
+    if (name && !user.name) {
+      updates.name = name;
+    }
+    
+    if (Object.keys(updates).length > 1) { // More than just updatedAt
+      const [updatedUser] = await db
+        .update(users)
+        .set(updates)
+        .where(eq(users.id, user.id))
+        .returning();
+      user = updatedUser;
+    }
   }
+  // If user has a different OAuth provider, we just return the existing user
+  // This prevents account duplication while allowing login
 
   return user;
 }
