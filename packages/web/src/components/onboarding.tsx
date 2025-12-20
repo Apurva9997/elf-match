@@ -64,9 +64,9 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: "Welcome to Secret Santa! 🎄",
+            title: "Welcome to GiftWhisper! 🎁",
             description:
-              "Welcome! We'll help you set up your first Secret Santa exchange in 3 simple steps.",
+              "We'll help you set up your first gift exchange in 3 simple steps.",
             icon: <Gift className="w-8 h-8 text-gold" />,
           },
           {
@@ -103,9 +103,9 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: `Welcome to ${firstTeamName || "your exchange"}! 🎄`,
+            title: `Welcome to ${firstTeamName || "your exchange"}! 🎁`,
             description:
-              "As the exchange admin, here's what you need to do to get your Secret Santa exchange started.",
+              "As the exchange admin, here's what you need to do to get your gift exchange started.",
             icon: <Users className="w-8 h-8 text-gold" />,
           },
           {
@@ -138,9 +138,9 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: `Welcome to ${firstTeamName || "the exchange"}! 🎄`,
+            title: `Welcome to ${firstTeamName || "the exchange"}! 🎁`,
             description:
-              "You've been invited to join a Secret Santa exchange. Let's get you set up so you can receive your gift!",
+              "You've been invited to join a gift exchange. Let's get you set up so you can receive your gift!",
             icon: <Gift className="w-8 h-8 text-gold" />,
           },
           {
