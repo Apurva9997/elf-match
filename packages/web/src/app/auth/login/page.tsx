@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -221,7 +221,7 @@ function LoginPageContent() {
                     <div className="w-full border-t border-cream/20" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-forest-light text-cream/50">
+                    <span className="px-4 bg-gradient-card text-cream/50">
                       or continue with email
                     </span>
                   </div>
