@@ -32,7 +32,7 @@ export function PublicNav() {
             </Link>
             {isAuthenticated ? (
               <Link href="/dashboard">
-                <Button>Dashboard</Button>
+                <Button size="sm">Dashboard</Button>
               </Link>
             ) : (
               <>

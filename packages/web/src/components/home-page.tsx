@@ -81,7 +81,7 @@ export function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
-                <Button size="lg" className="w-full sm:w-auto">
+                <Button size="md" className="w-full sm:w-auto">
                   {isAuthenticated ? "Go to Dashboard" : "Create Free Exchange"}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -299,7 +299,7 @@ export function HomePage() {
                 signup fees, no credit card, no catch.
               </p>
               <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
-                <Button size="lg">
+                <Button size="md">
                   {isAuthenticated
                     ? "Go to Dashboard"
                     : "Create Your Free Exchange"}

@@ -769,6 +769,19 @@ export default function TeamPage() {
                 <HelpCircle className="w-4 h-4 mr-2" />
                 How to
               </Button>
+              <Link href="/dashboard/profile">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-cream/70 hover:text-cream"
+                >
+                  <Avatar
+                    name={user?.name || user?.email || "U"}
+                    src={user?.avatarUrl}
+                    size="sm"
+                  />
+                </Button>
+              </Link>
               {isAdmin && (
                 <>
                   <Button
