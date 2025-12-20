@@ -81,13 +81,10 @@ custom:
     sourcemap: true
     target: "node20"
     platform: "node"
-    format: "esm"
-    outputFileExtension: ".mjs"
+    format: "cjs"
     mainFields:
       - module
       - main
-    banner:
-      js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);"
 
 functions:
   # Auth
