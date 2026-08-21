@@ -4,7 +4,6 @@ import * as assignments from "./handlers/assignments.js";
 import * as auth from "./handlers/auth.js";
 import * as exclusions from "./handlers/exclusions.js";
 import * as invitations from "./handlers/invitations.js";
-import * as oauth from "./handlers/oauth.js";
 import * as profile from "./handlers/profile.js";
 import * as teams from "./handlers/teams.js";
 import * as userPreferences from "./handlers/user-preferences.js";
@@ -20,19 +19,8 @@ interface Route {
 }
 
 const routes: Route[] = [
-  // Auth
-  { method: "POST", pattern: "/auth/magic-link", handler: auth.sendMagicLink },
-  { method: "POST", pattern: "/auth/verify", handler: auth.verifyMagicLink },
-  { method: "POST", pattern: "/auth/refresh", handler: auth.refreshToken },
+  // Auth (Clerk handles sign-in; this just returns local user data)
   { method: "GET", pattern: "/auth/me", handler: auth.getMe },
-
-  // OAuth - Google
-  { method: "GET", pattern: "/auth/google", handler: oauth.getGoogleAuthUrl },
-  { method: "POST", pattern: "/auth/google/callback", handler: oauth.handleGoogleCallback },
-
-  // OAuth - Apple
-  { method: "GET", pattern: "/auth/apple", handler: oauth.getAppleAuthUrl },
-  { method: "POST", pattern: "/auth/apple/callback", handler: oauth.handleAppleCallback },
 
   // User preferences
   { method: "GET", pattern: "/user/preferences", handler: userPreferences.getUserPreferences },
