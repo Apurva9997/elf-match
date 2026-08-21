@@ -1,7 +1,3 @@
-[build]
-  command = "next build"
-  publish = ".next"
-
 [build.environment]
   # FRONTEND_URL is a public production URL (https://giftwhisper.online) hardcoded
   # in canonical/SEO metadata — not a secret, so exclude from secrets scanning.
