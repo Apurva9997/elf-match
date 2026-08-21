@@ -1,9 +1,8 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, count, eq, or } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, teamMembers, teams } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { getUserFromRequest } from "../lib/auth.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
@@ -59,13 +58,14 @@ const updateTeamSchema = z.object({
 });
 
 async function _createTeam(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = createTeamSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -81,7 +81,6 @@ async function _createTeam(
       wishlistDeadline,
     } = parsed.data;
 
-    // Create team
     const [team] = await db
       .insert(teams)
       .values({
@@ -95,7 +94,6 @@ async function _createTeam(
       })
       .returning();
 
-    // Add creator as admin member
     await db.insert(teamMembers).values({
       teamId: team.id,
       userId: user.id,
@@ -112,13 +110,13 @@ async function _createTeam(
 }
 
 async function _listTeams(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    // Get all teams the user is a member of
     const memberships = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.userId, user.id),
@@ -131,10 +129,7 @@ async function _listTeams(
         team: {
           with: {
             creator: {
-              columns: {
-                id: true,
-                name: true,
-              },
+              columns: { id: true, name: true },
             },
           },
         },
@@ -156,16 +151,16 @@ async function _listTeams(
 }
 
 async function _getTeam(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check membership
     const membership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -178,25 +173,13 @@ async function _getTeam(
       return forbidden("You are not a member of this team");
     }
 
-    // Get team with members
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
       with: {
-        creator: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
+        creator: { columns: { id: true, name: true } },
         members: {
           with: {
-            user: {
-              columns: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
+            user: { columns: { id: true, name: true, avatarUrl: true } },
           },
         },
       },
@@ -206,11 +189,7 @@ async function _getTeam(
       return notFound("Team not found");
     }
 
-    return success({
-      ...team,
-      role: membership.role,
-      membershipId: membership.id,
-    });
+    return success({ ...team, role: membership.role, membershipId: membership.id });
   } catch (err) {
     console.error("Error getting team:", err);
     return serverError("Failed to get team");
@@ -218,16 +197,16 @@ async function _getTeam(
 }
 
 async function _updateTeam(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check admin membership
     const membership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -241,7 +220,7 @@ async function _updateTeam(
       return forbidden("Only admins can update team settings");
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = updateTeamSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -257,8 +236,7 @@ async function _updateTeam(
       updates.budgetMin = data.budgetMin?.toString() ?? null;
     if (data.budgetMax !== undefined)
       updates.budgetMax = data.budgetMax?.toString() ?? null;
-    if (data.exchangeDate !== undefined)
-      updates.exchangeDate = data.exchangeDate;
+    if (data.exchangeDate !== undefined) updates.exchangeDate = data.exchangeDate;
     if (data.wishlistDeadline !== undefined)
       updates.wishlistDeadline = data.wishlistDeadline;
 
@@ -276,16 +254,16 @@ async function _updateTeam(
 }
 
 async function _deleteTeam(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check admin membership
     const membership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -309,16 +287,16 @@ async function _deleteTeam(
 }
 
 async function _getTeamStatus(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check membership
     const membership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -331,7 +309,6 @@ async function _getTeamStatus(
       return forbidden("You are not a member of this team");
     }
 
-    // Get team
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
     });
@@ -340,7 +317,6 @@ async function _getTeamStatus(
       return notFound("Team not found");
     }
 
-    // Get all members count (accepted + pending)
     const [allMembersCount] = await db
       .select({ count: count() })
       .from(teamMembers)
@@ -348,23 +324,14 @@ async function _getTeamStatus(
 
     const totalMembers = allMembersCount?.count ?? 0;
 
-    // Get accepted members for wishlist/address counts and completion percentage
     const acceptedMembers = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
         eq(teamMembers.invitationStatus, "accepted")
       ),
       with: {
-        user: {
-          with: {
-            address: true, // User-level address from userAddresses table
-          },
-        },
-        wishlist: {
-          with: {
-            items: true,
-          },
-        },
+        user: { with: { address: true } },
+        wishlist: { with: { items: true } },
       },
     });
 
@@ -372,12 +339,10 @@ async function _getTeamStatus(
     const membersWithWishlist = acceptedMembers.filter(
       (m) => m.wishlist && m.wishlist.items.length > 0
     ).length;
-    // Check user-level address instead of team-level
     const membersWithAddress = acceptedMembers.filter(
       (m) => m.user?.address
     ).length;
 
-    // Check if assignments exist
     const [assignmentCount] = await db
       .select({ count: count() })
       .from(assignments)
@@ -385,7 +350,6 @@ async function _getTeamStatus(
 
     const hasAssignments = (assignmentCount?.count ?? 0) > 0;
 
-    // Get pending invitations count
     const [pendingCount] = await db
       .select({ count: count() })
       .from(teamMembers)
@@ -419,7 +383,6 @@ async function _getTeamStatus(
   }
 }
 
-// Export wrapped handlers with rate limiting
 export const createTeam = wrapHandler(_createTeam, {
   limiter: rateLimiters.authenticatedWrite,
   useUserId: true,

@@ -1,12 +1,11 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq, or } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { db, teamMembers, teams, users } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
+import { getUserFromRequest } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
@@ -26,16 +25,16 @@ const inviteMembersSchema = z.object({
 });
 
 async function _inviteMembers(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check admin membership
     const membership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -49,7 +48,7 @@ async function _inviteMembers(
       return forbidden("Only admins can invite members");
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = inviteMembersSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -58,7 +57,6 @@ async function _inviteMembers(
 
     const { emails } = parsed.data;
 
-    // Get team details for email
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
     });
@@ -74,7 +72,6 @@ async function _inviteMembers(
       const normalizedEmail = email.toLowerCase();
 
       try {
-        // Check if already a member or invited
         const existingMember = await db.query.teamMembers.findFirst({
           where: and(
             eq(teamMembers.teamId, teamId),
@@ -87,7 +84,6 @@ async function _inviteMembers(
           continue;
         }
 
-        // Check if user exists and is already a member
         const existingUser = await db.query.users.findFirst({
           where: eq(users.email, normalizedEmail),
         });
@@ -106,9 +102,8 @@ async function _inviteMembers(
           }
         }
 
-        // Create invitation with hashed token
         const token = uuidv4();
-        const tokenHash = hashToken(token); // Store hash, not the actual token
+        const tokenHash = hashToken(token);
         await db.insert(teamMembers).values({
           teamId,
           userId: existingUser?.id,
@@ -118,7 +113,6 @@ async function _inviteMembers(
           role: "member",
         });
 
-        // Send the actual token to the user via email
         await sendInvitationEmail(
           normalizedEmail,
           team.name,
@@ -145,34 +139,30 @@ async function _inviteMembers(
 }
 
 async function _acceptInvitation(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const token = event.pathParameters?.token;
+    const token = params.token;
     if (!token) return error("Invitation token required", 400);
 
-    // Hash the provided token to compare with stored hash
     const tokenHash = hashToken(token);
 
-    // Find the invitation using the hash
     const invitation = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.invitationToken, tokenHash),
         eq(teamMembers.invitationStatus, "pending")
       ),
-      with: {
-        team: true,
-      },
+      with: { team: true },
     });
 
     if (!invitation) {
       return notFound("Invitation not found or already used");
     }
 
-    // Verify email matches (if invitation was for a specific email)
     if (
       invitation.invitedEmail &&
       invitation.invitedEmail !== user.email.toLowerCase()
@@ -180,7 +170,6 @@ async function _acceptInvitation(
       return forbidden("This invitation was sent to a different email address");
     }
 
-    // Check if user is already a member
     const existingMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, invitation.teamId),
@@ -190,12 +179,10 @@ async function _acceptInvitation(
     });
 
     if (existingMembership) {
-      // Delete the pending invitation since user is already a member
       await db.delete(teamMembers).where(eq(teamMembers.id, invitation.id));
       return success({ team: invitation.team, message: "Already a member" });
     }
 
-    // Accept the invitation
     await db
       .update(teamMembers)
       .set({
@@ -214,16 +201,15 @@ async function _acceptInvitation(
 }
 
 async function _declineInvitation(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const token = event.pathParameters?.token;
+    const token = params.token;
     if (!token) return error("Invitation token required", 400);
 
-    // Hash the provided token to compare with stored hash
     const tokenHash = hashToken(token);
 
-    // Find the invitation using the hash
     const invitation = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.invitationToken, tokenHash),
@@ -235,13 +221,9 @@ async function _declineInvitation(
       return notFound("Invitation not found or already used");
     }
 
-    // Update status to declined
     await db
       .update(teamMembers)
-      .set({
-        invitationStatus: "declined",
-        invitationToken: null,
-      })
+      .set({ invitationStatus: "declined", invitationToken: null })
       .where(eq(teamMembers.id, invitation.id));
 
     return success({ message: "Invitation declined" });
@@ -252,18 +234,17 @@ async function _declineInvitation(
 }
 
 async function _removeMember(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
-    const memberId = event.pathParameters?.memberId;
+    const { teamId, memberId } = params;
     if (!teamId || !memberId)
       return error("Team ID and Member ID required", 400);
 
-    // Check admin membership
     const adminMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -277,7 +258,6 @@ async function _removeMember(
       return forbidden("Only admins can remove members");
     }
 
-    // Find the member to remove
     const memberToRemove = await db.query.teamMembers.findFirst({
       where: and(eq(teamMembers.id, memberId), eq(teamMembers.teamId, teamId)),
     });
@@ -286,7 +266,6 @@ async function _removeMember(
       return notFound("Member not found");
     }
 
-    // Cannot remove yourself if you're the only admin
     if (memberToRemove.userId === user.id) {
       const otherAdmins = await db.query.teamMembers.findMany({
         where: and(
@@ -304,7 +283,6 @@ async function _removeMember(
       }
     }
 
-    // Delete the member
     await db.delete(teamMembers).where(eq(teamMembers.id, memberId));
 
     return success({ message: "Member removed" });
@@ -315,15 +293,13 @@ async function _removeMember(
 }
 
 async function _listPendingInvitations(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    // Find pending invitations where:
-    // 1. invitedEmail matches user's email, OR
-    // 2. userId matches user's id (for cases where user was known at invite time)
     const pendingInvitations = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.invitationStatus, "pending"),
@@ -335,12 +311,7 @@ async function _listPendingInvitations(
       with: {
         team: {
           with: {
-            creator: {
-              columns: {
-                id: true,
-                name: true,
-              },
-            },
+            creator: { columns: { id: true, name: true } },
           },
         },
       },
@@ -363,16 +334,16 @@ async function _listPendingInvitations(
 }
 
 async function _acceptInvitationDirect(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const invitationId = event.pathParameters?.invitationId;
+    const invitationId = params.invitationId;
     if (!invitationId) return error("Invitation ID required", 400);
 
-    // Find the invitation
     const invitation = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.id, invitationId),
@@ -382,16 +353,13 @@ async function _acceptInvitationDirect(
           eq(teamMembers.userId, user.id)
         )
       ),
-      with: {
-        team: true,
-      },
+      with: { team: true },
     });
 
     if (!invitation) {
       return notFound("Invitation not found or not for this user");
     }
 
-    // Check if user is already a member through another invitation
     const existingMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, invitation.teamId),
@@ -401,12 +369,10 @@ async function _acceptInvitationDirect(
     });
 
     if (existingMembership) {
-      // Delete the pending invitation since user is already a member
       await db.delete(teamMembers).where(eq(teamMembers.id, invitation.id));
       return success({ team: invitation.team, message: "Already a member" });
     }
 
-    // Accept the invitation
     await db
       .update(teamMembers)
       .set({
@@ -425,16 +391,16 @@ async function _acceptInvitationDirect(
 }
 
 async function _declineInvitationDirect(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const invitationId = event.pathParameters?.invitationId;
+    const invitationId = params.invitationId;
     if (!invitationId) return error("Invitation ID required", 400);
 
-    // Find the invitation
     const invitation = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.id, invitationId),
@@ -450,13 +416,9 @@ async function _declineInvitationDirect(
       return notFound("Invitation not found or not for this user");
     }
 
-    // Update status to declined
     await db
       .update(teamMembers)
-      .set({
-        invitationStatus: "declined",
-        invitationToken: null,
-      })
+      .set({ invitationStatus: "declined", invitationToken: null })
       .where(eq(teamMembers.id, invitation.id));
 
     return success({ message: "Invitation declined" });
@@ -467,18 +429,17 @@ async function _declineInvitationDirect(
 }
 
 async function _resendInvitation(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
-    const memberId = event.pathParameters?.memberId;
+    const { teamId, memberId } = params;
     if (!teamId || !memberId)
       return error("Team ID and Member ID required", 400);
 
-    // Check admin membership
     const adminMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -492,7 +453,6 @@ async function _resendInvitation(
       return forbidden("Only admins can resend invitations");
     }
 
-    // Find the pending member
     const pendingMember = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.id, memberId),
@@ -509,7 +469,6 @@ async function _resendInvitation(
       return error("No email address for this invitation", 400);
     }
 
-    // Get team details for email
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
     });
@@ -518,19 +477,14 @@ async function _resendInvitation(
       return notFound("Team not found");
     }
 
-    // Generate a new token and update the invitation
     const token = uuidv4();
     const tokenHash = hashToken(token);
 
     await db
       .update(teamMembers)
-      .set({
-        invitationToken: tokenHash,
-        invitedAt: new Date(),
-      })
+      .set({ invitationToken: tokenHash, invitedAt: new Date() })
       .where(eq(teamMembers.id, memberId));
 
-    // Send the invitation email
     await sendInvitationEmail(
       pendingMember.invitedEmail,
       team.name,
@@ -545,7 +499,6 @@ async function _resendInvitation(
   }
 }
 
-// Export wrapped handlers with rate limiting
 export const inviteMembers = wrapHandler(_inviteMembers, {
   limiter: rateLimiters.inviteMembers,
   useUserId: true,
@@ -558,7 +511,7 @@ export const acceptInvitation = wrapHandler(_acceptInvitation, {
 
 export const declineInvitation = wrapHandler(_declineInvitation, {
   limiter: rateLimiters.authenticatedWrite,
-  useUserId: false, // May not have auth token
+  useUserId: false,
 });
 
 export const removeMember = wrapHandler(_removeMember, {

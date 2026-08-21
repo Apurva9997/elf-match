@@ -16,13 +16,11 @@ import {
 // Users table
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
+  clerkId: varchar("clerk_id", { length: 255 }).unique(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
   mobile: varchar("mobile", { length: 20 }),
   avatarUrl: text("avatar_url"),
-  // OAuth provider info (null for magic link users)
-  oauthProvider: varchar("oauth_provider", { length: 50 }), // 'google' | 'apple' | null
-  oauthProviderId: varchar("oauth_provider_id", { length: 255 }), // Provider's user ID
   preferences: jsonb("preferences").$type<{
     onboarding?: {
       new_user?: boolean;
@@ -166,16 +164,6 @@ export const exclusions = pgTable("exclusions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Magic link tokens for authentication
-export const magicLinks = pgTable("magic_links", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  email: varchar("email", { length: 255 }).notNull(),
-  token: varchar("token", { length: 255 }).notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
 // Activity log for transparency
 export const activityLog = pgTable("activity_log", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -292,5 +280,3 @@ export type Assignment = typeof assignments.$inferSelect;
 export type NewAssignment = typeof assignments.$inferInsert;
 export type Exclusion = typeof exclusions.$inferSelect;
 export type NewExclusion = typeof exclusions.$inferInsert;
-export type MagicLink = typeof magicLinks.$inferSelect;
-export type NewMagicLink = typeof magicLinks.$inferInsert;

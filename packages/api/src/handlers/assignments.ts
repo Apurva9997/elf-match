@@ -1,15 +1,10 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import {
-  assignments,
-  db,
-  exclusions,
-  teamMembers,
-  teams,
-} from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
+import { assignments, db, exclusions, teamMembers, teams } from "../db/index.js";
+import { getUserFromRequest } from "../lib/auth.js";
 import { sendAssignmentEmail } from "../lib/email.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
+import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
   forbidden,
@@ -17,9 +12,7 @@ import {
   serverError,
   success,
   unauthorized,
-  } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
-import { rateLimiters } from "../lib/rate-limit.js";
+} from "../lib/response.js";
 
 const updateAssignmentSchema = z.object({
   giftStatus: z.enum(["pending", "purchased", "shipped", "delivered"]),
@@ -46,7 +39,6 @@ async function getMembershipForTeam(userId: string, teamId: string) {
   });
 }
 
-// Fisher-Yates shuffle
 function shuffle<T>(array: T[]): T[] {
   const result = [...array];
   for (let i = result.length - 1; i > 0; i--) {
@@ -56,7 +48,6 @@ function shuffle<T>(array: T[]): T[] {
   return result;
 }
 
-// Generate valid Secret Santa assignments considering exclusions
 function generateAssignments(
   memberIds: string[],
   exclusionPairs: Set<string>
@@ -68,52 +59,41 @@ function generateAssignments(
     const receivers = shuffle([...memberIds]);
 
     let valid = true;
-    const assignments = new Map<string, string>();
+    const assignmentMap = new Map<string, string>();
 
     for (let i = 0; i < givers.length; i++) {
       const giver = givers[i];
       const receiver = receivers[i];
 
-      // Check if giver is assigned to themselves
-      if (giver === receiver) {
+      if (giver === receiver) { valid = false; break; }
+
+      const k1 = `${giver}:${receiver}`;
+      const k2 = `${receiver}:${giver}`;
+      if (exclusionPairs.has(k1) || exclusionPairs.has(k2)) {
         valid = false;
         break;
       }
 
-      // Check exclusion rules
-      const exclusionKey1 = `${giver}:${receiver}`;
-      const exclusionKey2 = `${receiver}:${giver}`;
-
-      if (
-        exclusionPairs.has(exclusionKey1) ||
-        exclusionPairs.has(exclusionKey2)
-      ) {
-        valid = false;
-        break;
-      }
-
-      assignments.set(giver, receiver);
+      assignmentMap.set(giver, receiver);
     }
 
-    if (valid) {
-      return assignments;
-    }
+    if (valid) return assignmentMap;
   }
 
-  return null; // Could not find valid assignment
+  return null;
 }
 
 async function _triggerAssignment(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check admin membership
     const adminMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -127,7 +107,6 @@ async function _triggerAssignment(
       return forbidden("Only admins can trigger assignments");
     }
 
-    // Check if assignments already exist
     const existingAssignments = await db.query.assignments.findMany({
       where: eq(assignments.teamId, teamId),
     });
@@ -136,27 +115,22 @@ async function _triggerAssignment(
       return error("Assignments have already been made for this team", 400);
     }
 
-    // Get all accepted members
     const members = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
         eq(teamMembers.invitationStatus, "accepted")
       ),
-      with: {
-        user: true,
-      },
+      with: { user: true },
     });
 
     if (members.length < 3) {
       return error("Need at least 3 members to create assignments", 400);
     }
 
-    // Get exclusions
     const teamExclusions = await db.query.exclusions.findMany({
       where: eq(exclusions.teamId, teamId),
     });
 
-    // Build exclusion pairs set
     const exclusionPairs = new Set<string>();
     for (const excl of teamExclusions) {
       exclusionPairs.add(`${excl.member1Id}:${excl.member2Id}`);
@@ -165,24 +139,17 @@ async function _triggerAssignment(
       }
     }
 
-    // Parse request body to check if preview assignments are provided
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = confirmAssignmentSchema.safeParse(body);
 
     let assignmentMap: Map<string, string> | null = null;
 
-    // If preview assignments are provided, validate and use them
     if (parsed.success && parsed.data.assignments) {
       const memberIds = new Set(members.map((m) => m.id));
       const providedAssignments = parsed.data.assignments;
 
-      // Validate all members are included
-      const providedGiverIds = new Set(
-        providedAssignments.map((a) => a.giverId)
-      );
-      const providedReceiverIds = new Set(
-        providedAssignments.map((a) => a.receiverId)
-      );
+      const providedGiverIds = new Set(providedAssignments.map((a) => a.giverId));
+      const providedReceiverIds = new Set(providedAssignments.map((a) => a.receiverId));
 
       if (
         providedGiverIds.size !== memberIds.size ||
@@ -196,31 +163,21 @@ async function _triggerAssignment(
         );
       }
 
-      // Validate assignments don't violate exclusions or self-assignment
       assignmentMap = new Map<string, string>();
       for (const assignment of providedAssignments) {
-        // Check self-assignment
         if (assignment.giverId === assignment.receiverId) {
-          return error(
-            `Invalid assignment: member cannot be assigned to themselves`,
-            400
-          );
+          return error("Invalid assignment: member cannot be assigned to themselves", 400);
         }
 
-        // Check exclusions
-        const exclusionKey1 = `${assignment.giverId}:${assignment.receiverId}`;
-        const exclusionKey2 = `${assignment.receiverId}:${assignment.giverId}`;
-        if (
-          exclusionPairs.has(exclusionKey1) ||
-          exclusionPairs.has(exclusionKey2)
-        ) {
-          return error(`Invalid assignment: violates exclusion rule`, 400);
+        const k1 = `${assignment.giverId}:${assignment.receiverId}`;
+        const k2 = `${assignment.receiverId}:${assignment.giverId}`;
+        if (exclusionPairs.has(k1) || exclusionPairs.has(k2)) {
+          return error("Invalid assignment: violates exclusion rule", 400);
         }
 
         assignmentMap.set(assignment.giverId, assignment.receiverId);
       }
     } else {
-      // Generate new assignments if none provided
       const memberIds = members.map((m) => m.id);
       assignmentMap = generateAssignments(memberIds, exclusionPairs);
 
@@ -232,49 +189,32 @@ async function _triggerAssignment(
       }
     }
 
-    // Get team for email
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
     });
 
-    if (!team) {
-      return notFound("Team not found");
-    }
+    if (!team) return notFound("Team not found");
 
-    // Save assignments and send emails
     const assignmentRecords = [];
     for (const [giverId, receiverId] of assignmentMap) {
       const [assignment] = await db
         .insert(assignments)
-        .values({
-          teamId,
-          giverId,
-          receiverId,
-        })
+        .values({ teamId, giverId, receiverId })
         .returning();
       assignmentRecords.push(assignment);
 
-      // Send email to giver
       const giver = members.find((m) => m.id === giverId);
       const receiver = members.find((m) => m.id === receiverId);
 
       if (giver?.user?.email && receiver?.user?.name) {
         try {
-          await sendAssignmentEmail(
-            giver.user.email,
-            team.name,
-            receiver.user.name
-          );
+          await sendAssignmentEmail(giver.user.email, team.name, receiver.user.name);
         } catch (emailErr) {
-          console.error(
-            `Failed to send assignment email to ${giver.user.email}:`,
-            emailErr
-          );
+          console.error(`Failed to send assignment email to ${giver.user.email}:`, emailErr);
         }
       }
     }
 
-    // Update team status
     await db
       .update(teams)
       .set({ status: "assigned", updatedAt: new Date() })
@@ -291,21 +231,19 @@ async function _triggerAssignment(
 }
 
 async function _getAssignment(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
-    if (!membership) {
-      return forbidden("You are not a member of this team");
-    }
+    if (!membership) return forbidden("You are not a member of this team");
 
-    // Find the assignment where this user is the giver
     const assignment = await db.query.assignments.findFirst({
       where: and(
         eq(assignments.teamId, teamId),
@@ -314,23 +252,14 @@ async function _getAssignment(
       with: {
         receiver: {
           with: {
-            user: {
-              columns: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
+            user: { columns: { id: true, name: true, avatarUrl: true } },
           },
         },
       },
     });
 
     if (!assignment) {
-      return success({
-        assigned: false,
-        message: "Assignments have not been made yet.",
-      });
+      return success({ assigned: false, message: "Assignments have not been made yet." });
     }
 
     return success({
@@ -349,21 +278,20 @@ async function _getAssignment(
 }
 
 async function _updateAssignment(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
-    if (!membership) {
-      return forbidden("You are not a member of this team");
-    }
+    if (!membership) return forbidden("You are not a member of this team");
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = updateAssignmentSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -372,7 +300,6 @@ async function _updateAssignment(
 
     const { giftStatus } = parsed.data;
 
-    // Find and update the assignment
     const assignment = await db.query.assignments.findFirst({
       where: and(
         eq(assignments.teamId, teamId),
@@ -380,9 +307,7 @@ async function _updateAssignment(
       ),
     });
 
-    if (!assignment) {
-      return notFound("Assignment not found");
-    }
+    if (!assignment) return notFound("Assignment not found");
 
     const [updated] = await db
       .update(assignments)
@@ -397,18 +322,17 @@ async function _updateAssignment(
   }
 }
 
-// Preview assignments without saving - allows admin to review before confirming
 async function _previewAssignment(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
-    // Check admin membership
     const adminMembership = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -418,11 +342,8 @@ async function _previewAssignment(
       ),
     });
 
-    if (!adminMembership) {
-      return forbidden("Only admins can preview assignments");
-    }
+    if (!adminMembership) return forbidden("Only admins can preview assignments");
 
-    // Check if assignments already exist
     const existingAssignments = await db.query.assignments.findMany({
       where: eq(assignments.teamId, teamId),
     });
@@ -431,27 +352,22 @@ async function _previewAssignment(
       return error("Assignments have already been made for this team", 400);
     }
 
-    // Get all accepted members
     const members = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
         eq(teamMembers.invitationStatus, "accepted")
       ),
-      with: {
-        user: true,
-      },
+      with: { user: true },
     });
 
     if (members.length < 3) {
       return error("Need at least 3 members to create assignments", 400);
     }
 
-    // Get exclusions
     const teamExclusions = await db.query.exclusions.findMany({
       where: eq(exclusions.teamId, teamId),
     });
 
-    // Build exclusion pairs set
     const exclusionPairs = new Set<string>();
     for (const excl of teamExclusions) {
       exclusionPairs.add(`${excl.member1Id}:${excl.member2Id}`);
@@ -460,7 +376,6 @@ async function _previewAssignment(
       }
     }
 
-    // Generate assignments (but don't save)
     const memberIds = members.map((m) => m.id);
     const assignmentMap = generateAssignments(memberIds, exclusionPairs);
 
@@ -471,7 +386,6 @@ async function _previewAssignment(
       );
     }
 
-    // Build preview response with member details
     const preview = [];
     for (const [giverId, receiverId] of assignmentMap) {
       const giver = members.find((m) => m.id === giverId);
@@ -502,7 +416,6 @@ async function _previewAssignment(
   }
 }
 
-// Export wrapped handlers with rate limiting
 export const triggerAssignment = wrapHandler(_triggerAssignment, {
   limiter: rateLimiters.assignment,
   useUserId: true,
