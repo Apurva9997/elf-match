@@ -1,7 +1,7 @@
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { Resend } from "resend";
 
-const ses = new SESClient({ region: process.env.AWS_REGION || "ap-south-1" });
-const FROM_EMAIL = process.env.SES_FROM_EMAIL || "info@giftwhisper.online";
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = process.env.FROM_EMAIL || "info@giftwhisper.online";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 interface EmailOptions {
@@ -17,8 +17,7 @@ export async function sendEmail({
   html,
   text,
 }: EmailOptions): Promise<void> {
-  // In development, just log the email
-  if (process.env.STAGE === "dev" || process.env.NODE_ENV === "development") {
+  if (process.env.NETLIFY_DEV === "true" || process.env.NODE_ENV === "development") {
     console.log("📧 Email (dev mode):");
     console.log(`  To: ${to}`);
     console.log(`  Subject: ${subject}`);
@@ -26,21 +25,13 @@ export async function sendEmail({
     return;
   }
 
-  const command = new SendEmailCommand({
-    Source: FROM_EMAIL,
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: { Data: subject },
-      Body: {
-        Html: { Data: html },
-        ...(text && { Text: { Data: text } }),
-      },
-    },
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html,
+    ...(text && { text }),
   });
-
-  await ses.send(command);
 }
 
 export async function sendMagicLinkEmail(
@@ -62,7 +53,6 @@ export async function sendMagicLinkEmail(
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <!-- Header -->
               <tr>
                 <td align="center" style="padding-bottom: 32px;">
                   <span style="font-size: 48px;">🎄</span>
@@ -71,8 +61,6 @@ export async function sendMagicLinkEmail(
                   </h1>
                 </td>
               </tr>
-              
-              <!-- Card -->
               <tr>
                 <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
                   <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
@@ -81,26 +69,21 @@ export async function sendMagicLinkEmail(
                   <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
                     Click the button below to securely sign in. This link will expire in 15 minutes.
                   </p>
-                  
-                  <!-- Button -->
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
                       <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${magicLink}" target="_blank" 
+                        <a href="${magicLink}" target="_blank"
                            style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           ✨ Sign In
                         </a>
                       </td>
                     </tr>
                   </table>
-                  
                   <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 32px 0 0 0;">
                     If you didn't request this email, you can safely ignore it.
                   </p>
                 </td>
               </tr>
-              
-              <!-- Footer -->
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">
@@ -155,7 +138,6 @@ export async function sendInvitationEmail(
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <!-- Header -->
               <tr>
                 <td align="center" style="padding-bottom: 32px;">
                   <span style="font-size: 48px;">🎁</span>
@@ -164,8 +146,6 @@ export async function sendInvitationEmail(
                   </h1>
                 </td>
               </tr>
-              
-              <!-- Card -->
               <tr>
                 <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
                   <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
@@ -174,26 +154,21 @@ export async function sendInvitationEmail(
                   <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
                     <strong style="color: #D4A853;">${inviterName}</strong> has invited you to join their Secret Santa gift exchange! Click below to accept and start adding items to your wishlist.
                   </p>
-                  
-                  <!-- Button -->
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
                       <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${inviteLink}" target="_blank" 
+                        <a href="${inviteLink}" target="_blank"
                            style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           🎄 Accept Invitation
                         </a>
                       </td>
                     </tr>
                   </table>
-                  
                   <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 32px 0 0 0;">
                     If you don't want to participate, you can simply ignore this email.
                   </p>
                 </td>
               </tr>
-              
-              <!-- Footer -->
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">
@@ -247,7 +222,6 @@ export async function sendAssignmentEmail(
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <!-- Header -->
               <tr>
                 <td align="center" style="padding-bottom: 32px;">
                   <span style="font-size: 48px;">🎅</span>
@@ -256,8 +230,6 @@ export async function sendAssignmentEmail(
                   </h1>
                 </td>
               </tr>
-              
-              <!-- Card -->
               <tr>
                 <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
                   <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
@@ -269,26 +241,21 @@ export async function sendAssignmentEmail(
                   <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
                     You'll be getting a gift for: <strong style="color: #4ADE80; font-size: 20px;">${gifteeName}</strong>
                   </p>
-                  
-                  <!-- Button -->
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
                       <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${dashboardLink}" target="_blank" 
+                        <a href="${dashboardLink}" target="_blank"
                            style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           🎁 View Their Wishlist
                         </a>
                       </td>
                     </tr>
                   </table>
-                  
                   <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 32px 0 0 0;">
                     Remember, keep it a secret! 🤫
                   </p>
                 </td>
               </tr>
-              
-              <!-- Footer -->
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">
@@ -350,7 +317,6 @@ export async function sendReminderEmail(
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <!-- Header -->
               <tr>
                 <td align="center" style="padding-bottom: 32px;">
                   <span style="font-size: 48px;">⏰</span>
@@ -359,8 +325,6 @@ export async function sendReminderEmail(
                   </h1>
                 </td>
               </tr>
-              
-              <!-- Card -->
               <tr>
                 <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
                   <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
@@ -375,12 +339,10 @@ export async function sendReminderEmail(
                   <ul style="color: #F87171; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0; padding-left: 20px;">
                     ${missingItemsHtml}
                   </ul>
-                  
-                  <!-- Button -->
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
                     <tr>
                       <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${dashboardLink}" target="_blank" 
+                        <a href="${dashboardLink}" target="_blank"
                            style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
                           ✏️ Complete Now
                         </a>
@@ -389,8 +351,6 @@ export async function sendReminderEmail(
                   </table>
                 </td>
               </tr>
-              
-              <!-- Footer -->
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">

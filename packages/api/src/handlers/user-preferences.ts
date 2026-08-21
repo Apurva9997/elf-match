@@ -1,10 +1,9 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, users } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
+import { getUserFromRequest } from "../lib/auth.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 
 const updatePreferencesSchema = z.object({
@@ -18,10 +17,11 @@ const updatePreferencesSchema = z.object({
 });
 
 async function _getUserPreferences(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
 
     if (!user) {
       return unauthorized();
@@ -44,23 +44,23 @@ async function _getUserPreferences(
 }
 
 async function _updateUserPreferences(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
 
     if (!user) {
       return unauthorized();
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = updatePreferencesSchema.safeParse(body);
 
     if (!parsed.success) {
       return error("Invalid preferences data", 400, "VALIDATION_ERROR");
     }
 
-    // Get current preferences
     const currentUser = await db.query.users.findFirst({
       where: eq(users.id, user.id),
       columns: {
@@ -70,7 +70,6 @@ async function _updateUserPreferences(
 
     const currentPreferences = currentUser?.preferences || {};
 
-    // Merge new preferences with existing ones
     const updatedPreferences = {
       ...currentPreferences,
       ...parsed.data,
@@ -80,7 +79,6 @@ async function _updateUserPreferences(
       },
     };
 
-    // Update user preferences
     const [updatedUser] = await db
       .update(users)
       .set({
@@ -99,7 +97,6 @@ async function _updateUserPreferences(
   }
 }
 
-// Export wrapped handlers
 export const getUserPreferences = wrapHandler(_getUserPreferences, {
   limiter: rateLimiters.authenticatedRead,
   useUserId: true,
