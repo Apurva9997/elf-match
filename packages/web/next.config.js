@@ -16,8 +16,8 @@ module.exports = withSentryConfig(nextConfig, {
   },
   hideSourceMaps: true,
   disableLogger: true,
-  // Skip source map uploads when no auth token is present (e.g. Netlify builds
-  // without SENTRY_AUTH_TOKEN configured) — prevents non-zero exit in CI.
+  // Skip source map uploads when no auth token is present — prevents
+  // non-zero exit in Netlify CI when SENTRY_AUTH_TOKEN is not configured.
   sourcemaps: {
     disable: !process.env.SENTRY_AUTH_TOKEN,
   },
