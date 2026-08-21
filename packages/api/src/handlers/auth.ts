@@ -1,16 +1,15 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db, magicLinks, users } from "../db/index.js";
 import {
   generateMagicLinkToken,
   generateTokens,
-  getUserFromEvent,
+  getUserFromRequest,
   verifyToken,
 } from "../lib/auth.js";
 import { sendMagicLinkEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
@@ -32,10 +31,11 @@ const refreshTokenSchema = z.object({
 });
 
 async function _sendMagicLink(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = sendMagicLinkSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -44,17 +44,15 @@ async function _sendMagicLink(
 
     const { email } = parsed.data;
     const token = generateMagicLinkToken();
-    const tokenHash = hashToken(token); // Store hash, not the actual token
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Store the magic link with hashed token
     await db.insert(magicLinks).values({
       email: email.toLowerCase(),
       token: tokenHash,
       expiresAt,
     });
 
-    // Send the actual token to the user via email
     await sendMagicLinkEmail(email.toLowerCase(), token);
 
     return success({ message: "Magic link sent" });
@@ -65,10 +63,11 @@ async function _sendMagicLink(
 }
 
 async function _verifyMagicLink(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = verifyMagicLinkSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -76,11 +75,8 @@ async function _verifyMagicLink(
     }
 
     const { token, name } = parsed.data;
-
-    // Hash the provided token to compare with stored hash
     const tokenHash = hashToken(token);
 
-    // Find and validate the magic link using the hash
     const magicLink = await db.query.magicLinks.findFirst({
       where: and(
         eq(magicLinks.token, tokenHash),
@@ -93,21 +89,16 @@ async function _verifyMagicLink(
       return error("Invalid or expired token", 400, "INVALID_TOKEN");
     }
 
-    // Mark the magic link as used
     await db
       .update(magicLinks)
       .set({ usedAt: new Date() })
       .where(eq(magicLinks.id, magicLink.id));
 
-    // Find or create the user by email
-    // This ensures users can use either magic link or OAuth with the same email
-    // If user already exists (e.g., signed up with OAuth), we allow magic link login
     let user = await db.query.users.findFirst({
       where: eq(users.email, magicLink.email),
     });
 
     if (!user) {
-      // Create new user with magic link
       const [newUser] = await db
         .insert(users)
         .values({
@@ -117,8 +108,6 @@ async function _verifyMagicLink(
         .returning();
       user = newUser;
     } else {
-      // User already exists (may have been created via OAuth or previous magic link)
-      // Update name if provided and user doesn't have one
       if (name && !user.name) {
         const [updatedUser] = await db
           .update(users)
@@ -129,7 +118,6 @@ async function _verifyMagicLink(
       }
     }
 
-    // Generate tokens
     const tokens = await generateTokens(user.id, user.email);
 
     return success({
@@ -149,10 +137,11 @@ async function _verifyMagicLink(
 }
 
 async function _refreshToken(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = refreshTokenSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -166,7 +155,6 @@ async function _refreshToken(
       return unauthorized("Invalid refresh token");
     }
 
-    // Verify user still exists
     const user = await db.query.users.findFirst({
       where: eq(users.id, payload.userId),
     });
@@ -175,7 +163,6 @@ async function _refreshToken(
       return unauthorized("User not found");
     }
 
-    // Generate new tokens
     const tokens = await generateTokens(user.id, user.email);
 
     return success({
@@ -194,11 +181,9 @@ async function _refreshToken(
   }
 }
 
-async function _getMe(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+async function _getMe(req: Request, _params: RouteParams): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
 
     if (!user) {
       return unauthorized();
@@ -217,10 +202,9 @@ async function _getMe(
   }
 }
 
-// Export wrapped handlers with rate limiting
 export const sendMagicLink = wrapHandler(_sendMagicLink, {
   limiter: rateLimiters.auth,
-  useUserId: false, // Public endpoint, use IP
+  useUserId: false,
 });
 
 export const verifyMagicLink = wrapHandler(_verifyMagicLink, {
@@ -230,7 +214,7 @@ export const verifyMagicLink = wrapHandler(_verifyMagicLink, {
 
 export const refreshToken = wrapHandler(_refreshToken, {
   limiter: rateLimiters.authenticatedWrite,
-  useUserId: true, // Extract from token
+  useUserId: true,
 });
 
 export const getMe = wrapHandler(_getMe, {

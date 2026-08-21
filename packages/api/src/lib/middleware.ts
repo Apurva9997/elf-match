@@ -1,61 +1,79 @@
 import type { Ratelimit } from "@upstash/ratelimit";
-import type {
-  APIGatewayProxyEventV2,
-  APIGatewayProxyResult,
-  Handler,
-} from "aws-lambda";
+import { Sentry } from "./sentry.js";
 import { checkRateLimit, getIdentifier } from "./rate-limit.js";
-import { wrapHandler as wrapSentry } from "./sentry.js";
 
-type LambdaHandler = Handler<APIGatewayProxyEventV2, APIGatewayProxyResult>;
+export type RouteParams = Record<string, string>;
+export type NetlifyHandler = (
+  req: Request,
+  params: RouteParams
+) => Promise<Response>;
 
 interface RateLimitOptions {
   limiter: Ratelimit;
-  useUserId?: boolean; // If true, extract userId from JWT
+  useUserId?: boolean;
 }
 
-/**
- * Wrap handler with rate limiting
- */
-export function withRateLimit(
-  handler: LambdaHandler,
-  options: RateLimitOptions
-): LambdaHandler {
-  return async (event, context, callback): Promise<APIGatewayProxyResult> => {
-    try {
-      // Get identifier
-      let identifier: string;
+const corsOrigin = () =>
+  process.env.FRONTEND_URL || "http://localhost:3000";
 
-      if (options.useUserId) {
-        // Extract userId from JWT token
-        const authHeader =
-          event.headers.authorization || event.headers.Authorization;
+function rateLimitExceededResponse(reset: number, headers: Record<string, string>): Response {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: {
+        message: "Too many requests. Please try again later.",
+        code: "RATE_LIMIT_EXCEEDED",
+        retryAfter: reset,
+      },
+    }),
+    {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": corsOrigin(),
+        "Access-Control-Allow-Credentials": "true",
+        "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
+        ...headers,
+      },
+    }
+  );
+}
+
+export function wrapHandler(
+  handler: NetlifyHandler,
+  rateLimitOptions?: RateLimitOptions
+): NetlifyHandler {
+  return async (req: Request, params: RouteParams): Promise<Response> => {
+    try {
+      if (!rateLimitOptions) {
+        return await handler(req, params);
+      }
+
+      let identifier: string;
+      if (rateLimitOptions.useUserId) {
+        const authHeader = req.headers.get("authorization");
         if (authHeader?.startsWith("Bearer ")) {
-          const token = authHeader.slice(7);
           try {
-            // Simple JWT decode (payload only, we already verified in handler)
+            const token = authHeader.slice(7);
             const payload = JSON.parse(
               Buffer.from(token.split(".")[1], "base64").toString()
             );
-            identifier = getIdentifier(event, payload.userId);
+            identifier = getIdentifier(req, payload.userId);
           } catch {
-            // If token decode fails, fall back to IP-based limiting
-            identifier = getIdentifier(event);
+            identifier = getIdentifier(req);
           }
         } else {
-          identifier = getIdentifier(event);
+          identifier = getIdentifier(req);
         }
       } else {
-        identifier = getIdentifier(event);
+        identifier = getIdentifier(req);
       }
 
-      // Check rate limit
       const { success, limit, remaining, reset } = await checkRateLimit(
-        options.limiter,
+        rateLimitOptions.limiter,
         identifier
       );
 
-      // Add rate limit headers to response
       const rateLimitHeaders = {
         "X-RateLimit-Limit": limit.toString(),
         "X-RateLimit-Remaining": remaining.toString(),
@@ -63,75 +81,36 @@ export function withRateLimit(
       };
 
       if (!success) {
-        const rateLimitResponse: APIGatewayProxyResult = {
-          statusCode: 429,
+        return rateLimitExceededResponse(reset, rateLimitHeaders);
+      }
+
+      const response = await handler(req, params);
+
+      const newHeaders = new Headers(response.headers);
+      for (const [key, value] of Object.entries(rateLimitHeaders)) {
+        newHeaders.set(key, value);
+      }
+      return new Response(response.body, {
+        status: response.status,
+        headers: newHeaders,
+      });
+    } catch (err) {
+      Sentry.captureException(err);
+      console.error("Handler error:", err);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: { message: "Internal server error", code: "SERVER_ERROR" },
+        }),
+        {
+          status: 500,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin":
-              process.env.FRONTEND_URL || "http://localhost:3000",
+            "Access-Control-Allow-Origin": corsOrigin(),
             "Access-Control-Allow-Credentials": "true",
-            ...rateLimitHeaders,
-            "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
           },
-          body: JSON.stringify({
-            success: false,
-            error: {
-              message: "Too many requests. Please try again later.",
-              code: "RATE_LIMIT_EXCEEDED",
-              retryAfter: reset,
-            },
-          }),
-        };
-        return rateLimitResponse;
-      }
-
-      // Execute handler
-      const response = await handler(event, context, callback);
-
-      // Ensure we always return a proper response
-      if (!response) {
-        throw new Error("Handler returned undefined");
-      }
-
-      // Add rate limit headers to successful response
-      if (response.headers) {
-        response.headers = {
-          ...response.headers,
-          ...rateLimitHeaders,
-        };
-      } else {
-        response.headers = rateLimitHeaders;
-      }
-
-      return response;
-    } catch (error) {
-      console.error("Rate limit middleware error:", error);
-      // If rate limiting fails, allow request through (fail open)
-      const fallbackResponse = await handler(event, context, callback);
-      if (!fallbackResponse) {
-        throw new Error("Handler returned undefined in error path");
-      }
-      return fallbackResponse;
+        }
+      );
     }
   };
-}
-
-/**
- * Convenience function to wrap with both Sentry and rate limiting
- */
-export function wrapHandler(
-  handler: LambdaHandler,
-  rateLimitOptions?: RateLimitOptions
-): LambdaHandler {
-  let wrapped = handler;
-
-  // Apply rate limiting if configured
-  if (rateLimitOptions) {
-    wrapped = withRateLimit(wrapped, rateLimitOptions);
-  }
-
-  // Apply Sentry wrapper
-  wrapped = wrapSentry(wrapped);
-
-  return wrapped;
 }

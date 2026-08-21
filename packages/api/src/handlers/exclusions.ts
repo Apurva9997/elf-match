@@ -1,9 +1,8 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, exclusions, teamMembers } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { getUserFromRequest } from "../lib/auth.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
@@ -39,13 +38,14 @@ async function isTeamAdmin(userId: string, teamId: string) {
 }
 
 async function _listExclusions(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     if (!(await isTeamAdmin(user.id, teamId))) {
@@ -86,20 +86,20 @@ async function _listExclusions(
 }
 
 async function _addExclusion(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     if (!(await isTeamAdmin(user.id, teamId))) {
       return forbidden("Only admins can add exclusions");
     }
 
-    // Check if assignments already exist
     const existingAssignments = await db.query.assignments.findMany({
       where: eq(assignments.teamId, teamId),
     });
@@ -111,7 +111,7 @@ async function _addExclusion(
       );
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = addExclusionSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -124,7 +124,6 @@ async function _addExclusion(
       return error("Cannot exclude a member from themselves", 400);
     }
 
-    // Verify both members belong to this team
     const member1 = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.id, member1Id),
@@ -145,7 +144,6 @@ async function _addExclusion(
       return error("One or both members not found in this team", 400);
     }
 
-    // Check if exclusion already exists
     const existing = await db.query.exclusions.findFirst({
       where: and(
         eq(exclusions.teamId, teamId),
@@ -177,14 +175,14 @@ async function _addExclusion(
 }
 
 async function _removeExclusion(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
-    const exclusionId = event.pathParameters?.exclusionId;
+    const { teamId, exclusionId } = params;
     if (!teamId || !exclusionId)
       return error("Team ID and Exclusion ID required", 400);
 
@@ -192,7 +190,6 @@ async function _removeExclusion(
       return forbidden("Only admins can remove exclusions");
     }
 
-    // Check if assignments already exist
     const existingAssignments = await db.query.assignments.findMany({
       where: eq(assignments.teamId, teamId),
     });
@@ -221,7 +218,6 @@ async function _removeExclusion(
   }
 }
 
-// Export wrapped handlers with rate limiting
 export const listExclusions = wrapHandler(_listExclusions, {
   limiter: rateLimiters.authenticatedRead,
   useUserId: true,

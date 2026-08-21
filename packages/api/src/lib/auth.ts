@@ -1,4 +1,3 @@
-import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { eq } from "drizzle-orm";
 import * as jose from "jose";
 import { db, users } from "../db/index.js";
@@ -46,8 +45,9 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
   }
 }
 
-export async function getUserFromEvent(event: APIGatewayProxyEventV2) {
-  const authHeader = event.headers.authorization || event.headers.Authorization;
+export async function getUserFromRequest(req: Request) {
+  const authHeader =
+    req.headers.get("authorization") || req.headers.get("Authorization");
 
   if (!authHeader?.startsWith("Bearer ")) {
     return null;

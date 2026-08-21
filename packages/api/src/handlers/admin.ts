@@ -1,10 +1,9 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, teamMembers, teams, users } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
+import { getUserFromRequest } from "../lib/auth.js";
 import { sendReminderEmail } from "../lib/email.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
@@ -29,20 +28,20 @@ async function isTeamAdmin(userId: string, teamId: string) {
 }
 
 async function _sendReminders(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     if (!(await isTeamAdmin(user.id, teamId))) {
       return forbidden("Only admins can send reminders");
     }
 
-    // Get team
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
     });
@@ -51,7 +50,6 @@ async function _sendReminders(
       return notFound("Team not found");
     }
 
-    // Get all accepted members with their wishlists and user-level addresses
     const members = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -60,7 +58,7 @@ async function _sendReminders(
       with: {
         user: {
           with: {
-            address: true, // User-level address from userAddresses table
+            address: true,
           },
         },
         wishlist: {
@@ -82,17 +80,14 @@ async function _sendReminders(
 
       const missingItems: string[] = [];
 
-      // Check wishlist
       if (!member.wishlist || member.wishlist.items.length === 0) {
         missingItems.push("Add items to your wishlist");
       }
 
-      // Check user-level address
       if (!member.user.address) {
         missingItems.push("Add your shipping address");
       }
 
-      // Only send reminder if something is missing
       if (missingItems.length > 0) {
         try {
           const deadline = team.wishlistDeadline
@@ -145,14 +140,14 @@ const changeUserEmailSchema = z.object({
 });
 
 async function _changeUserEmail(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
-    const userId = event.pathParameters?.userId;
+    const { teamId, userId } = params;
     if (!teamId || !userId) {
       return error("Team ID and User ID required", 400);
     }
@@ -161,7 +156,6 @@ async function _changeUserEmail(
       return forbidden("Only admins can change user emails");
     }
 
-    // Verify the user is a member of this team
     const targetMember = await db.query.teamMembers.findFirst({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -177,7 +171,7 @@ async function _changeUserEmail(
       return notFound("User not found in this team");
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = changeUserEmailSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -187,7 +181,6 @@ async function _changeUserEmail(
     const { newEmail } = parsed.data;
     const normalizedNewEmail = newEmail.toLowerCase();
 
-    // Check if new email is already taken by another user
     const existingUser = await db.query.users.findFirst({
       where: eq(users.email, normalizedNewEmail),
     });
@@ -196,7 +189,6 @@ async function _changeUserEmail(
       return error("Email address already in use", 400);
     }
 
-    // Update user email
     await db
       .update(users)
       .set({
@@ -205,7 +197,6 @@ async function _changeUserEmail(
       })
       .where(eq(users.id, userId));
 
-    // Update any pending invitations for this user in this team
     await db
       .update(teamMembers)
       .set({
@@ -233,7 +224,6 @@ async function _changeUserEmail(
   }
 }
 
-// Export wrapped handlers
 export const sendReminders = wrapHandler(_sendReminders, {
   limiter: rateLimiters.reminders,
   useUserId: true,
