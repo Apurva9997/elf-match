@@ -1,15 +1,14 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, userAddresses, users } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
+import { getUserFromRequest } from "../lib/auth.js";
 import {
   decryptAddress,
   decryptMobile,
   encryptAddress,
   encryptMobile,
 } from "../lib/encryption.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import { error, serverError, success, unauthorized } from "../lib/response.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
@@ -56,13 +55,13 @@ const profileUpdateSchema = z.object({
 });
 
 async function _getProfile(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    // Get user with address
     const userWithAddress = await db.query.users.findFirst({
       where: eq(users.id, user.id),
       with: {
@@ -102,13 +101,14 @@ async function _getProfile(
 }
 
 async function _updateProfile(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  _params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = profileUpdateSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -117,7 +117,6 @@ async function _updateProfile(
 
     const { name, mobile, address } = parsed.data;
 
-    // Update user fields (name and mobile)
     if (name !== undefined || mobile !== undefined) {
       const updateData: {
         name?: string;
@@ -133,12 +132,10 @@ async function _updateProfile(
       await db.update(users).set(updateData).where(eq(users.id, user.id));
     }
 
-    // Update or create address if provided
     if (address) {
       const { streetLine1, streetLine2, city, state, postalCode, country } =
         address;
 
-      // Encrypt sensitive address fields before storing
       const encryptedData = encryptAddress({
         streetLine1,
         streetLine2: streetLine2 || null,
@@ -147,13 +144,11 @@ async function _updateProfile(
         postalCode,
       });
 
-      // Check if address exists
       const existingAddress = await db.query.userAddresses.findFirst({
         where: eq(userAddresses.userId, user.id),
       });
 
       if (existingAddress) {
-        // Update existing
         await db
           .update(userAddresses)
           .set({
@@ -162,12 +157,11 @@ async function _updateProfile(
             city: encryptedData.city!,
             state: encryptedData.state,
             postalCode: encryptedData.postalCode!,
-            country, // Country is not encrypted (needed for shipping logistics)
+            country,
             updatedAt: new Date(),
           })
           .where(eq(userAddresses.id, existingAddress.id));
       } else {
-        // Create new
         await db.insert(userAddresses).values({
           userId: user.id,
           streetLine1: encryptedData.streetLine1!,
@@ -175,12 +169,11 @@ async function _updateProfile(
           city: encryptedData.city!,
           state: encryptedData.state,
           postalCode: encryptedData.postalCode!,
-          country, // Country is not encrypted
+          country,
         });
       }
     }
 
-    // Return updated profile
     const updatedUser = await db.query.users.findFirst({
       where: eq(users.id, user.id),
       with: {
@@ -219,7 +212,6 @@ async function _updateProfile(
   }
 }
 
-// Export wrapped handlers with rate limiting
 export const getProfile = wrapHandler(_getProfile, {
   limiter: rateLimiters.authenticatedRead,
   useUserId: true,

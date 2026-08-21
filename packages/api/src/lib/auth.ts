@@ -1,76 +1,55 @@
-import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import { createClerkClient } from "@clerk/backend";
 import { eq } from "drizzle-orm";
-import * as jose from "jose";
 import { db, users } from "../db/index.js";
 
-const jwtSecretValue = process.env.JWT_SECRET;
-if (!jwtSecretValue) {
-  throw new Error("JWT_SECRET environment variable is required");
-}
-const JWT_SECRET = new TextEncoder().encode(jwtSecretValue);
-const TOKEN_EXPIRY = "7d";
-const REFRESH_TOKEN_EXPIRY = "30d";
+const clerk = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
 
-export interface JWTPayload {
-  userId: string;
-  email: string;
-  type: "access" | "refresh";
-}
-
-export async function generateTokens(userId: string, email: string) {
-  const accessToken = await new jose.SignJWT({ userId, email, type: "access" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(TOKEN_EXPIRY)
-    .sign(JWT_SECRET);
-
-  const refreshToken = await new jose.SignJWT({
-    userId,
-    email,
-    type: "refresh",
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(REFRESH_TOKEN_EXPIRY)
-    .sign(JWT_SECRET);
-
-  return { accessToken, refreshToken };
-}
-
-export async function verifyToken(token: string): Promise<JWTPayload | null> {
-  try {
-    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-    return payload as unknown as JWTPayload;
-  } catch {
-    return null;
-  }
-}
-
-export async function getUserFromEvent(event: APIGatewayProxyEventV2) {
-  const authHeader = event.headers.authorization || event.headers.Authorization;
+export async function getUserFromRequest(req: Request) {
+  const authHeader =
+    req.headers.get("authorization") || req.headers.get("Authorization");
 
   if (!authHeader?.startsWith("Bearer ")) {
     return null;
   }
 
   const token = authHeader.slice(7);
-  const payload = await verifyToken(token);
 
-  if (!payload || payload.type !== "access") {
+  try {
+    const payload = await clerk.verifyToken(token);
+    const clerkId = payload.sub;
+
+    let user = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!user) {
+      const clerkUser = await clerk.users.getUser(clerkId);
+      const email =
+        clerkUser.emailAddresses.find(
+          (e) => e.id === clerkUser.primaryEmailAddressId
+        )?.emailAddress ||
+        clerkUser.emailAddresses[0]?.emailAddress ||
+        "";
+      const name =
+        [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
+        email.split("@")[0];
+
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          clerkId,
+          email: email.toLowerCase(),
+          name,
+          avatarUrl: clerkUser.imageUrl || null,
+        })
+        .returning();
+      user = newUser;
+    }
+
+    return user || null;
+  } catch {
     return null;
   }
-
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, payload.userId),
-  });
-
-  return user || null;
-}
-
-export function generateMagicLinkToken(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-    ""
-  );
 }

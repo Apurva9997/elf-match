@@ -1,4 +1,3 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -7,9 +6,9 @@ import {
   teamMembers,
   userAddresses,
 } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
+import { getUserFromRequest } from "../lib/auth.js";
 import { decryptAddress, encryptAddress } from "../lib/encryption.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
@@ -49,13 +48,14 @@ async function getMembershipForTeam(userId: string, teamId: string) {
 }
 
 async function _getAddress(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
@@ -63,12 +63,10 @@ async function _getAddress(
       return forbidden("You are not a member of this team");
     }
 
-    // Get user-level address (shared across all teams)
     const address = await db.query.userAddresses.findFirst({
       where: eq(userAddresses.userId, user.id),
     });
 
-    // Decrypt address data before returning
     const decryptedAddress = decryptAddress(address);
 
     return success(decryptedAddress || null);
@@ -79,13 +77,14 @@ async function _getAddress(
 }
 
 async function _updateAddress(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
@@ -93,7 +92,7 @@ async function _updateAddress(
       return forbidden("You are not a member of this team");
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = addressSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -103,7 +102,6 @@ async function _updateAddress(
     const { streetLine1, streetLine2, city, state, postalCode, country } =
       parsed.data;
 
-    // Encrypt sensitive address fields before storing
     const encryptedData = encryptAddress({
       streetLine1,
       streetLine2: streetLine2 || null,
@@ -112,14 +110,12 @@ async function _updateAddress(
       postalCode,
     });
 
-    // Check if user-level address exists
     const existingAddress = await db.query.userAddresses.findFirst({
       where: eq(userAddresses.userId, user.id),
     });
 
     let address;
     if (existingAddress) {
-      // Update existing user-level address
       const [updated] = await db
         .update(userAddresses)
         .set({
@@ -128,14 +124,13 @@ async function _updateAddress(
           city: encryptedData.city!,
           state: encryptedData.state,
           postalCode: encryptedData.postalCode!,
-          country, // Country is not encrypted (needed for shipping logistics)
+          country,
           updatedAt: new Date(),
         })
         .where(eq(userAddresses.id, existingAddress.id))
         .returning();
       address = updated;
     } else {
-      // Create new user-level address
       const [created] = await db
         .insert(userAddresses)
         .values({
@@ -145,13 +140,12 @@ async function _updateAddress(
           city: encryptedData.city!,
           state: encryptedData.state,
           postalCode: encryptedData.postalCode!,
-          country, // Country is not encrypted
+          country,
         })
         .returning();
       address = created;
     }
 
-    // Decrypt before returning to client
     const decryptedAddress = decryptAddress(address);
 
     return success(decryptedAddress);
@@ -162,13 +156,14 @@ async function _updateAddress(
 }
 
 async function _getGifteeAddress(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
@@ -176,7 +171,6 @@ async function _getGifteeAddress(
       return forbidden("You are not a member of this team");
     }
 
-    // Find the assignment where this user is the giver
     const assignment = await db.query.assignments.findFirst({
       where: and(
         eq(assignments.teamId, teamId),
@@ -202,7 +196,6 @@ async function _getGifteeAddress(
       );
     }
 
-    // Get the giftee's user-level address
     const gifteeUserId = assignment.receiver.user?.id;
     if (!gifteeUserId) {
       return success({
@@ -228,7 +221,6 @@ async function _getGifteeAddress(
       });
     }
 
-    // Decrypt the giftee's address before returning
     const decryptedAddress = decryptAddress(gifteeAddress);
 
     return success({
@@ -243,7 +235,6 @@ async function _getGifteeAddress(
   }
 }
 
-// Export wrapped handlers
 export const getAddress = wrapHandler(_getAddress, {
   limiter: rateLimiters.authenticatedRead,
   useUserId: true,

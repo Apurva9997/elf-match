@@ -1,4 +1,3 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -8,8 +7,8 @@ import {
   wishItems,
   wishlists,
 } from "../db/index.js";
-import { getUserFromEvent } from "../lib/auth.js";
-import { wrapHandler } from "../lib/middleware.js";
+import { getUserFromRequest } from "../lib/auth.js";
+import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
   error,
@@ -52,13 +51,14 @@ async function getMembershipForTeam(userId: string, teamId: string) {
 }
 
 async function _getWishlist(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
@@ -66,7 +66,6 @@ async function _getWishlist(
       return forbidden("You are not a member of this team");
     }
 
-    // Get or create wishlist
     let wishlist = await db.query.wishlists.findFirst({
       where: eq(wishlists.teamMemberId, membership.id),
       with: {
@@ -77,7 +76,6 @@ async function _getWishlist(
     });
 
     if (!wishlist) {
-      // Create empty wishlist
       const [newWishlist] = await db
         .insert(wishlists)
         .values({ teamMemberId: membership.id })
@@ -94,13 +92,14 @@ async function _getWishlist(
 }
 
 async function _updateWishlist(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
@@ -108,7 +107,7 @@ async function _updateWishlist(
       return forbidden("You are not a member of this team");
     }
 
-    const body = JSON.parse(event.body || "{}");
+    const body = JSON.parse(await req.text() || "{}");
     const parsed = updateWishlistSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -117,7 +116,6 @@ async function _updateWishlist(
 
     const { items } = parsed.data;
 
-    // Get or create wishlist
     let wishlist = await db.query.wishlists.findFirst({
       where: eq(wishlists.teamMemberId, membership.id),
     });
@@ -130,7 +128,6 @@ async function _updateWishlist(
       wishlist = newWishlist;
     }
 
-    // Delete existing items and insert new ones
     await db.delete(wishItems).where(eq(wishItems.wishlistId, wishlist.id));
 
     if (items.length > 0) {
@@ -146,13 +143,11 @@ async function _updateWishlist(
       );
     }
 
-    // Update wishlist timestamp
     await db
       .update(wishlists)
       .set({ updatedAt: new Date() })
       .where(eq(wishlists.id, wishlist.id));
 
-    // Fetch updated wishlist
     const updatedWishlist = await db.query.wishlists.findFirst({
       where: eq(wishlists.id, wishlist.id),
       with: {
@@ -170,13 +165,14 @@ async function _updateWishlist(
 }
 
 async function _getGifteeWishlist(
-  event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResult> {
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
   try {
-    const user = await getUserFromEvent(event);
+    const user = await getUserFromRequest(req);
     if (!user) return unauthorized();
 
-    const teamId = event.pathParameters?.teamId;
+    const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
 
     const membership = await getMembershipForTeam(user.id, teamId);
@@ -184,7 +180,6 @@ async function _getGifteeWishlist(
       return forbidden("You are not a member of this team");
     }
 
-    // Find the assignment where this user is the giver
     const assignment = await db.query.assignments.findFirst({
       where: and(
         eq(assignments.teamId, teamId),
@@ -218,7 +213,6 @@ async function _getGifteeWishlist(
       );
     }
 
-    // Mark as revealed if first time viewing
     if (!assignment.revealedAt) {
       await db
         .update(assignments)
@@ -240,7 +234,6 @@ async function _getGifteeWishlist(
   }
 }
 
-// Export wrapped handlers
 export const getWishlist = wrapHandler(_getWishlist, {
   limiter: rateLimiters.authenticatedRead,
   useUserId: true,
