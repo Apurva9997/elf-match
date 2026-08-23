@@ -7,68 +7,59 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth as useClerkAuth, useClerk, useUser } from "@clerk/nextjs";
 import { api, type User } from "./api";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (accessToken: string, refreshToken: string, user: User) => void;
+  login: () => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { isLoaded: clerkLoaded, isSignedIn, getToken } = useClerkAuth();
+  const { user: clerkUser } = useUser();
+  const { signOut } = useClerk();
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingUser, setIsFetchingUser] = useState(false);
 
+  // Keep the API client's token getter in sync with Clerk
   useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
-      const token = api.getAccessToken();
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
+    if (isSignedIn) {
+      api.setTokenGetter(() => getToken());
+    } else {
+      api.setTokenGetter(null);
+    }
+  }, [isSignedIn, getToken]);
 
-      try {
-        const userData = await api.getMe();
-        setUser(userData);
-      } catch {
-        // Token expired or invalid, try refresh
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          try {
-            const data = await api.refreshToken(refreshToken);
-            api.setAccessToken(data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
-            setUser(data.user);
-          } catch {
-            // Refresh failed, clear tokens
-            api.setAccessToken(null);
-            localStorage.removeItem("refreshToken");
-          }
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Fetch our local user record whenever Clerk signs in
+  useEffect(() => {
+    if (!clerkLoaded) return;
 
-    checkAuth();
-  }, []);
+    if (!isSignedIn || !clerkUser) {
+      setUser(null);
+      return;
+    }
 
-  const login = (accessToken: string, refreshToken: string, userData: User) => {
-    api.setAccessToken(accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    setUser(userData);
-  };
+    setIsFetchingUser(true);
+    api
+      .getMe()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setIsFetchingUser(false));
+  }, [clerkLoaded, isSignedIn, clerkUser]);
 
-  const logout = () => {
-    api.setAccessToken(null);
-    localStorage.removeItem("refreshToken");
+  const logout = async () => {
     setUser(null);
+    api.setTokenGetter(null);
+    await signOut();
   };
+
+  const isLoading = !clerkLoaded || (!!isSignedIn && isFetchingUser);
 
   return (
     <AuthContext.Provider
@@ -76,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
-        login,
+        login: () => {},
         logout,
       }}
     >
