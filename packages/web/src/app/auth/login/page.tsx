@@ -3,12 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { oauthConfig } from "@/lib/oauth-config";
+import { useSignIn } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -16,13 +16,17 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const schema = z.object({
+const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-type FormData = z.infer<typeof schema>;
+const codeSchema = z.object({
+  code: z.string().min(6, "Enter the 6-digit code from your email"),
+});
 
-// Google icon component
+type EmailForm = z.infer<typeof emailSchema>;
+type CodeForm = z.infer<typeof codeSchema>;
+
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none">
@@ -46,7 +50,6 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-// Apple icon component
 function AppleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -59,49 +62,91 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { signIn, setActive, isLoaded: signInLoaded } = useSignIn();
+  const [step, setStep] = useState<"email" | "code">("email");
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
 
-  // Get redirect URL from query params (for post-login redirect)
   const redirectTo = searchParams.get("redirect") || "/dashboard";
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       router.push(redirectTo);
     }
   }, [isAuthenticated, isLoading, router, redirectTo]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  const emailForm = useForm<EmailForm>({
+    resolver: zodResolver(emailSchema),
   });
 
-  const onSubmit = async (data: FormData) => {
+  const codeForm = useForm<CodeForm>({
+    resolver: zodResolver(codeSchema),
+  });
+
+  const handleEmailSubmit = async (data: EmailForm) => {
+    if (!signIn) return;
     try {
-      await api.sendMagicLink(data.email);
+      const result = await signIn.create({ identifier: data.email });
+
+      // Find the email code factor to get emailAddressId
+      const emailFactor = result.supportedFirstFactors?.find(
+        (f) => f.strategy === "email_code"
+      );
+      const emailAddressId = (
+        emailFactor as { emailAddressId?: string } | undefined
+      )?.emailAddressId;
+
+      if (!emailAddressId) {
+        throw new Error("Email sign-in is not enabled. Please contact support.");
+      }
+
+      await signIn.prepareFirstFactor({
+        strategy: "email_code",
+        emailAddressId,
+      });
+
       setSubmittedEmail(data.email);
-      setIsSubmitted(true);
+      setStep("code");
     } catch (error) {
-      console.error("Failed to send magic link:", error);
+      console.error("Failed to send code:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to send magic link"
+        error instanceof Error ? error.message : "Failed to send sign-in code"
+      );
+    }
+  };
+
+  const handleCodeSubmit = async (data: CodeForm) => {
+    if (!signIn || !setActive) return;
+    try {
+      const result = await signIn.attemptFirstFactor({
+        strategy: "email_code",
+        code: data.code,
+      });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.push(redirectTo);
+      }
+    } catch (error) {
+      console.error("Failed to verify code:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Invalid code. Please try again."
       );
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (!signIn) return;
     setIsGoogleLoading(true);
     try {
-      // Store redirect URL for after OAuth callback
-      sessionStorage.setItem("oauth_redirect", redirectTo);
-      const { url } = await api.getGoogleAuthUrl(redirectTo);
-      window.location.href = url;
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: redirectTo,
+      });
     } catch (error) {
       console.error("Failed to initiate Google sign-in:", error);
       toast.error("Failed to connect to Google. Please try again.");
@@ -110,12 +155,14 @@ function LoginPageContent() {
   };
 
   const handleAppleSignIn = async () => {
+    if (!signIn) return;
     setIsAppleLoading(true);
     try {
-      // Store redirect URL for after OAuth callback
-      sessionStorage.setItem("oauth_redirect", redirectTo);
-      const { url } = await api.getAppleAuthUrl(redirectTo);
-      window.location.href = url;
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_apple",
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: redirectTo,
+      });
     } catch (error) {
       console.error("Failed to initiate Apple sign-in:", error);
       toast.error("Failed to connect to Apple. Please try again.");
@@ -123,50 +170,10 @@ function LoginPageContent() {
     }
   };
 
-  // Show loading while checking auth or redirecting
-  if (isLoading || isAuthenticated) {
+  if (isLoading || isAuthenticated || !signInLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="w-full max-w-md"
-        >
-          <Card className="text-center">
-            <CardContent className="pt-8 pb-6">
-              <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-8 h-8 text-success" />
-              </div>
-              <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                Check Your Email
-              </h1>
-              <p className="text-cream/70 mb-6">
-                We sent a magic link to{" "}
-                <span className="text-gold font-medium">{submittedEmail}</span>
-              </p>
-              <p className="text-cream/50 text-sm mb-6">
-                Click the link in the email to sign in. The link will expire in
-                15 minutes.
-              </p>
-              <Button
-                variant="secondary"
-                onClick={() => setIsSubmitted(false)}
-                className="w-full"
-              >
-                Use a different email
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
       </div>
     );
   }
@@ -195,78 +202,120 @@ function LoginPageContent() {
                 Welcome to GiftWhisper
               </h1>
               <p className="text-cream/60">
-                Sign in to organize your gift exchange
+                {step === "email"
+                  ? "Sign in to organize your gift exchange"
+                  : `Enter the code we sent to ${submittedEmail}`}
               </p>
             </div>
 
-            {/* Social Sign-In Buttons */}
-            {(oauthConfig.google.enabled || oauthConfig.apple.enabled) && (
+            {step === "email" && (
               <>
-                <div className="space-y-3 mb-6">
-                  {oauthConfig.google.enabled && (
-                    <button
-                      onClick={handleGoogleSignIn}
-                      disabled={isGoogleLoading || isAppleLoading}
-                      className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
-                    >
-                      {isGoogleLoading ? (
-                        <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                      ) : (
-                        <GoogleIcon className="w-5 h-5" />
+                {(oauthConfig.google.enabled || oauthConfig.apple.enabled) && (
+                  <>
+                    <div className="space-y-3 mb-6">
+                      {oauthConfig.google.enabled && (
+                        <button
+                          onClick={handleGoogleSignIn}
+                          disabled={isGoogleLoading || isAppleLoading}
+                          className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                        >
+                          {isGoogleLoading ? (
+                            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                          ) : (
+                            <GoogleIcon className="w-5 h-5" />
+                          )}
+                          <span>Continue with Google</span>
+                        </button>
                       )}
-                      <span>Continue with Google</span>
-                    </button>
-                  )}
 
-                  {oauthConfig.apple.enabled && (
-                    <button
-                      onClick={handleAppleSignIn}
-                      disabled={isGoogleLoading || isAppleLoading}
-                      className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-black hover:bg-gray-900 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
-                    >
-                      {isAppleLoading ? (
-                        <div className="w-5 h-5 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <AppleIcon className="w-5 h-5" />
+                      {oauthConfig.apple.enabled && (
+                        <button
+                          onClick={handleAppleSignIn}
+                          disabled={isGoogleLoading || isAppleLoading}
+                          className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-black hover:bg-gray-900 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                        >
+                          {isAppleLoading ? (
+                            <div className="w-5 h-5 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <AppleIcon className="w-5 h-5" />
+                          )}
+                          <span>Continue with Apple</span>
+                        </button>
                       )}
-                      <span>Continue with Apple</span>
-                    </button>
-                  )}
-                </div>
+                    </div>
 
-                {/* Divider */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-cream/20" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-gradient-card text-cream/50">
-                      or continue with email
-                    </span>
-                  </div>
-                </div>
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-cream/20" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-gradient-card text-cream/50">
+                          or continue with email
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <form
+                  onSubmit={emailForm.handleSubmit(handleEmailSubmit)}
+                  className="space-y-6"
+                >
+                  <Input
+                    {...emailForm.register("email")}
+                    type="email"
+                    label="Email address"
+                    placeholder="you@example.com"
+                    error={emailForm.formState.errors.email?.message}
+                  />
+
+                  <Button
+                    type="submit"
+                    isLoading={emailForm.formState.isSubmitting}
+                    className="w-full"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Send Sign-in Code
+                  </Button>
+                </form>
+
+                <p className="text-center text-cream/50 text-sm mt-6">
+                  We&apos;ll email you a 6-digit sign-in code
+                </p>
               </>
             )}
 
-            {/* Magic Link Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <Input
-                {...register("email")}
-                type="email"
-                label="Email address"
-                placeholder="you@example.com"
-                error={errors.email?.message}
-              />
+            {step === "code" && (
+              <form
+                onSubmit={codeForm.handleSubmit(handleCodeSubmit)}
+                className="space-y-6"
+              >
+                <Input
+                  {...codeForm.register("code")}
+                  type="text"
+                  inputMode="numeric"
+                  label="Sign-in code"
+                  placeholder="000000"
+                  error={codeForm.formState.errors.code?.message}
+                />
 
-              <Button type="submit" isLoading={isSubmitting} className="w-full">
-                <Mail className="w-4 h-4 mr-2" />
-                Send Magic Link
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  isLoading={codeForm.formState.isSubmitting}
+                  className="w-full"
+                >
+                  Sign In
+                </Button>
 
-            <p className="text-center text-cream/50 text-sm mt-6">
-              We&apos;ll email you a secure sign-in link
-            </p>
+                <button
+                  type="button"
+                  onClick={() => setStep("email")}
+                  className="w-full text-cream/50 hover:text-cream text-sm transition-colors"
+                >
+                  Use a different email
+                </button>
+              </form>
+            )}
           </CardContent>
         </Card>
       </motion.div>
