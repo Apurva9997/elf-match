@@ -1,90 +1,32 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
-import { storage } from "@/lib/storage";
+import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { toast } from "sonner";
-
-// Module-level Set to track tokens currently being verified.
-// This persists across React Strict Mode's unmount/remount cycle.
-const verifyingTokens = new Set<string>();
 
 function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
-  const [error, setError] = useState("");
-  const token = searchParams.get("token");
+  const { isSignedIn, isLoaded } = useAuth();
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setError("Invalid or missing token");
+    if (!isLoaded) return;
+
+    if (isSignedIn) {
+      const redirectTo = searchParams.get("redirect_url") || "/dashboard";
+      router.push(redirectTo);
       return;
     }
 
-    // Prevent duplicate calls - if this token is already being verified, skip
-    if (verifyingTokens.has(token)) {
-      return;
-    }
-
-    // Mark token as being verified
-    verifyingTokens.add(token);
-
-    let isCancelled = false;
-
-    const verify = async () => {
-      try {
-        const data = await api.verifyMagicLink(token);
-
-        if (isCancelled) {
-          return;
-        }
-
-        login(data.accessToken, data.refreshToken, data.user);
-        setStatus("success");
-        toast.success("Welcome back!");
-
-        // Check for pending invitation before redirecting
-        const pendingInvitation = await storage.getItem("pendingInvitation");
-        if (pendingInvitation) {
-          setTimeout(async () => {
-            await storage.removeItem("pendingInvitation");
-            router.push(`/invite/${pendingInvitation}`);
-          }, 1500);
-        } else {
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 1500);
-        }
-      } catch (err) {
-        if (isCancelled) {
-          return;
-        }
-        setStatus("error");
-        setError(err instanceof Error ? err.message : "Failed to verify link");
-      } finally {
-        // Clean up: remove token from Set after verification completes
-        verifyingTokens.delete(token);
-      }
-    };
-
-    verify();
-
-    return () => {
-      isCancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    // Show error if Clerk hasn't signed the user in within 8s
+    const timer = setTimeout(() => setTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, [isLoaded, isSignedIn, router, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -96,7 +38,7 @@ function VerifyContent() {
       >
         <Card className="text-center">
           <CardContent className="pt-8 pb-6">
-            {status === "loading" && (
+            {!timedOut && (
               <>
                 <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
                   <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -110,7 +52,7 @@ function VerifyContent() {
               </>
             )}
 
-            {status === "success" && (
+            {isLoaded && isSignedIn && (
               <>
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-8 h-8 text-success" />
@@ -124,21 +66,24 @@ function VerifyContent() {
               </>
             )}
 
-            {status === "error" && (
+            {timedOut && !isSignedIn && (
               <>
-                <div className="w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mx-auto mb-6">
-                  <XCircle className="w-8 h-8 text-error" />
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
+                  <XCircle className="w-8 h-8 text-red-400" />
                 </div>
                 <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Something went wrong
+                  Sign-in Failed
                 </h1>
-                <p className="text-cream/70 mb-6">{error}</p>
-                <Button
-                  onClick={() => router.push("/auth/login")}
-                  className="w-full"
+                <p className="text-cream/70 mb-6">
+                  This sign-in link may have expired or already been used.
+                  Please request a new one.
+                </p>
+                <Link
+                  href="/auth/login"
+                  className="w-full inline-flex items-center justify-center font-semibold transition-all duration-300 rounded-lg px-6 py-3 text-base bg-gradient-gold text-midnight hover:shadow-glow hover:scale-[1.02]"
                 >
-                  Try Again
-                </Button>
+                  Back to Sign In
+                </Link>
               </>
             )}
           </CardContent>

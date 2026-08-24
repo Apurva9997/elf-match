@@ -10,23 +10,17 @@ interface ApiResponse<T> {
 }
 
 class ApiClient {
-  private accessToken: string | null = null;
+  private _tokenGetter: (() => Promise<string | null>) | null = null;
 
-  setAccessToken(token: string | null) {
-    this.accessToken = token;
-    if (token) {
-      localStorage.setItem("accessToken", token);
-    } else {
-      localStorage.removeItem("accessToken");
-    }
+  setTokenGetter(getter: (() => Promise<string | null>) | null) {
+    this._tokenGetter = getter;
   }
 
-  getAccessToken(): string | null {
-    if (this.accessToken) return this.accessToken;
-    if (typeof window !== "undefined") {
-      this.accessToken = localStorage.getItem("accessToken");
+  private async getToken(): Promise<string | null> {
+    if (this._tokenGetter) {
+      return this._tokenGetter();
     }
-    return this.accessToken;
+    return null;
   }
 
   private async request<T>(
@@ -34,7 +28,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_URL}${endpoint}`;
-    const token = this.getAccessToken();
+    const token = await this.getToken();
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -57,72 +51,8 @@ class ApiClient {
     return data.data as T;
   }
 
-  // Auth
-  async sendMagicLink(email: string) {
-    return this.request<{ message: string }>("/auth/magic-link", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-  }
-
-  async verifyMagicLink(token: string, name?: string) {
-    return this.request<{
-      user: User;
-      accessToken: string;
-      refreshToken: string;
-    }>("/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ token, name }),
-    });
-  }
-
-  async refreshToken(refreshToken: string) {
-    return this.request<{
-      user: User;
-      accessToken: string;
-      refreshToken: string;
-    }>("/auth/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken }),
-    });
-  }
-
   async getMe() {
     return this.request<User>("/auth/me");
-  }
-
-  // OAuth - Google
-  async getGoogleAuthUrl(state?: string) {
-    const params = state ? `?state=${encodeURIComponent(state)}` : "";
-    return this.request<{ url: string }>(`/auth/google${params}`);
-  }
-
-  async handleGoogleCallback(code: string) {
-    return this.request<{
-      user: User;
-      accessToken: string;
-      refreshToken: string;
-    }>("/auth/google/callback", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    });
-  }
-
-  // OAuth - Apple
-  async getAppleAuthUrl(state?: string) {
-    const params = state ? `?state=${encodeURIComponent(state)}` : "";
-    return this.request<{ url: string }>(`/auth/apple${params}`);
-  }
-
-  async handleAppleCallback(code: string, idToken?: string, user?: string) {
-    return this.request<{
-      user: User;
-      accessToken: string;
-      refreshToken: string;
-    }>("/auth/apple/callback", {
-      method: "POST",
-      body: JSON.stringify({ code, id_token: idToken, user }),
-    });
   }
 
   // User Preferences
