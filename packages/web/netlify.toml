@@ -3,11 +3,3 @@
   # in canonical/SEO metadata — not a secret, so exclude from secrets scanning.
   # ENCRYPTION_SALT is an app-specific key derivation salt, not a direct secret.
   SECRETS_SCAN_OMIT_KEYS = "FRONTEND_URL,ENCRYPTION_SALT"
-
-# Deploy the API Netlify Function alongside the Next.js web app on the same site.
-# The function's path config in packages/api/netlify/functions/api.ts routes
-# /auth/me, /user/*, /teams/*, /invitations/* directly — no redirects needed.
-[functions]
-  directory = "../api/netlify/functions"
-  node_bundler = "esbuild"
-  included_files = ["../api/src/**/*"]
