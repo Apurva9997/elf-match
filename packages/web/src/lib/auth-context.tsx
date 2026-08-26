@@ -49,7 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api
       .getMe()
       .then(setUser)
-      .catch(() => setUser(null))
+      .catch(() => {
+        // Fall back to Clerk user data so the app stays functional even
+        // when the backend /auth/me endpoint is temporarily unavailable.
+        setUser({
+          id: clerkUser.id,
+          email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
+          name: clerkUser.fullName,
+          avatarUrl: clerkUser.imageUrl ?? null,
+        });
+      })
       .finally(() => setIsFetchingUser(false));
   }, [clerkLoaded, isSignedIn, clerkUser]);
 
@@ -66,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated: !!isSignedIn,
         login: () => {},
         logout,
       }}
