@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import { oauthConfig } from "@/lib/oauth-config";
-import { useSignIn } from "@clerk/nextjs";
+import { useClerk, useSignIn } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail } from "lucide-react";
@@ -63,6 +63,7 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
   const { signIn, setActive, isLoaded: signInLoaded } = useSignIn();
+  const clerk = useClerk();
   const [step, setStep] = useState<"email" | "code">("email");
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -87,6 +88,8 @@ function LoginPageContent() {
   const handleEmailSubmit = async (data: EmailForm) => {
     if (!signIn) return;
     try {
+      // Clear any stale session so Clerk doesn't return session_exists
+      try { await clerk.signOut(); } catch {}
       const result = await signIn.create({ identifier: data.email });
 
       // Find the email code factor to get emailAddressId
@@ -142,6 +145,8 @@ function LoginPageContent() {
     if (!signIn) return;
     setIsGoogleLoading(true);
     try {
+      // Clear any stale session so Clerk doesn't return session_exists
+      try { await clerk.signOut(); } catch {}
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: `${window.location.origin}/sso-callback`,
@@ -158,6 +163,8 @@ function LoginPageContent() {
     if (!signIn) return;
     setIsAppleLoading(true);
     try {
+      // Clear any stale session so Clerk doesn't return session_exists
+      try { await clerk.signOut(); } catch {}
       await signIn.authenticateWithRedirect({
         strategy: "oauth_apple",
         redirectUrl: `${window.location.origin}/sso-callback`,
