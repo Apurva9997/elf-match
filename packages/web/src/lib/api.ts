@@ -1,4 +1,6 @@
-const API_URL = "";
+// Keep API traffic in its own namespace so it cannot collide with Next.js
+// pages such as /auth/login or /dashboard.
+const API_URL = "/api";
 
 interface ApiResponse<T> {
   success: boolean;
