@@ -1,0 +1,4 @@
+[functions]
+  directory = "packages/api/netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["packages/api/src/**/*"]
