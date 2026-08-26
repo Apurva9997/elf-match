@@ -3,3 +3,7 @@
   # in canonical/SEO metadata — not a secret, so exclude from secrets scanning.
   # ENCRYPTION_SALT is an app-specific key derivation salt, not a direct secret.
   SECRETS_SCAN_OMIT_KEYS = "FRONTEND_URL,ENCRYPTION_SALT"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
