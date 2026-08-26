@@ -107,7 +107,20 @@ const corsHeaders = {
 
 export async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const pathname = url.pathname;
+  // Netlify's rewrite may pass either the original /api path or the internal
+  // function path. Normalize both forms before matching application routes.
+  const functionPrefix = "/.netlify/functions/api";
+  const apiPrefix = "/api";
+  const stripPrefix = (pathname: string, prefix: string) => {
+    if (pathname === prefix) return "/";
+    return pathname.startsWith(`${prefix}/`)
+      ? pathname.slice(prefix.length)
+      : null;
+  };
+  const pathname =
+    stripPrefix(url.pathname, functionPrefix) ??
+    stripPrefix(url.pathname, apiPrefix) ??
+    url.pathname;
   const method = req.method.toUpperCase();
 
   if (method === "OPTIONS") {

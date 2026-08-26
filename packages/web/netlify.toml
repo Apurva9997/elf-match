@@ -7,3 +7,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# Keep API requests out of Next.js's page router. The forced rewrite also
+# works with the standard Netlify function URL when the site uses the Next.js
+# runtime.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
