@@ -4,31 +4,10 @@
   # ENCRYPTION_SALT is an app-specific key derivation salt, not a direct secret.
   SECRETS_SCAN_OMIT_KEYS = "FRONTEND_URL,ENCRYPTION_SALT"
 
-# Proxy API routes to the API Netlify Functions site.
-# Set API_URL in the Netlify dashboard environment variables to the API site URL
-# (e.g. https://your-api-site.netlify.app). Not prefixed with NEXT_PUBLIC_ — it
-# is only used server-side by these redirect rules and is never sent to the browser.
-
-[[redirects]]
-  from = "/auth/*"
-  to = "$API_URL/auth/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/user/*"
-  to = "$API_URL/user/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/teams/*"
-  to = "$API_URL/teams/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/invitations/*"
-  to = "$API_URL/invitations/:splat"
-  status = 200
-  force = true
+# Deploy the API Netlify Function alongside the Next.js web app on the same site.
+# The function's path config in packages/api/netlify/functions/api.ts routes
+# /auth/me, /user/*, /teams/*, /invitations/* directly — no redirects needed.
+[functions]
+  directory = "../api/netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["../api/src/**/*"]
