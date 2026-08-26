@@ -1,9 +1,10 @@
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import { eq } from "drizzle-orm";
 import { db, users } from "../db/index.js";
 
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
 const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
+  secretKey: clerkSecretKey,
 });
 
 export async function getUserFromRequest(req: Request) {
@@ -17,8 +18,17 @@ export async function getUserFromRequest(req: Request) {
   const token = authHeader.slice(7);
 
   try {
-    const payload = await clerk.verifyToken(token);
+    const payload = await verifyToken(token, {
+      secretKey: clerkSecretKey,
+      ...(process.env.FRONTEND_URL && {
+        authorizedParties: [process.env.FRONTEND_URL],
+      }),
+    });
     const clerkId = payload.sub;
+
+    if (!clerkId) {
+      return null;
+    }
 
     let user = await db.query.users.findFirst({
       where: eq(users.clerkId, clerkId),

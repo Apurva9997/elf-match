@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -49,9 +49,7 @@ export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
-  const [pincodeTimeout, setPincodeTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  const pincodeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     data: profile,
@@ -78,15 +76,16 @@ export default function ProfilePage() {
 
   // Auto-fill city and state from postal code (India-specific)
   useEffect(() => {
-    if (pincodeTimeout) {
-      clearTimeout(pincodeTimeout);
+    if (pincodeTimeout.current) {
+      clearTimeout(pincodeTimeout.current);
+      pincodeTimeout.current = null;
     }
 
     if (!postalCode || postalCode.length !== 6) {
       return;
     }
 
-    const timeout = setTimeout(async () => {
+    pincodeTimeout.current = setTimeout(async () => {
       setIsFetchingPincode(true);
       try {
         const response = await fetch(
@@ -112,10 +111,11 @@ export default function ProfilePage() {
       }
     }, 500);
 
-    setPincodeTimeout(timeout);
-
     return () => {
-      if (timeout) clearTimeout(timeout);
+      if (pincodeTimeout.current) {
+        clearTimeout(pincodeTimeout.current);
+        pincodeTimeout.current = null;
+      }
     };
   }, [postalCode, setValue]);
 
