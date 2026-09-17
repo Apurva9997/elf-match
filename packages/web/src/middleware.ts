@@ -14,7 +14,6 @@ const isPublicRoute = createRouteMatcher([
   "/terms(.*)",
   "/privacy(.*)",
   "/api(.*)",
-  "/.netlify(.*)",
   "/sitemap.xml",
   "/robots.txt",
 ]);
@@ -41,10 +40,12 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  // Do not run Clerk/Next.js middleware on API traffic. On Netlify the
-  // default Clerk matcher was intercepting /api/* and /.netlify/functions/*
-  // and turning them into page 404s / login redirects.
+  // /api must stay in the matcher. On Netlify, paths excluded from
+  // middleware never reach the Next.js server, so app/api/[...path]
+  // would 404 at the CDN. /api is still a public route above, so
+  // Clerk will not redirect those requests to login.
   matcher: [
-    "/((?!_next|api(?:/|$)|\\.netlify(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
   ],
 };

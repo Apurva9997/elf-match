@@ -4,6 +4,6 @@
   # ENCRYPTION_SALT is an app-specific key derivation salt, not a direct secret.
   SECRETS_SCAN_OMIT_KEYS = "FRONTEND_URL,ENCRYPTION_SALT"
 
-# Do not rewrite /api/* to /.netlify/functions/api. That function is not
-# included in the Next.js production deploy, and a forced rewrite 404s
-# before Next.js app/api/[...path] can handle the request.
+# Do not add netlify/functions/api or a /api/* rewrite. On this Next.js
+# site those claim /api before the app router. APIs live at
+# src/app/api/[...path]/route.ts.
