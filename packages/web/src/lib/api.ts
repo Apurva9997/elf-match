@@ -44,6 +44,13 @@ class ApiClient {
       credentials: "include",
     });
 
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(
+        `API request failed (${response.status} ${response.statusText})`
+      );
+    }
+
     const data: ApiResponse<T> = await response.json();
 
     if (!response.ok || !data.success) {
