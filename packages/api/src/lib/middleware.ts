@@ -1,6 +1,9 @@
-import type { Ratelimit } from "@upstash/ratelimit";
 import { Sentry } from "./sentry.js";
-import { checkRateLimit, getIdentifier } from "./rate-limit.js";
+import {
+  checkRateLimit,
+  getIdentifier,
+  type AppRateLimiter,
+} from "./rate-limit.js";
 
 export type RouteParams = Record<string, string>;
 export type NetlifyHandler = (
@@ -9,7 +12,7 @@ export type NetlifyHandler = (
 ) => Promise<Response>;
 
 interface RateLimitOptions {
-  limiter: Ratelimit;
+  limiter: AppRateLimiter;
   useUserId?: boolean;
 }
 

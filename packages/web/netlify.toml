@@ -4,14 +4,6 @@
   # ENCRYPTION_SALT is an app-specific key derivation salt, not a direct secret.
   SECRETS_SCAN_OMIT_KEYS = "FRONTEND_URL,ENCRYPTION_SALT"
 
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# Force /api/* onto the function so the Next.js runtime cannot 404 it as a
-# missing page. Clerk middleware is also configured to skip these paths.
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-  force = true
+# Do not rewrite /api/* to /.netlify/functions/api. That function is not
+# included in the Next.js production deploy, and a forced rewrite 404s
+# before Next.js app/api/[...path] can handle the request.
