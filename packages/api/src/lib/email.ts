@@ -1,15 +1,24 @@
 import Mailgun from "mailgun.js";
 import FormData from "form-data";
 
-const mailgun = new Mailgun(FormData);
-const mg = mailgun.client({
-  username: "api",
-  key: process.env.MAILGUN_API_KEY || "",
-});
+const FROM_EMAIL = () => process.env.FROM_EMAIL || "info@giftwhisper.online";
+const FRONTEND_URL = () => process.env.FRONTEND_URL || "http://localhost:3000";
 
-const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "info@giftwhisper.online";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+let mailgunClient: ReturnType<Mailgun["client"]> | undefined;
+
+function getMailgun() {
+  if (!mailgunClient) {
+    const key = process.env.MAILGUN_API_KEY;
+    if (!key) {
+      throw new Error("MAILGUN_API_KEY is not configured");
+    }
+    mailgunClient = new Mailgun(FormData).client({
+      username: "api",
+      key,
+    });
+  }
+  return mailgunClient;
+}
 
 interface EmailOptions {
   to: string;
@@ -32,8 +41,8 @@ export async function sendEmail({
     return;
   }
 
-  await mg.messages.create(MAILGUN_DOMAIN, {
-    from: FROM_EMAIL,
+  await getMailgun().messages.create(process.env.MAILGUN_DOMAIN || "", {
+    from: FROM_EMAIL(),
     to,
     subject,
     html,
@@ -47,7 +56,7 @@ export async function sendInvitationEmail(
   inviterName: string,
   token: string
 ): Promise<void> {
-  const inviteLink = `${FRONTEND_URL}/invite/${token}`;
+  const inviteLink = `${FRONTEND_URL()}/invite/${token}`;
 
   const html = `
     <!DOCTYPE html>
@@ -131,7 +140,7 @@ export async function sendAssignmentEmail(
   teamName: string,
   gifteeName: string
 ): Promise<void> {
-  const dashboardLink = `${FRONTEND_URL}/dashboard`;
+  const dashboardLink = `${FRONTEND_URL()}/dashboard`;
 
   const html = `
     <!DOCTYPE html>
@@ -221,7 +230,7 @@ export async function sendReminderEmail(
   deadline: string,
   missingItems: string[]
 ): Promise<void> {
-  const dashboardLink = `${FRONTEND_URL}/dashboard`;
+  const dashboardLink = `${FRONTEND_URL()}/dashboard`;
 
   const missingItemsList = missingItems.map((item) => `• ${item}`).join("\n");
   const missingItemsHtml = missingItems

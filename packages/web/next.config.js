@@ -3,6 +3,18 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Compile the API package sitting next to this app in the monorepo.
+    externalDir: true,
+    serverComponentsExternalPackages: ["pg"],
+  },
+  webpack: (config) => {
+    // packages/api is ESM TypeScript that imports sibling files as ".js".
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".js"],
+    };
+    return config;
+  },
 };
 
 module.exports = withSentryConfig(nextConfig, {
