@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/terms(.*)",
   "/privacy(.*)",
   "/api(.*)",
+  "/.netlify(.*)",
   "/sitemap.xml",
   "/robots.txt",
 ]);
@@ -40,8 +41,10 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
+  // Do not run Clerk/Next.js middleware on API traffic. On Netlify the
+  // default Clerk matcher was intercepting /api/* and /.netlify/functions/*
+  // and turning them into page 404s / login redirects.
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
+    "/((?!_next|api(?:/|$)|\\.netlify(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],
 };
