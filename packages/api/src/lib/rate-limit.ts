@@ -34,7 +34,13 @@ function createLimiter(
         });
       }
 
-      return limiter.limit(identifier);
+      try {
+        return await limiter.limit(identifier);
+      } catch (err) {
+        // Dead/misconfigured Upstash (e.g. ENOTFOUND) must not 500 the API.
+        console.error("Rate limit backend unavailable, allowing request:", err);
+        return { success: true, limit: 0, remaining: 0, reset: Date.now() };
+      }
     },
   };
 }

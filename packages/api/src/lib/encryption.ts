@@ -9,7 +9,11 @@ const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 
 // Get encryption key from environment or derive from secret
+let encryptionKey: Buffer | null = null;
+
 function getEncryptionKey(): Buffer {
+  if (encryptionKey) return encryptionKey;
+
   const secret = process.env.ENCRYPTION_SECRET;
   if (!secret) {
     throw new Error("ENCRYPTION_SECRET environment variable is required");
@@ -18,7 +22,10 @@ function getEncryptionKey(): Buffer {
   if (!salt) {
     throw new Error("ENCRYPTION_SALT environment variable is required");
   }
-  return scryptSync(secret, salt, 32);
+  // scrypt is intentionally slow. Deriving it on every profile read blows
+  // the Netlify function timeout and surfaces as "This function has crashed".
+  encryptionKey = scryptSync(secret, salt, 32);
+  return encryptionKey;
 }
 
 /**

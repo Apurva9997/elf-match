@@ -105,11 +105,14 @@ export default function DashboardPage() {
   const {
     data: teams,
     isLoading: teamsLoading,
+    isError: teamsError,
+    error: teamsErrorDetail,
     refetch: refetchTeams,
   } = useQuery({
     queryKey: ["teams"],
     queryFn: () => api.listTeams(),
     enabled: !!user,
+    retry: 1,
   });
 
   const {
@@ -283,9 +286,13 @@ export default function DashboardPage() {
     return firstTeam.role === "admin" ? "admin" : "member";
   };
 
-  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login");
+    }
+  }, [authLoading, user, router]);
+
   if (!authLoading && !user) {
-    router.push("/auth/login");
     return null;
   }
 
@@ -445,7 +452,21 @@ export default function DashboardPage() {
         </div>
 
         {/* Teams Grid */}
-        {teams && teams.length > 0 ? (
+        {teamsError ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <h2 className="text-xl font-display font-semibold text-cream mb-2">
+                Couldn&apos;t load your exchanges
+              </h2>
+              <p className="text-cream/60 mb-6 max-w-md mx-auto">
+                {teamsErrorDetail instanceof Error
+                  ? teamsErrorDetail.message
+                  : "The server didn't respond. Please try again."}
+              </p>
+              <Button onClick={() => refetchTeams()}>Try again</Button>
+            </CardContent>
+          </Card>
+        ) : teams && teams.length > 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

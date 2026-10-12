@@ -54,11 +54,14 @@ export default function ProfilePage() {
   const {
     data: profile,
     isLoading: profileLoading,
+    isError: profileError,
+    error: profileErrorDetail,
     refetch: refetchProfile,
   } = useQuery({
     queryKey: ["profile"],
     queryFn: () => api.getProfile(),
     enabled: !!user,
+    retry: 1,
   });
 
   const {
@@ -167,8 +170,13 @@ export default function ProfilePage() {
   };
 
   // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login");
+    }
+  }, [authLoading, user, router]);
+
   if (!authLoading && !user) {
-    router.push("/auth/login");
     return null;
   }
 
@@ -176,6 +184,29 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-gold animate-spin" />
+      </div>
+    );
+  }
+
+  if (profileError || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="text-center p-8 max-w-md">
+          <h2 className="text-xl font-display font-semibold text-cream mb-2">
+            Couldn&apos;t load your profile
+          </h2>
+          <p className="text-cream/60 mb-6">
+            {profileErrorDetail instanceof Error
+              ? profileErrorDetail.message
+              : "The server didn't respond. Please try again."}
+          </p>
+          <div className="flex justify-center gap-3">
+            <Link href="/dashboard">
+              <Button variant="secondary">Back</Button>
+            </Link>
+            <Button onClick={() => refetchProfile()}>Try again</Button>
+          </div>
+        </Card>
       </div>
     );
   }
