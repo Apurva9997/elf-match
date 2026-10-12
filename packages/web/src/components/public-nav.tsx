@@ -17,7 +17,7 @@ export function PublicNav() {
               GiftWhisper
             </span>
           </Link>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
             <Link
               href="/features"
               className="text-cream/70 hover:text-cream transition-colors hidden sm:block"
@@ -37,10 +37,14 @@ export function PublicNav() {
             ) : (
               <>
                 <Link href="/auth/login">
-                  <Button variant="ghost">Sign In</Button>
+                  <Button variant="ghost" className="whitespace-nowrap px-2.5 py-2 text-sm sm:px-4">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/auth/login">
-                  <Button>Get Started Free</Button>
+                  <Button className="whitespace-nowrap px-2.5 py-2 text-sm sm:px-4">
+                    Get Started
+                  </Button>
                 </Link>
               </>
             )}
