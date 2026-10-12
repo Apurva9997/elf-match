@@ -37,3 +37,5 @@ coverage/
 .turbo/
 
 .esbuild
+# Local Netlify folder
+.netlify

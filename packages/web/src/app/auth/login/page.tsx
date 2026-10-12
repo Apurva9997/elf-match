@@ -90,7 +90,10 @@ function LoginPageContent() {
     try {
       // Clear any stale session so Clerk doesn't return session_exists
       try { await clerk.signOut(); } catch {}
-      const result = await signIn.create({ identifier: data.email });
+      const result = await signIn.create({
+        identifier: data.email,
+        strategy: "email_code",
+      });
 
       // Find the email code factor to get emailAddressId
       const emailFactor = result.supportedFirstFactors?.find(
