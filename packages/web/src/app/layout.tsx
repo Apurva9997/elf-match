@@ -8,12 +8,11 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   metadataBase: new URL("https://elfmatch.com"),
   title: {
-    default:
-      "GiftWhisper - Free Secret Santa Generator & Gift Exchange Organizer",
-    template: "%s | GiftWhisper",
+    default: "Elf Match — organize a Secret Santa gift exchange",
+    template: "%s | Elf Match",
   },
   description:
-    "Create your free Secret Santa gift exchange in 2 minutes. Organize office parties, family exchanges & friend groups with wishlists, exclusion rules & automatic matching. No signup required to start!",
+    "Elf Match helps you organize a gift exchange: set a budget and date, invite participants, manage exclusions, collect wishlists, and privately assign recipients.",
   keywords: [
     "secret santa",
     "secret santa generator",
@@ -30,9 +29,9 @@ export const metadata: Metadata = {
     "wishlist maker",
     "secret santa with exclusions",
   ],
-  authors: [{ name: "GiftWhisper" }],
-  creator: "GiftWhisper",
-  publisher: "GiftWhisper",
+  authors: [{ name: "Elf Match" }],
+  creator: "Elf Match",
+  publisher: "Elf Match",
   formatDetection: {
     email: false,
     address: false,
@@ -42,27 +41,26 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://elfmatch.com",
-    siteName: "GiftWhisper",
-    title:
-      "GiftWhisper - Free Secret Santa Generator & Gift Exchange Organizer",
+    siteName: "Elf Match",
+    title: "Elf Match — organize a Secret Santa gift exchange",
     description:
-      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
+      "Set a budget and date, invite the group, keep particular pairs apart, and send each person only their own recipient.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "GiftWhisper - Free Secret Santa Generator",
+        alt: "Elf Match — a gift exchange, with the names kept private",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GiftWhisper - Free Secret Santa Generator",
+    title: "Elf Match — organize a Secret Santa gift exchange",
     description:
-      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
+      "Set a budget and date, invite the group, keep particular pairs apart, and send each person only their own recipient.",
     images: ["/og-image.png"],
-    creator: "@giftwhisper",
+    creator: "@elfmatch",
   },
   robots: {
     index: true,

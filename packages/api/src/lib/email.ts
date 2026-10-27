@@ -1,7 +1,11 @@
 import Mailgun from "mailgun.js";
 import FormData from "form-data";
 
-const FROM_EMAIL = () => process.env.FROM_EMAIL || "GiftWhisper <noreply@localhost>";
+function fromAddress() {
+  const raw = process.env.FROM_EMAIL || "noreply@localhost";
+  if (raw.includes("<")) return raw;
+  return `Elf Match <${raw}>`;
+}
 const FRONTEND_URL = () => process.env.FRONTEND_URL || "http://localhost:3000";
 
 let mailgunClient: ReturnType<Mailgun["client"]> | undefined;
@@ -42,7 +46,7 @@ export async function sendEmail({
   }
 
   await getMailgun().messages.create(process.env.MAILGUN_DOMAIN || "", {
-    from: FROM_EMAIL(),
+    from: fromAddress(),
     to,
     subject,
     html,
@@ -64,7 +68,7 @@ export async function sendInvitationEmail(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>You're invited to Secret Santa!</title>
+      <title>You're invited to Elf Match</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0F1419; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
       <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -105,7 +109,7 @@ export async function sendInvitationEmail(
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                    © ${new Date().getFullYear()} Secret Santa. Made with ❤️
+                    © ${new Date().getFullYear()} Elf Match. Made with ❤️
                   </p>
                 </td>
               </tr>
@@ -129,7 +133,7 @@ If you don't want to participate, you can simply ignore this email.
 
   await sendEmail({
     to: email,
-    subject: `🎁 ${inviterName} invited you to Secret Santa!`,
+    subject: `🎁 ${inviterName} invited you to Elf Match`,
     html,
     text,
   });
@@ -148,7 +152,7 @@ export async function sendAssignmentEmail(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Your Secret Santa has been assigned!</title>
+      <title>Your Elf Match is ready</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0F1419; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
       <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -192,7 +196,7 @@ export async function sendAssignmentEmail(
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                    © ${new Date().getFullYear()} Secret Santa. Made with ❤️
+                    © ${new Date().getFullYear()} Elf Match. Made with ❤️
                   </p>
                 </td>
               </tr>
@@ -218,7 +222,7 @@ Remember, keep it a secret! 🤫
 
   await sendEmail({
     to: email,
-    subject: `🎅 Your Secret Santa match for "${teamName}" is ready!`,
+    subject: `🎅 Your Elf Match for "${teamName}" is ready!`,
     html,
     text,
   });
@@ -243,7 +247,7 @@ export async function sendReminderEmail(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Reminder: Complete your Secret Santa profile</title>
+      <title>Reminder from Elf Match</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0F1419; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
       <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -287,7 +291,7 @@ export async function sendReminderEmail(
               <tr>
                 <td align="center" style="padding-top: 32px;">
                   <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                    © ${new Date().getFullYear()} Secret Santa. Made with ❤️
+                    © ${new Date().getFullYear()} Elf Match. Made with ❤️
                   </p>
                 </td>
               </tr>
@@ -312,7 +316,7 @@ Visit ${dashboardLink} to complete your profile.
 
   await sendEmail({
     to: email,
-    subject: `⏰ Reminder: Complete your "${teamName}" Secret Santa profile`,
+    subject: `⏰ Reminder: Complete your "${teamName}" profile on Elf Match`,
     html,
     text,
   });

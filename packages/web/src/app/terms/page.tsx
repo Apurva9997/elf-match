@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Read the terms and conditions for using GiftWhisper, the free Secret Santa gift exchange organizer.",
+    "Read the terms and conditions for using Elf Match, the free Secret Santa gift exchange organizer.",
   alternates: {
     canonical: "https://elfmatch.com/terms",
   },
@@ -20,7 +20,7 @@ export default function TermsPage() {
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl">🎁</span>
               <span className="font-display text-xl font-semibold text-cream">
-                GiftWhisper
+                Elf Match
               </span>
             </Link>
           </div>
@@ -47,7 +47,7 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p className="text-cream/70">
-              By accessing or using GiftWhisper (&quot;the Service&quot;), you
+              By accessing or using Elf Match (&quot;the Service&quot;), you
               agree to be bound by these Terms of Service. If you do not agree
               to these terms, please do not use the Service.
             </p>
@@ -58,7 +58,7 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p className="text-cream/70">
-              GiftWhisper is a free online platform that helps users organize
+              Elf Match is a free online platform that helps users organize
               Secret Santa and gift exchange events. The Service allows users to
               create exchanges, invite participants, create wishlists, set
               exclusion rules, and automatically match participants.

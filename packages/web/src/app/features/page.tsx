@@ -19,12 +19,12 @@ import { PublicNav } from "@/components/public-nav";
 export const metadata: Metadata = {
   title: "Features - Everything You Need for Secret Santa",
   description:
-    "Discover all the features that make GiftWhisper the best free Secret Santa organizer. Wishlists, exclusion rules, automatic matching, email notifications, and more.",
+    "Discover all the features that make Elf Match the best free Secret Santa organizer. Wishlists, exclusion rules, automatic matching, email notifications, and more.",
   alternates: {
     canonical: "https://elfmatch.com/features",
   },
   openGraph: {
-    title: "GiftWhisper Features - The Complete Secret Santa Solution",
+    title: "Elf Match Features - The Complete Secret Santa Solution",
     description:
       "Wishlists, exclusion rules, automatic matching, secure address sharing, and more. Everything you need for the perfect gift exchange.",
   },
@@ -35,7 +35,7 @@ const features = [
     icon: Users,
     title: "Unlimited Participants",
     description:
-      "Invite as many people as you want to your exchange. Whether it's a small family gathering of 4 or a large office party of 100+, GiftWhisper handles it all.",
+      "Invite as many people as you want to your exchange. Whether it's a small family gathering of 4 or a large office party of 100+, Elf Match handles it all.",
     highlight: "No participant limits",
   },
   {
@@ -112,7 +112,7 @@ const features = [
     icon: CheckCircle,
     title: "100% Free Forever",
     description:
-      "No premium tiers, no feature gates, no ads. GiftWhisper is completely free because we believe gift-giving should be accessible to everyone.",
+      "No premium tiers, no feature gates, no ads. Elf Match is completely free because we believe gift-giving should be accessible to everyone.",
     highlight: "No hidden costs",
   },
 ];
@@ -132,7 +132,7 @@ export default function FeaturesPage() {
               <span className="text-gradient-gold">Perfect Gift Exchange</span>
             </h1>
             <p className="text-xl text-cream/70 max-w-2xl mx-auto">
-              Powerful features, beautifully simple. GiftWhisper has everything
+              Powerful features, beautifully simple. Elf Match has everything
               to make your Secret Santa effortless.
             </p>
           </div>
@@ -169,7 +169,7 @@ export default function FeaturesPage() {
           {/* Comparison Section */}
           <div className="glass-card p-8 mb-16">
             <h2 className="text-2xl font-display font-bold text-cream mb-6 text-center">
-              Why Choose GiftWhisper?
+              Why Choose Elf Match?
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -177,7 +177,7 @@ export default function FeaturesPage() {
                   <tr className="border-b border-gold/20">
                     <th className="text-left py-3 px-4 text-cream">Feature</th>
                     <th className="text-center py-3 px-4 text-gold">
-                      GiftWhisper
+                      Elf Match
                     </th>
                     <th className="text-center py-3 px-4 text-cream/50">
                       Spreadsheets

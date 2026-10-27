@@ -64,7 +64,7 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: "Welcome to GiftWhisper! 🎁",
+            title: "Welcome to Elf Match! 🎁",
             description:
               "We'll help you set up your first gift exchange in 3 simple steps.",
             icon: <Gift className="w-8 h-8 text-gold" />,

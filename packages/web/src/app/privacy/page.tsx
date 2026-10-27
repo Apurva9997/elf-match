@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Learn how GiftWhisper collects, uses, and protects your personal information when you use our Secret Santa gift exchange platform.",
+    "Learn how Elf Match collects, uses, and protects your personal information when you use our Secret Santa gift exchange platform.",
   alternates: {
     canonical: "https://elfmatch.com/privacy",
   },
@@ -20,7 +20,7 @@ export default function PrivacyPage() {
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl">🎁</span>
               <span className="font-display text-xl font-semibold text-cream">
-                GiftWhisper
+                Elf Match
               </span>
             </Link>
           </div>
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
               1. Information We Collect
             </h2>
             <p className="text-cream/70 mb-4">
-              When you use GiftWhisper, we collect the following information:
+              When you use Elf Match, we collect the following information:
             </p>
             <ul className="list-disc pl-6 text-cream/70 space-y-2">
               <li>
@@ -78,7 +78,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-cream/70 mb-4">We use your information to:</p>
             <ul className="list-disc pl-6 text-cream/70 space-y-2">
-              <li>Provide and operate the GiftWhisper service</li>
+              <li>Provide and operate the Elf Match service</li>
               <li>
                 Send you important notifications about your gift exchanges
               </li>
