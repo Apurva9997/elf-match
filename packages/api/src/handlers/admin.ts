@@ -103,7 +103,8 @@ async function _sendReminders(
             member.user.email,
             team.name,
             deadline,
-            missingItems
+            missingItems,
+            team.id
           );
 
           results.push({

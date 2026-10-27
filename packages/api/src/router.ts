@@ -49,6 +49,7 @@ const routes: Route[] = [
   // Team invitations / members
   { method: "POST", pattern: "/teams/:teamId/invite", handler: invitations.inviteMembers },
   { method: "DELETE", pattern: "/teams/:teamId/members/:memberId", handler: invitations.removeMember },
+  { method: "POST", pattern: "/teams/:teamId/members/:memberId/cancel", handler: invitations.cancelInvitation },
   { method: "POST", pattern: "/teams/:teamId/members/:memberId/resend", handler: invitations.resendInvitation },
 
   // Wishlists
@@ -63,6 +64,7 @@ const routes: Route[] = [
 
   // Assignments (preview before assign to match more specific first)
   { method: "POST", pattern: "/teams/:teamId/assign/preview", handler: assignments.previewAssignment },
+  { method: "POST", pattern: "/teams/:teamId/assign/notify", handler: assignments.retryAssignmentEmails },
   { method: "POST", pattern: "/teams/:teamId/assign", handler: assignments.triggerAssignment },
   { method: "GET", pattern: "/teams/:teamId/assignment", handler: assignments.getAssignment },
   { method: "PATCH", pattern: "/teams/:teamId/assignment", handler: assignments.updateAssignment },

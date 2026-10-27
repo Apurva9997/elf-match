@@ -142,9 +142,10 @@ If you don't want to participate, you can simply ignore this email.
 export async function sendAssignmentEmail(
   email: string,
   teamName: string,
-  gifteeName: string
+  gifteeName: string,
+  teamId: string
 ): Promise<void> {
-  const dashboardLink = `${FRONTEND_URL()}/dashboard`;
+  const dashboardLink = `${FRONTEND_URL()}/dashboard/teams/${teamId}`;
 
   const html = `
     <!DOCTYPE html>
@@ -215,7 +216,7 @@ The assignments for "${teamName}" are in!
 
 You'll be getting a gift for: ${gifteeName}
 
-Visit ${dashboardLink} to view their wishlist.
+Open your exchange to see their wishlist: ${dashboardLink}
 
 Remember, keep it a secret! 🤫
   `.trim();
@@ -232,9 +233,12 @@ export async function sendReminderEmail(
   email: string,
   teamName: string,
   deadline: string,
-  missingItems: string[]
+  missingItems: string[],
+  teamId?: string
 ): Promise<void> {
-  const dashboardLink = `${FRONTEND_URL()}/dashboard`;
+  const dashboardLink = teamId
+    ? `${FRONTEND_URL()}/dashboard/teams/${teamId}`
+    : `${FRONTEND_URL()}/dashboard`;
 
   const missingItemsList = missingItems.map((item) => `• ${item}`).join("\n");
   const missingItemsHtml = missingItems

@@ -24,11 +24,10 @@ import {
 } from "../lib/response.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
 
+const emailItem = z.string().email();
+
 const inviteMembersSchema = z.object({
-  emails: z
-    .array(z.string().email().transform(sanitizeTransform("email")))
-    .min(1)
-    .max(50),
+  emails: z.array(z.string()).min(1).max(50),
 });
 
 async function _inviteMembers(
@@ -62,7 +61,23 @@ async function _inviteMembers(
       return error("Invalid email list", 400, "VALIDATION_ERROR");
     }
 
-    const { emails } = parsed.data;
+    const invalid = parsed.data.emails
+      .map((value) => value.trim())
+      .filter((value) => value && !emailItem.safeParse(value).success);
+    const emails = [
+      ...new Set(
+        parsed.data.emails
+          .map((value) => sanitizeTransform("email")(value))
+          .filter((value) => emailItem.safeParse(value).success)
+      ),
+    ];
+    if (emails.length === 0) {
+      return error(
+        "None of those look like email addresses.",
+        400,
+        "VALIDATION_ERROR"
+      );
+    }
 
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
@@ -73,7 +88,11 @@ async function _inviteMembers(
     }
 
     const results: Array<{ email: string; status: string; error?: string }> =
-      [];
+      invalid.map((email) => ({
+        email,
+        status: "invalid",
+        error: "That is not an email address",
+      }));
 
     for (const email of emails) {
       const normalizedEmail = email.toLowerCase();
@@ -129,6 +148,14 @@ async function _inviteMembers(
 
         results.push({ email: normalizedEmail, status: "invited" });
       } catch (err) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? String((err as { code?: unknown }).code)
+            : "";
+        if (code === "23505") {
+          results.push({ email: normalizedEmail, status: "already_invited" });
+          continue;
+        }
         console.error(`Error inviting ${normalizedEmail}:`, err);
         results.push({
           email: normalizedEmail,
@@ -212,7 +239,17 @@ async function _acceptInvitation(
       invitation.invitedEmail &&
       invitation.invitedEmail !== user.email.toLowerCase()
     ) {
-      return forbidden("This invitation was sent to a different email address");
+      return forbidden(
+        `This invitation was sent to ${invitation.invitedEmail}. You are signed in as ${user.email}. Sign out and open the link with that email.`
+      );
+    }
+
+    if (invitation.team?.status === "assigned") {
+      return error(
+        "Names have already been drawn for this exchange. Ask the organizer before joining — a late join is not added to the draw.",
+        409,
+        "DRAW_LOCKED"
+      );
     }
 
     const existingMembership = await db.query.teamMembers.findFirst({
@@ -322,20 +359,24 @@ async function _removeMember(
     }
 
     if (memberToRemove.userId === user.id) {
-      const otherAdmins = await db.query.teamMembers.findMany({
-        where: and(
-          eq(teamMembers.teamId, teamId),
-          eq(teamMembers.role, "admin"),
-          eq(teamMembers.invitationStatus, "accepted")
-        ),
-      });
+      return error(
+        "You organize this exchange, so you cannot remove your own seat. Delete the exchange if the group is not going ahead.",
+        400
+      );
+    }
 
-      if (otherAdmins.length <= 1) {
-        return error(
-          "Cannot remove yourself as the only admin. Transfer admin rights first.",
-          400
-        );
-      }
+    const draw = await db.query.assignments.findMany({
+      where: eq(assignments.teamId, teamId),
+    });
+    if (
+      draw.length > 0 &&
+      memberToRemove.invitationStatus === "accepted"
+    ) {
+      return error(
+        "Names are already drawn. Removing someone would leave their giver without a recipient, and the draw cannot be changed. Ask them to sit this gift out instead.",
+        409,
+        "DRAW_LOCKED"
+      );
     }
 
     await db
@@ -360,6 +401,50 @@ async function _removeMember(
   } catch (err) {
     console.error("Error removing member:", err);
     return serverError("Failed to remove member");
+  }
+}
+
+async function _cancelInvitation(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const { teamId, memberId } = params;
+    if (!teamId || !memberId) {
+      return error("Team ID and Member ID required", 400);
+    }
+
+    const adminMembership = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, user.id),
+        eq(teamMembers.invitationStatus, "accepted"),
+        eq(teamMembers.role, "admin")
+      ),
+    });
+    if (!adminMembership) {
+      return forbidden("Only the organizer can cancel an invitation");
+    }
+
+    const pending = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.id, memberId),
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.invitationStatus, "pending")
+      ),
+    });
+    if (!pending) {
+      return notFound("That invitation is no longer open");
+    }
+
+    await db.delete(teamMembers).where(eq(teamMembers.id, memberId));
+    return success({ message: "Invitation cancelled" });
+  } catch (err) {
+    console.error("Error cancelling invitation:", err);
+    return serverError("Failed to cancel invitation");
   }
 }
 
@@ -429,6 +514,14 @@ async function _acceptInvitationDirect(
 
     if (!invitation) {
       return notFound("Invitation not found or not for this user");
+    }
+
+    if (invitation.team?.status === "assigned") {
+      return error(
+        "Names have already been drawn for this exchange. Ask the organizer before joining — a late join is not added to the draw.",
+        409,
+        "DRAW_LOCKED"
+      );
     }
 
     const existingMembership = await db.query.teamMembers.findFirst({
@@ -550,18 +643,37 @@ async function _resendInvitation(
 
     const token = uuidv4();
     const tokenHash = hashToken(token);
+    const previousToken = pendingMember.invitationToken;
 
     await db
       .update(teamMembers)
       .set({ invitationToken: tokenHash, invitedAt: new Date() })
       .where(eq(teamMembers.id, memberId));
 
-    await sendInvitationEmail(
-      pendingMember.invitedEmail,
-      team.name,
-      user.name || user.email,
-      token
-    );
+    try {
+      await sendInvitationEmail(
+        pendingMember.invitedEmail,
+        team.name,
+        user.name || user.email,
+        token
+      );
+    } catch (emailErr) {
+      // Keep the link the person may already have. A failed resend
+      // must not replace a working invitation with one nobody received.
+      await db
+        .update(teamMembers)
+        .set({
+          invitationToken: previousToken,
+          invitedAt: pendingMember.invitedAt,
+        })
+        .where(eq(teamMembers.id, memberId));
+      console.error("Error resending invitation:", emailErr);
+      return error(
+        "The invitation email did not send. The previous link still works.",
+        502,
+        "EMAIL_FAILED"
+      );
+    }
 
     return success({ message: "Invitation resent successfully" });
   } catch (err) {
@@ -589,6 +701,11 @@ export const declineInvitation = wrapHandler(_declineInvitation, {
 });
 
 export const removeMember = wrapHandler(_removeMember, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const cancelInvitation = wrapHandler(_cancelInvitation, {
   limiter: rateLimiters.authenticatedWrite,
   useUserId: true,
 });

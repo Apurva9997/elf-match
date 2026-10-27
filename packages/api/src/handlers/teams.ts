@@ -15,34 +15,82 @@ import {
 import { optionalIsoDateSchema } from "../lib/dates.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
 
-const createTeamSchema = z.object({
-  name: z.string().min(1).max(255).transform(sanitizeTransform("text")),
-  description: z
-    .string()
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
-  budgetMin: z.number().positive().optional(),
-  budgetMax: z.number().positive().optional(),
-  exchangeDate: optionalIsoDateSchema,
-  wishlistDeadline: optionalIsoDateSchema,
-});
+const budgetField = z.number().positive().max(1_000_000);
 
-const updateTeamSchema = z.object({
-  name: z
-    .string()
-    .min(1)
-    .max(255)
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
-  description: z
-    .string()
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
-  budgetMin: z.number().positive().nullable().optional(),
-  budgetMax: z.number().positive().nullable().optional(),
-  exchangeDate: optionalIsoDateSchema,
-  wishlistDeadline: optionalIsoDateSchema,
-});
+function budgetOrder(
+  budgetMin: number | null | undefined,
+  budgetMax: number | null | undefined,
+  ctx: z.RefinementCtx
+) {
+  if (
+    budgetMin != null &&
+    budgetMax != null &&
+    budgetMin > budgetMax
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "The minimum budget cannot be higher than the maximum.",
+      path: ["budgetMin"],
+    });
+  }
+}
+
+function dateOrder(
+  exchangeDate: string | null | undefined,
+  wishlistDeadline: string | null | undefined,
+  ctx: z.RefinementCtx
+) {
+  if (
+    exchangeDate &&
+    wishlistDeadline &&
+    wishlistDeadline > exchangeDate
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "The wishlist deadline cannot be after the exchange date.",
+      path: ["wishlistDeadline"],
+    });
+  }
+}
+
+const createTeamSchema = z
+  .object({
+    name: z.string().min(1).max(255).transform(sanitizeTransform("text")),
+    description: z
+      .string()
+      .optional()
+      .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
+    budgetMin: budgetField.optional(),
+    budgetMax: budgetField.optional(),
+    exchangeDate: optionalIsoDateSchema,
+    wishlistDeadline: optionalIsoDateSchema,
+  })
+  .superRefine((data, ctx) => {
+    budgetOrder(data.budgetMin, data.budgetMax, ctx);
+    dateOrder(data.exchangeDate, data.wishlistDeadline, ctx);
+  });
+
+const updateTeamSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1)
+      .max(255)
+      .optional()
+      .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+    description: z
+      .string()
+      .optional()
+      .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
+    budgetMin: budgetField.nullable().optional(),
+    budgetMax: budgetField.nullable().optional(),
+    exchangeDate: optionalIsoDateSchema,
+    wishlistDeadline: optionalIsoDateSchema,
+  })
+  .superRefine((data, ctx) => {
+    budgetOrder(data.budgetMin, data.budgetMax, ctx);
+    dateOrder(data.exchangeDate, data.wishlistDeadline, ctx);
+  });
 
 async function _createTeam(
   req: Request,
@@ -56,7 +104,11 @@ async function _createTeam(
     const parsed = createTeamSchema.safeParse(body);
 
     if (!parsed.success) {
-      return error("Invalid team data", 400, "VALIDATION_ERROR");
+      return error(
+        parsed.error.issues[0]?.message || "Invalid team data",
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     const {
@@ -211,11 +263,55 @@ async function _updateTeam(
     const parsed = updateTeamSchema.safeParse(body);
 
     if (!parsed.success) {
-      return error("Invalid team data", 400, "VALIDATION_ERROR");
+      return error(
+        parsed.error.issues[0]?.message || "Invalid team data",
+        400,
+        "VALIDATION_ERROR"
+      );
+    }
+
+    const data = parsed.data;
+
+    const current = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+    });
+    if (!current) return notFound("Team not found");
+
+    const nextMin =
+      data.budgetMin !== undefined
+        ? data.budgetMin
+        : current.budgetMin
+          ? Number(current.budgetMin)
+          : null;
+    const nextMax =
+      data.budgetMax !== undefined
+        ? data.budgetMax
+        : current.budgetMax
+          ? Number(current.budgetMax)
+          : null;
+    if (nextMin != null && nextMax != null && nextMin > nextMax) {
+      return error(
+        "The minimum budget cannot be higher than the maximum.",
+        400,
+        "VALIDATION_ERROR"
+      );
+    }
+
+    const nextExchange =
+      data.exchangeDate !== undefined ? data.exchangeDate : current.exchangeDate;
+    const nextDeadline =
+      data.wishlistDeadline !== undefined
+        ? data.wishlistDeadline
+        : current.wishlistDeadline;
+    if (nextExchange && nextDeadline && nextDeadline > nextExchange) {
+      return error(
+        "The wishlist deadline cannot be after the exchange date.",
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
-    const data = parsed.data;
 
     if (data.name !== undefined) updates.name = data.name;
     if (data.description !== undefined) updates.description = data.description;
@@ -352,6 +448,13 @@ async function _getTeamStatus(
       pendingInvitations: pendingCount?.count ?? 0,
       hasAssignments,
       canAssign: acceptedMembersCount >= 3 && !hasAssignments,
+      assignmentEmailsPending: hasAssignments
+        ? (
+            await db.query.assignments.findMany({
+              where: eq(assignments.teamId, teamId),
+            })
+          ).filter((row) => !row.revealedAt).length
+        : 0,
       completionPercentage:
         acceptedMembersCount > 0
           ? Math.round(

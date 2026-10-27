@@ -24,7 +24,7 @@ export default function InvitePage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, logout } = useAuth();
   const reduce = useReducedMotion();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState("");
@@ -82,7 +82,7 @@ export default function InvitePage() {
               <p className="text-ink-soft">Opening the invitation.</p>
             )}
 
-            {error && (
+            {error && !preview && (
               <>
                 <h1 className="font-display text-3xl text-evergreen">
                   This invitation did not open
@@ -134,6 +134,19 @@ export default function InvitePage() {
                   </p>
                 ) : authLoading ? (
                   <p className="mt-6 text-sm text-ink-soft">Checking your account.</p>
+                ) : error ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-cranberry">{error}</p>
+                    {error.includes("signed in as") && (
+                      <Button
+                        variant="secondary"
+                        className="mt-4 w-full"
+                        onClick={() => logout()}
+                      >
+                        Sign out and use the invited email
+                      </Button>
+                    )}
+                  </div>
                 ) : user ? (
                   <Button onClick={join} isLoading={joining} className="mt-6 w-full">
                     Join {preview.exchangeName}

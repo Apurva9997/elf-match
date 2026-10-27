@@ -25,7 +25,7 @@ const steps = [
     details: [
       "Name is required",
       "Budget, wishlist deadline, and exchange date are optional",
-      "You can edit the details later, before the draw is sent",
+      "You can edit the details later. After the draw, tell the group yourself — they are not emailed the change",
     ],
   },
   {

@@ -181,6 +181,13 @@ class ApiClient {
     );
   }
 
+  async cancelInvitation(teamId: string, memberId: string) {
+    return this.request<{ message: string }>(
+      `/teams/${teamId}/members/${memberId}/cancel`,
+      { method: "POST" }
+    );
+  }
+
   async resendInvitation(teamId: string, memberId: string) {
     return this.request<{ message: string }>(
       `/teams/${teamId}/members/${memberId}/resend`,
@@ -239,15 +246,25 @@ class ApiClient {
     teamId: string,
     previewAssignments?: Array<{ giverId: string; receiverId: string }>
   ) {
-    return this.request<{ message: string; count: number }>(
-      `/teams/${teamId}/assign`,
-      {
-        method: "POST",
-        body: JSON.stringify(
-          previewAssignments ? { assignments: previewAssignments } : {}
-        ),
-      }
-    );
+    return this.request<{
+      message: string;
+      count: number;
+      notified: number;
+      failed: string[];
+    }>(`/teams/${teamId}/assign`, {
+      method: "POST",
+      body: JSON.stringify(
+        previewAssignments ? { assignments: previewAssignments } : {}
+      ),
+    });
+  }
+
+  async retryAssignmentEmails(teamId: string) {
+    return this.request<{
+      message: string;
+      notified: number;
+      failed: string[];
+    }>(`/teams/${teamId}/assign/notify`, { method: "POST" });
   }
 
   async getAssignment(teamId: string) {
@@ -369,6 +386,7 @@ export interface TeamStatus {
   pendingInvitations: number;
   hasAssignments: boolean;
   canAssign: boolean;
+  assignmentEmailsPending: number;
   completionPercentage: number;
 }
 
@@ -477,6 +495,7 @@ export interface Exclusion {
   member2Id: string;
   reason: string | null;
   bidirectional: boolean;
+  warning?: string | null;
   member1: TeamMember;
   member2: TeamMember;
 }

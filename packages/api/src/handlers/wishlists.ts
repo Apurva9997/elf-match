@@ -28,11 +28,15 @@ const wishItemSchema = z.object({
     .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
   url: z
     .string()
-    .url()
+    .max(2000)
     .optional()
     .or(z.literal(""))
-    .transform((val) => (val ? sanitizeTransform("url")(val) : val)),
-  priceEstimate: z.number().positive().optional(),
+    .transform((val) => {
+      if (!val) return val;
+      const withProtocol = /^https?:\/\//i.test(val) ? val : `https://${val}`;
+      return sanitizeTransform("url")(withProtocol);
+    }),
+  priceEstimate: z.number().positive().max(1_000_000).optional().nullable(),
   priority: z.number().int().min(0).max(10).optional(),
 });
 
@@ -137,7 +141,7 @@ async function _updateWishlist(
           title: item.title,
           description: item.description,
           url: item.url || null,
-          priceEstimate: item.priceEstimate?.toString(),
+          priceEstimate: item.priceEstimate?.toString() ?? null,
           priority: item.priority ?? index,
         }))
       );

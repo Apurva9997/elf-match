@@ -68,7 +68,7 @@ const faqs = [
   {
     question: "Do participants need to create an account?",
     answer:
-      "Yes, participants need to create a free account to join an exchange. We use passwordless login (magic links sent to email) so there's no password to remember. This ensures everyone's wishlist and assignment stays secure.",
+      "Yes. Sign in with a one-time email code, or with Google. Use the same email the invitation was sent to. Signing in with a different email will not accept that seat.",
   },
   {
     question: "Can I add items to my wishlist with links?",

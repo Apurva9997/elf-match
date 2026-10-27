@@ -32,14 +32,44 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const createTeamSchema = z.object({
-  name: z.string().min(1, "Team name is required").max(255),
-  description: z.string().optional(),
-  budgetMin: z.string().optional(),
-  budgetMax: z.string().optional(),
-  exchangeDate: z.string().optional(),
-  wishlistDeadline: z.string().optional(),
-});
+const createTeamSchema = z
+  .object({
+    name: z.string().min(1, "Team name is required").max(255),
+    description: z.string().optional(),
+    budgetMin: z.string().optional(),
+    budgetMax: z.string().optional(),
+    exchangeDate: z.string().optional(),
+    wishlistDeadline: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const min = data.budgetMin ? Number(data.budgetMin) : null;
+    const max = data.budgetMax ? Number(data.budgetMax) : null;
+    if (min != null && (Number.isNaN(min) || min <= 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a budget above zero, or leave it blank.",
+        path: ["budgetMin"],
+      });
+    }
+    if (min != null && max != null && min > max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Minimum cannot be higher than maximum.",
+        path: ["budgetMin"],
+      });
+    }
+    if (
+      data.exchangeDate &&
+      data.wishlistDeadline &&
+      data.wishlistDeadline > data.exchangeDate
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Wishlists are due after the exchange date.",
+        path: ["wishlistDeadline"],
+      });
+    }
+  });
 
 type CreateTeamForm = z.infer<typeof createTeamSchema>;
 
@@ -555,6 +585,7 @@ function DashboardContent() {
               type="number"
               label="Min Budget (₹)"
               placeholder="500"
+              error={errors.budgetMin?.message}
             />
             <Input
               {...register("budgetMax")}
@@ -569,6 +600,7 @@ function DashboardContent() {
               {...register("wishlistDeadline")}
               type="date"
               label="Wishlist Deadline"
+              error={errors.wishlistDeadline?.message}
             />
             <Input
               {...register("exchangeDate")}

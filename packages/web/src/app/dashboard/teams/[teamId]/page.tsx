@@ -74,14 +74,37 @@ const addressSchema = z.object({
   country: z.string().min(1, "Country is required"),
 });
 
-const updateTeamSchema = z.object({
-  name: z.string().min(1, "Team name is required").max(255),
-  description: z.string().optional(),
-  budgetMin: z.string().optional(),
-  budgetMax: z.string().optional(),
-  exchangeDate: z.string().optional(),
-  wishlistDeadline: z.string().optional(),
-});
+const updateTeamSchema = z
+  .object({
+    name: z.string().min(1, "Team name is required").max(255),
+    description: z.string().optional(),
+    budgetMin: z.string().optional(),
+    budgetMax: z.string().optional(),
+    exchangeDate: z.string().optional(),
+    wishlistDeadline: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const min = data.budgetMin ? Number(data.budgetMin) : null;
+    const max = data.budgetMax ? Number(data.budgetMax) : null;
+    if (min != null && max != null && min > max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Minimum cannot be higher than maximum.",
+        path: ["budgetMin"],
+      });
+    }
+    if (
+      data.exchangeDate &&
+      data.wishlistDeadline &&
+      data.wishlistDeadline > data.exchangeDate
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Wishlists are due after the exchange date.",
+        path: ["wishlistDeadline"],
+      });
+    }
+  });
 
 type WishItemForm = z.infer<typeof wishItemSchema>;
 type AddressForm = z.infer<typeof addressSchema>;
@@ -208,12 +231,35 @@ export default function TeamPage() {
   // Mutations
   const inviteMutation = useMutation({
     mutationFn: (emails: string[]) => api.inviteMembers(teamId, emails),
-    onSuccess: (_, emails) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       setIsInviteModalOpen(false);
+      const invited = result.results.filter((item) => item.status === "invited");
+      const invalid = result.results.filter((item) => item.status === "invalid");
+      const skipped = result.results.filter(
+        (item) => item.status !== "invited" && item.status !== "invalid"
+      );
+      if (invited.length === 0) {
+        toast.error(
+          invalid.length > 0
+            ? "No invitation was sent. Check the email addresses."
+            : "No new invitation was sent. Those addresses are already on this exchange."
+        );
+        return;
+      }
+      const notes = [
+        skipped.length > 0
+          ? `${skipped.length} already on this exchange`
+          : "",
+        invalid.length > 0
+          ? `${invalid.length} not an email address`
+          : "",
+      ].filter(Boolean);
       toast.success(
-        `Invitation${emails.length > 1 ? "s" : ""} sent successfully!`
+        notes.length > 0
+          ? `Sent ${invited.length}. ${notes.join(". ")}.`
+          : `Invitation${invited.length > 1 ? "s" : ""} sent.`
       );
     },
     onError: (error: Error) => {
@@ -299,7 +345,7 @@ export default function TeamPage() {
     mutationFn: (
       assignments?: Array<{ giverId: string; receiverId: string }>
     ) => api.triggerAssignment(teamId, assignments),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
@@ -307,7 +353,13 @@ export default function TeamPage() {
       setPreviewData(null);
       setSentDraw(true);
       track("draw_confirmed", { role: "admin" });
-      toast.success("Assignments emailed. They cannot be changed.");
+      if (result.failed.length > 0) {
+        toast.error(
+          "Assignments are saved and cannot be changed. Some emails did not send — use Send the missing emails."
+        );
+      } else {
+        toast.success("Assignments emailed. They cannot be changed.");
+      }
     },
     onError: (error: Error) => {
       toast.error(
@@ -351,6 +403,42 @@ export default function TeamPage() {
     },
   });
 
+  const retryEmailsMutation = useMutation({
+    mutationFn: () => api.retryAssignmentEmails(teamId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
+      toast.success(result.message);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Couldn't resend the assignment emails.");
+    },
+  });
+
+  const cancelInvitationMutation = useMutation({
+    mutationFn: (memberId: string) => api.cancelInvitation(teamId, memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
+      toast.success("Invitation cancelled. That link no longer works.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Couldn't cancel that invitation.");
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: string) => api.removeMember(teamId, memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["exclusions", teamId] });
+      toast.success("Removed from the exchange. They were not in the draw.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Couldn't remove that person.");
+    },
+  });
+
   const resendInvitationMutation = useMutation({
     mutationFn: (memberId: string) => api.resendInvitation(teamId, memberId),
     onSuccess: () => {
@@ -371,13 +459,17 @@ export default function TeamPage() {
       reason?: string;
       bidirectional?: boolean;
     }) => api.addExclusion(teamId, data),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["exclusions", teamId] });
       setIsAddExclusionOpen(false);
       setSelectedMember1("");
       setSelectedMember2("");
       setExclusionReason("");
-      toast.success("Exclusion added successfully");
+      toast.success(
+        result.warning
+          ? `Saved. A draw is not possible yet: ${result.warning}`
+          : "Exclusion added. Those two will not be assigned to each other."
+      );
     },
     onError: (error: Error) => {
       toast.error(error.message || "Couldn't add exclusion. Please try again.");
@@ -906,6 +998,28 @@ export default function TeamPage() {
           </div>
         </motion.div>
 
+        {status && isAdmin && status.hasAssignments && status.assignmentEmailsPending > 0 && (
+          <div className="mb-8 border border-cranberry/40 bg-ivory-card px-4 py-4">
+            <p className="font-medium text-ink">
+              The draw is saved. {status.assignmentEmailsPending}{" "}
+              {status.assignmentEmailsPending === 1 ? "person has" : "people have"} not
+              been emailed their recipient.
+            </p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Assignments cannot be redrawn. Sending again only delivers the emails that failed.
+            </p>
+            <Button
+              size="sm"
+              className="mt-3"
+              onClick={() => retryEmailsMutation.mutate()}
+              isLoading={retryEmailsMutation.isPending}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Send the missing emails
+            </Button>
+          </div>
+        )}
+
         {status && isAdmin && !status.hasAssignments && (
           <div className="mb-8 border border-rule bg-ivory-card px-4 py-4">
             <p className="font-medium text-ink">
@@ -926,6 +1040,11 @@ export default function TeamPage() {
               </li>
               <li>
                 {status.membersWithWishlist} of {status.totalMembers} have a wishlist.
+              </li>
+              <li>
+                {status.pendingInvitations > 0
+                  ? "People still invited are left out of the draw. Cancel a wrong address, or wait for them to join."
+                  : "Everyone invited has joined."}
               </li>
               <li>Draw only when you mean to email the assignments. They cannot be redrawn.</li>
             </ul>
@@ -1051,28 +1170,71 @@ export default function TeamPage() {
                         )}
                         {member.invitationStatus === "pending" && (
                           <>
-                            <span className="text-sm text-cranberry transition-colors duration-200">
-                              Invitation open
+                            <span className="text-sm text-cranberry">
+                              Invited, not joined
                             </span>
                             {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  resendInvitationMutation.mutate(member.id)
-                                }
-                                disabled={resendInvitationMutation.isPending}
-                                aria-label={`Resend invitation to ${member.invitedEmail || "this person"}`}
-                                className="p-1.5 text-ink-faint hover:text-cranberry disabled:opacity-50"
-                              >
-                                {resendInvitationMutation.isPending ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="w-4 h-4" />
-                                )}
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    resendInvitationMutation.mutate(member.id)
+                                  }
+                                  disabled={resendInvitationMutation.isPending}
+                                  aria-label={`Resend invitation to ${member.invitedEmail || "this person"}`}
+                                  className="p-1.5 text-ink-faint hover:text-cranberry disabled:opacity-50"
+                                >
+                                  {resendInvitationMutation.isPending ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (
+                                      window.confirm(
+                                        `Cancel the invitation to ${member.invitedEmail || "this person"}? Their link will stop working.`
+                                      )
+                                    ) {
+                                      cancelInvitationMutation.mutate(member.id);
+                                    }
+                                  }}
+                                  disabled={cancelInvitationMutation.isPending}
+                                  aria-label={`Cancel invitation to ${member.invitedEmail || "this person"}`}
+                                  className="p-1.5 text-ink-faint hover:text-cranberry disabled:opacity-50"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
                             )}
                           </>
                         )}
+                        {member.invitationStatus === "accepted" &&
+                          isAdmin &&
+                          member.id !== team.membershipId &&
+                          !status?.hasAssignments && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const name =
+                                  member.user?.name || member.invitedEmail || "this person";
+                                if (
+                                  window.confirm(
+                                    `Remove ${name} before the draw? They can be invited again. After names are drawn, a seat cannot be removed.`
+                                  )
+                                ) {
+                                  removeMemberMutation.mutate(member.id);
+                                }
+                              }}
+                              disabled={removeMemberMutation.isPending}
+                              aria-label={`Remove ${member.user?.name || member.invitedEmail || "this person"}`}
+                              className="p-1.5 text-ink-faint hover:text-cranberry disabled:opacity-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                       </div>
                     </div>
                   ))}
@@ -1089,7 +1251,7 @@ export default function TeamPage() {
                   <div>
                     <CardTitle>My Wishlist</CardTitle>
                     <CardDescription>
-                      Share what you&apos;d love to receive this holiday season
+                      After names are drawn, only the person assigned to give you a gift can read this. Other participants cannot.
                     </CardDescription>
                   </div>
                   {saveStatus === "saving" && (
@@ -1436,8 +1598,7 @@ export default function TeamPage() {
                       Exclusion Rules
                     </CardTitle>
                     <CardDescription>
-                      Prevent certain pairs from being matched (e.g., couples,
-                      family members)
+                      A pair kept apart will not be assigned to each other, in either direction. Add one only if the group can still draw.
                     </CardDescription>
                   </div>
                   {!status?.hasAssignments && (
@@ -1725,8 +1886,10 @@ export default function TeamPage() {
                       <p className="text-cream/60 mb-4">
                         {isAdmin
                           ? status?.canAssign
-                            ? "Three people have joined. Draw when you mean to email the assignments."
-                            : `${status?.totalMembers ?? 0} joined. A draw needs three.`
+                            ? status.pendingInvitations > 0
+                              ? `${status.pendingInvitations} ${status.pendingInvitations === 1 ? "person is" : "people are"} still invited and will be left out. Draw only the people who have joined, when you mean to email them.`
+                              : "Everyone invited has joined. Draw when you mean to email the assignments."
+                            : `${status?.totalMembers ?? 0} joined. A draw needs three people who have accepted.`
                           : "The organizer sends assignments when the group is ready. You will see only your own recipient."}
                       </p>
                       {isAdmin && status?.canAssign && (
@@ -1789,7 +1952,12 @@ export default function TeamPage() {
                       </div>
                     ) : (
                       <p className="text-cream/60 text-center py-4">
-                        No wishlist items yet.
+                        {assignment.giftee?.name || "They"} have not added wishes yet.
+                        The budget
+                        {team.budgetMin && team.budgetMax
+                          ? ` is ₹${team.budgetMin}–₹${team.budgetMax}`
+                          : " has not been set"}
+                        . Ask them, or choose something in that range.
                       </p>
                     )}
                   </CardContent>
@@ -1905,6 +2073,7 @@ export default function TeamPage() {
                 type="number"
                 label="Min Budget (₹)"
                 placeholder="500"
+                error={teamEditForm.formState.errors.budgetMin?.message}
               />
               <Input
                 {...teamEditForm.register("budgetMax")}
@@ -1919,6 +2088,7 @@ export default function TeamPage() {
                 {...teamEditForm.register("wishlistDeadline")}
                 type="date"
                 label="Wishlist Deadline"
+                error={teamEditForm.formState.errors.wishlistDeadline?.message}
               />
               <Input
                 {...teamEditForm.register("exchangeDate")}
@@ -1980,7 +2150,7 @@ export default function TeamPage() {
             </div>
             <h3 className="font-display text-2xl text-evergreen">Sent.</h3>
             <p className="mt-2 text-ink-soft">
-              Each person received only their own recipient. The assignments cannot be changed.
+              The names are saved and cannot be changed. Each person should have received only their own recipient. If someone says they did not, use Send the missing emails — that does not redraw.
             </p>
             <Button
               className="mt-6"
@@ -2023,7 +2193,9 @@ export default function TeamPage() {
 
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
               <p className="text-warning text-sm">
-                ⚠️ Make sure all members have joined before proceeding.
+                {status?.pendingInvitations
+                  ? `${status.pendingInvitations} ${status.pendingInvitations === 1 ? "person has" : "people have"} not joined. They will not be in this draw, and they cannot be added after you send it.`
+                  : "Everyone who was invited has joined. After you send this, the names cannot be redrawn."}
               </p>
             </div>
 
@@ -2147,8 +2319,8 @@ export default function TeamPage() {
                 Ready to Send!
               </h3>
               <p className="text-cream/70">
-                {previewData?.totalAssignments} members will receive an email
-                with their Secret Santa.
+                {previewData?.totalAssignments} people will each be emailed only their own recipient.
+                If an email fails, the names stay as you confirmed them and you can send the missing ones.
               </p>
             </div>
 

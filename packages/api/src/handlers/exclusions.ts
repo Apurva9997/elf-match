@@ -1,6 +1,7 @@
 import { and, eq, or } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, exclusions, teamMembers } from "../db/index.js";
+import { exclusionEdges, explainBlockedDraw } from "../lib/draw.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
@@ -164,6 +165,24 @@ async function _addExclusion(
       return error("This exclusion already exists", 400);
     }
 
+    const accepted = await db.query.teamMembers.findMany({
+      where: and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.invitationStatus, "accepted")
+      ),
+    });
+    const existingRules = await db.query.exclusions.findMany({
+      where: eq(exclusions.teamId, teamId),
+    });
+    const blocked = exclusionEdges([
+      ...existingRules,
+      { member1Id, member2Id, bidirectional },
+    ]);
+    const blockedReason = explainBlockedDraw(
+      accepted.map((member) => member.id),
+      blocked
+    );
+
     const [exclusion] = await db
       .insert(exclusions)
       .values({
@@ -175,7 +194,13 @@ async function _addExclusion(
       })
       .returning();
 
-    return success(exclusion, 201);
+    return success(
+      {
+        ...exclusion,
+        warning: blockedReason,
+      },
+      201
+    );
   } catch (err) {
     console.error("Error adding exclusion:", err);
     return serverError("Failed to add exclusion");

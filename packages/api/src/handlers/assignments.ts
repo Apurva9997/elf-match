@@ -1,7 +1,14 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, exclusions, teamMembers, teams } from "../db/index.js";
 import { getUserFromRequest } from "../lib/auth.js";
+import {
+  exclusionEdges,
+  explainBlockedDraw,
+  findDerangement,
+  validateProvidedPairs,
+  type Pair,
+} from "../lib/draw.js";
 import { sendAssignmentEmail } from "../lib/email.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
@@ -39,48 +46,78 @@ async function getMembershipForTeam(userId: string, teamId: string) {
   });
 }
 
-function shuffle<T>(array: T[]): T[] {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
+type DrawMember = {
+  id: string;
+  invitedEmail: string | null;
+  user: {
+    email: string;
+    name: string | null;
+    avatarUrl: string | null;
+  } | null;
+};
+
+function memberName(member: DrawMember | undefined): string {
+  return member?.user?.name || member?.invitedEmail || "Someone in the exchange";
 }
 
-function generateAssignments(
-  memberIds: string[],
-  exclusionPairs: Set<string>
-): Map<string, string> | null {
-  const maxAttempts = 1000;
+function blockedDrawMessage(memberIds: string[], blocked: Set<string>): string {
+  return (
+    explainBlockedDraw(memberIds, blocked) ||
+    "These exclusions leave no way for everyone to give and receive exactly once. Remove one exclusion, or invite another person."
+  );
+}
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const givers = [...memberIds];
-    const receivers = shuffle([...memberIds]);
+async function notifyAssignments(
+  teamId: string,
+  teamName: string,
+  records: Array<{ giverId: string; receiverId: string; revealedAt: Date | null }>
+): Promise<{ notified: string[]; failed: string[] }> {
+  const memberIds = [
+    ...new Set(records.flatMap((record) => [record.giverId, record.receiverId])),
+  ];
+  const members = await db.query.teamMembers.findMany({
+    where: inArray(teamMembers.id, memberIds),
+    with: { user: true },
+  });
+  const byId = new Map(members.map((member) => [member.id, member]));
 
-    let valid = true;
-    const assignmentMap = new Map<string, string>();
+  const notified: string[] = [];
+  const failed: string[] = [];
 
-    for (let i = 0; i < givers.length; i++) {
-      const giver = givers[i];
-      const receiver = receivers[i];
-
-      if (giver === receiver) { valid = false; break; }
-
-      const k1 = `${giver}:${receiver}`;
-      const k2 = `${receiver}:${giver}`;
-      if (exclusionPairs.has(k1) || exclusionPairs.has(k2)) {
-        valid = false;
-        break;
-      }
-
-      assignmentMap.set(giver, receiver);
+  for (const record of records) {
+    if (record.revealedAt) continue;
+    const giver = byId.get(record.giverId);
+    const receiver = byId.get(record.receiverId);
+    const email = giver?.user?.email;
+    if (!email) {
+      failed.push(giver?.invitedEmail || record.giverId);
+      continue;
     }
 
-    if (valid) return assignmentMap;
+    try {
+      await sendAssignmentEmail(
+        email,
+        teamName,
+        memberName(receiver),
+        teamId
+      );
+      await db
+        .update(assignments)
+        .set({ revealedAt: new Date() })
+        .where(
+          and(
+            eq(assignments.teamId, teamId),
+            eq(assignments.giverId, record.giverId)
+          )
+        );
+      notified.push(email);
+    } catch (emailErr) {
+      console.error(`Failed to send assignment email to ${email}:`, emailErr);
+      failed.push(email);
+    }
   }
 
-  return null;
+  return { notified, failed };
 }
 
 async function _triggerAssignment(
@@ -124,105 +161,100 @@ async function _triggerAssignment(
     });
 
     if (members.length < 3) {
-      return error("Need at least 3 members to create assignments", 400);
+      return error("A draw needs at least three people who have joined.", 400);
     }
 
     const teamExclusions = await db.query.exclusions.findMany({
       where: eq(exclusions.teamId, teamId),
     });
-
-    const exclusionPairs = new Set<string>();
-    for (const excl of teamExclusions) {
-      exclusionPairs.add(`${excl.member1Id}:${excl.member2Id}`);
-      if (excl.bidirectional) {
-        exclusionPairs.add(`${excl.member2Id}:${excl.member1Id}`);
-      }
-    }
+    const blocked = exclusionEdges(teamExclusions);
+    const memberIds = members.map((member) => member.id);
 
     const body = JSON.parse(await req.text() || "{}");
     const parsed = confirmAssignmentSchema.safeParse(body);
+    const provided = parsed.success ? parsed.data.assignments : undefined;
 
-    let assignmentMap: Map<string, string> | null = null;
-
-    if (parsed.success && parsed.data.assignments) {
-      const memberIds = new Set(members.map((m) => m.id));
-      const providedAssignments = parsed.data.assignments;
-
-      const providedGiverIds = new Set(providedAssignments.map((a) => a.giverId));
-      const providedReceiverIds = new Set(providedAssignments.map((a) => a.receiverId));
-
-      if (
-        providedGiverIds.size !== memberIds.size ||
-        providedReceiverIds.size !== memberIds.size ||
-        ![...memberIds].every((id) => providedGiverIds.has(id)) ||
-        ![...memberIds].every((id) => providedReceiverIds.has(id))
-      ) {
-        return error(
-          "Provided assignments must include all team members exactly once",
-          400
-        );
-      }
-
-      assignmentMap = new Map<string, string>();
-      for (const assignment of providedAssignments) {
-        if (assignment.giverId === assignment.receiverId) {
-          return error("Invalid assignment: member cannot be assigned to themselves", 400);
-        }
-
-        const k1 = `${assignment.giverId}:${assignment.receiverId}`;
-        const k2 = `${assignment.receiverId}:${assignment.giverId}`;
-        if (exclusionPairs.has(k1) || exclusionPairs.has(k2)) {
-          return error("Invalid assignment: violates exclusion rule", 400);
-        }
-
-        assignmentMap.set(assignment.giverId, assignment.receiverId);
-      }
+    let pairs: Pair[];
+    if (provided) {
+      const checked = validateProvidedPairs(memberIds, blocked, provided);
+      if (!checked.ok) return error(checked.reason, 409, "STALE_PREVIEW");
+      pairs = provided;
     } else {
-      const memberIds = members.map((m) => m.id);
-      assignmentMap = generateAssignments(memberIds, exclusionPairs);
-
-      if (!assignmentMap) {
-        return error(
-          "Could not generate valid assignments. This may happen if exclusion rules are too restrictive.",
-          400
-        );
+      const generated = findDerangement(memberIds, blocked);
+      if (!generated) {
+        return error(blockedDrawMessage(memberIds, blocked), 400, "DRAW_IMPOSSIBLE");
       }
+      pairs = generated;
     }
 
     const team = await db.query.teams.findFirst({
       where: eq(teams.id, teamId),
     });
-
     if (!team) return notFound("Team not found");
 
-    const assignmentRecords = [];
-    for (const [giverId, receiverId] of assignmentMap) {
-      const [assignment] = await db
-        .insert(assignments)
-        .values({ teamId, giverId, receiverId })
-        .returning();
-      assignmentRecords.push(assignment);
-
-      const giver = members.find((m) => m.id === giverId);
-      const receiver = members.find((m) => m.id === receiverId);
-
-      if (giver?.user?.email && receiver?.user?.name) {
-        try {
-          await sendAssignmentEmail(giver.user.email, team.name, receiver.user.name);
-        } catch (emailErr) {
-          console.error(`Failed to send assignment email to ${giver.user.email}:`, emailErr);
+    // Commit the whole draw or none of it. A second confirm that arrives
+    // while this one is writing hits the giver unique index and rolls back.
+    let committed: Array<{
+      giverId: string;
+      receiverId: string;
+      revealedAt: Date | null;
+    }>;
+    try {
+      committed = await db.transaction(async (tx) => {
+        const already = await tx.query.assignments.findMany({
+          where: eq(assignments.teamId, teamId),
+        });
+        if (already.length > 0) {
+          throw new Error("ALREADY_ASSIGNED");
         }
+
+        const inserted = [];
+        for (const pair of pairs) {
+          const [row] = await tx
+            .insert(assignments)
+            .values({
+              teamId,
+              giverId: pair.giverId,
+              receiverId: pair.receiverId,
+            })
+            .returning();
+          inserted.push(row);
+        }
+
+        await tx
+          .update(teams)
+          .set({ status: "assigned", updatedAt: new Date() })
+          .where(eq(teams.id, teamId));
+
+        return inserted;
+      });
+    } catch (commitErr) {
+      if (commitErr instanceof Error && commitErr.message === "ALREADY_ASSIGNED") {
+        return error("Assignments have already been made for this team", 400);
       }
+      const code =
+        commitErr && typeof commitErr === "object" && "code" in commitErr
+          ? String((commitErr as { code?: unknown }).code)
+          : "";
+      if (code === "23505") {
+        return error(
+          "Assignments have already been made for this team",
+          400
+        );
+      }
+      throw commitErr;
     }
 
-    await db
-      .update(teams)
-      .set({ status: "assigned", updatedAt: new Date() })
-      .where(eq(teams.id, teamId));
+    const delivery = await notifyAssignments(teamId, team.name, committed);
 
     return success({
-      message: "Assignments created successfully",
-      count: assignmentRecords.length,
+      message:
+        delivery.failed.length > 0
+          ? "Assignments are saved. Some emails did not send — use Send the missing emails."
+          : "Assignments created successfully",
+      count: committed.length,
+      notified: delivery.notified.length,
+      failed: delivery.failed,
     });
   } catch (err) {
     console.error("Error triggering assignment:", err);
@@ -253,7 +285,7 @@ async function _getAssignment(
         receiver: {
           with: {
             user: {
-              columns: { id: true, name: true, email: true, avatarUrl: true },
+              columns: { id: true, name: true, avatarUrl: true },
             },
           },
         },
@@ -267,10 +299,7 @@ async function _getAssignment(
     return success({
       assigned: true,
       giftee: {
-        name:
-          assignment.receiver.user?.name ||
-          assignment.receiver.user?.email ||
-          "Unknown",
+        name: assignment.receiver.user?.name || "Name not shared",
         avatarUrl: assignment.receiver.user?.avatarUrl,
       },
       giftStatus: assignment.giftStatus,
@@ -320,10 +349,72 @@ async function _updateAssignment(
       .where(eq(assignments.id, assignment.id))
       .returning();
 
-    return success(updated);
+    return success({
+      id: updated.id,
+      giftStatus: updated.giftStatus,
+    });
   } catch (err) {
     console.error("Error updating assignment:", err);
     return serverError("Failed to update assignment");
+  }
+}
+
+async function _retryAssignmentEmails(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const teamId = params.teamId;
+    if (!teamId) return error("Team ID required", 400);
+
+    const adminMembership = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, user.id),
+        eq(teamMembers.invitationStatus, "accepted"),
+        eq(teamMembers.role, "admin")
+      ),
+    });
+    if (!adminMembership) {
+      return forbidden("Only the organizer can resend assignment emails");
+    }
+
+    const team = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+    });
+    if (!team) return notFound("Team not found");
+
+    const existing = await db.query.assignments.findMany({
+      where: eq(assignments.teamId, teamId),
+    });
+    if (existing.length === 0) {
+      return error("Assignments have not been made yet", 400);
+    }
+
+    const pending = existing.filter((row) => !row.revealedAt);
+    if (pending.length === 0) {
+      return success({
+        message: "Everyone who has an assignment was already emailed.",
+        notified: 0,
+        failed: [],
+      });
+    }
+
+    const delivery = await notifyAssignments(teamId, team.name, pending);
+    return success({
+      message:
+        delivery.failed.length > 0
+          ? "Some assignment emails still did not send. Try again in a few minutes."
+          : "The missing assignment emails were sent.",
+      notified: delivery.notified.length,
+      failed: delivery.failed,
+    });
+  } catch (err) {
+    console.error("Error resending assignment emails:", err);
+    return serverError("Failed to resend assignment emails");
   }
 }
 
@@ -366,35 +457,26 @@ async function _previewAssignment(
     });
 
     if (members.length < 3) {
-      return error("Need at least 3 members to create assignments", 400);
+      return error("A draw needs at least three people who have joined.", 400);
     }
 
     const teamExclusions = await db.query.exclusions.findMany({
       where: eq(exclusions.teamId, teamId),
     });
+    const blocked = exclusionEdges(teamExclusions);
+    const memberIds = members.map((member) => member.id);
+    const pairs = findDerangement(memberIds, blocked);
 
-    const exclusionPairs = new Set<string>();
-    for (const excl of teamExclusions) {
-      exclusionPairs.add(`${excl.member1Id}:${excl.member2Id}`);
-      if (excl.bidirectional) {
-        exclusionPairs.add(`${excl.member2Id}:${excl.member1Id}`);
-      }
-    }
-
-    const memberIds = members.map((m) => m.id);
-    const assignmentMap = generateAssignments(memberIds, exclusionPairs);
-
-    if (!assignmentMap) {
-      return error(
-        "Could not generate valid assignments. This may happen if exclusion rules are too restrictive.",
-        400
-      );
+    if (!pairs) {
+      return error(blockedDrawMessage(memberIds, blocked), 400, "DRAW_IMPOSSIBLE");
     }
 
     const preview = [];
-    for (const [giverId, receiverId] of assignmentMap) {
-      const giver = members.find((m) => m.id === giverId);
-      const receiver = members.find((m) => m.id === receiverId);
+    for (const pair of pairs) {
+      const giver = members.find((member) => member.id === pair.giverId);
+      const receiver = members.find((member) => member.id === pair.receiverId);
+      const giverId = pair.giverId;
+      const receiverId = pair.receiverId;
 
       preview.push({
         giver: {
@@ -437,6 +519,11 @@ export const updateAssignment = wrapHandler(_updateAssignment, {
 });
 
 export const previewAssignment = wrapHandler(_previewAssignment, {
+  limiter: rateLimiters.assignment,
+  useUserId: true,
+});
+
+export const retryAssignmentEmails = wrapHandler(_retryAssignmentEmails, {
   limiter: rateLimiters.assignment,
   useUserId: true,
 });
