@@ -155,6 +155,7 @@ export default function TeamPage() {
     queryFn: () => api.getTeam(teamId),
     enabled: !!user,
     retry: 1,
+    staleTime: 30_000,
   });
 
   const { data: status } = useQuery({
@@ -759,7 +760,7 @@ export default function TeamPage() {
   return (
     <div className="min-h-screen pb-12">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
+      <nav className="sticky top-0 z-30 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link
@@ -1580,7 +1581,7 @@ export default function TeamPage() {
               {/* My Assignment */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Secret Santa</CardTitle>
+                  <CardTitle>You are buying for</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {assignment?.assigned ? (
@@ -1591,15 +1592,12 @@ export default function TeamPage() {
                         size="xl"
                         className="mx-auto mb-4"
                       />
-                      <h3 className="text-2xl font-display font-bold text-cream mb-2">
-                        {assignment.giftee?.name}
+                      <h3 className="text-2xl font-display font-bold text-cream mb-6">
+                        {assignment.giftee?.name || "Name not shared"}
                       </h3>
-                      <p className="text-cream/60 mb-6">
-                        You&apos;re gifting to:
-                      </p>
 
                       {/* Gift Status */}
-                      <div className="flex justify-center gap-2 mb-6">
+                      <div className="flex flex-wrap justify-center gap-2 mb-6">
                         {(
                           [
                             "pending",

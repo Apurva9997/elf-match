@@ -252,7 +252,9 @@ async function _getAssignment(
       with: {
         receiver: {
           with: {
-            user: { columns: { id: true, name: true, avatarUrl: true } },
+            user: {
+              columns: { id: true, name: true, email: true, avatarUrl: true },
+            },
           },
         },
       },
@@ -265,7 +267,10 @@ async function _getAssignment(
     return success({
       assigned: true,
       giftee: {
-        name: assignment.receiver.user?.name || "Unknown",
+        name:
+          assignment.receiver.user?.name ||
+          assignment.receiver.user?.email ||
+          "Unknown",
         avatarUrl: assignment.receiver.user?.avatarUrl,
       },
       giftStatus: assignment.giftStatus,
