@@ -18,7 +18,12 @@ function VerifyContent() {
     if (!isLoaded) return;
 
     if (isSignedIn) {
-      const redirectTo = searchParams.get("redirect_url") || "/dashboard";
+      const requestedRedirect = searchParams.get("redirect_url") || "";
+      const redirectTo =
+        requestedRedirect.startsWith("/") &&
+        !requestedRedirect.startsWith("//")
+          ? requestedRedirect
+          : "/dashboard";
       router.push(redirectTo);
       return;
     }

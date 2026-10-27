@@ -69,7 +69,11 @@ function LoginPageContent() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
 
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const requestedRedirect = searchParams.get("redirect") || "";
+  const redirectTo =
+    requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//")
+      ? requestedRedirect
+      : "/dashboard";
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
