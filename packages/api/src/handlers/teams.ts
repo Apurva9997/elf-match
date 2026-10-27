@@ -1,6 +1,6 @@
 import { and, count, eq, or } from "drizzle-orm";
 import { z } from "zod";
-import { assignments, db, teamMembers, teams } from "../db/index.js";
+import { assignments, db, exclusions, teamMembers, teams } from "../db/index.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
@@ -277,6 +277,10 @@ async function _deleteTeam(
       return forbidden("Only admins can delete the team");
     }
 
+    // Assignments and exclusions point at members without cascading,
+    // so they have to go before the exchange itself.
+    await db.delete(assignments).where(eq(assignments.teamId, teamId));
+    await db.delete(exclusions).where(eq(exclusions.teamId, teamId));
     await db.delete(teams).where(eq(teams.id, teamId));
 
     return success({ message: "Team deleted" });
