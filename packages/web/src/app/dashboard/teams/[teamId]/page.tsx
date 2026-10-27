@@ -967,8 +967,21 @@ export default function TeamPage() {
               <CardHeader>
                 <CardTitle>Team Members</CardTitle>
                 <CardDescription>
-                  {team.members.length} member
-                  {team.members.length !== 1 ? "s" : ""}
+                  {
+                    team.members.filter(
+                      (member) => member.invitationStatus === "accepted"
+                    ).length
+                  }{" "}
+                  joined
+                  {team.members.some(
+                    (member) => member.invitationStatus === "pending"
+                  )
+                    ? `, ${
+                        team.members.filter(
+                          (member) => member.invitationStatus === "pending"
+                        ).length
+                      } invited`
+                    : ""}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -988,6 +1001,7 @@ export default function TeamPage() {
                             {member.user?.name || member.invitedEmail}
                           </div>
                           {member.invitationStatus === "pending" &&
+                            member.user?.name &&
                             member.invitedEmail && (
                               <div className="text-cream/50 text-sm">
                                 {member.invitedEmail}
