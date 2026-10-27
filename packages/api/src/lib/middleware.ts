@@ -101,8 +101,7 @@ export function wrapHandler(
       try {
         Sentry.captureException(err);
       } catch {
-        // @sentry/node bundled into the Next.js route can throw
-        // (_captureRequestSession) and crash the isolate after a handler error.
+        // Reporting must not replace the handler error with a second failure.
       }
       console.error("Handler error:", err);
       return new Response(
