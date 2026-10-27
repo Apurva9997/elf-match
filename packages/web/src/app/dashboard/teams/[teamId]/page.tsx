@@ -850,6 +850,7 @@ export default function TeamPage() {
                     variant="ghost"
                     size="sm"
                     onClick={handleStartEditTeam}
+                    aria-label="Edit exchange"
                     className="mt-1"
                   >
                     <Edit className="w-4 h-4" />
@@ -1486,10 +1487,20 @@ export default function TeamPage() {
                           )}
                           {!status?.hasAssignments && (
                             <button
+                              type="button"
                               onClick={() =>
                                 removeExclusionMutation.mutate(exclusion.id)
                               }
                               disabled={removeExclusionMutation.isPending}
+                              aria-label={`Remove exclusion between ${
+                                exclusion.member1.user?.name ||
+                                exclusion.member1.invitedEmail ||
+                                "the first person"
+                              } and ${
+                                exclusion.member2.user?.name ||
+                                exclusion.member2.invitedEmail ||
+                                "the second person"
+                              }`}
                               className="p-2 text-error/70 hover:text-error transition-colors disabled:opacity-50"
                             >
                               {removeExclusionMutation.isPending ? (
