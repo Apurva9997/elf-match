@@ -99,7 +99,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-    <html lang="en">
+    <html lang="en-IN">
       <body className="min-h-screen">
         <Script
           src="https://analytics.ahrefs.com/analytics.js"
