@@ -76,6 +76,7 @@ export default function ProfilePage() {
   });
 
   const postalCode = watch("postalCode");
+  const savedPostalCode = useRef<string | null>(null);
 
   // Auto-fill city and state from postal code (India-specific)
   useEffect(() => {
@@ -85,6 +86,10 @@ export default function ProfilePage() {
     }
 
     if (!postalCode || postalCode.length !== 6) {
+      return;
+    }
+
+    if (postalCode === savedPostalCode.current) {
       return;
     }
 
@@ -135,6 +140,7 @@ export default function ProfilePage() {
         postalCode: profile.address?.postalCode || "",
         country: profile.address?.country || "India",
       });
+      savedPostalCode.current = profile.address?.postalCode || null;
     }
   }, [profile, reset]);
 
