@@ -1,7 +1,14 @@
 import { and, eq, or } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
-import { db, teamMembers, teams, users } from "../db/index.js";
+import {
+  assignments,
+  db,
+  exclusions,
+  teamMembers,
+  teams,
+  users,
+} from "../db/index.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
@@ -283,6 +290,22 @@ async function _removeMember(
       }
     }
 
+    await db
+      .delete(assignments)
+      .where(
+        or(
+          eq(assignments.giverId, memberId),
+          eq(assignments.receiverId, memberId)
+        )
+      );
+    await db
+      .delete(exclusions)
+      .where(
+        or(
+          eq(exclusions.member1Id, memberId),
+          eq(exclusions.member2Id, memberId)
+        )
+      );
     await db.delete(teamMembers).where(eq(teamMembers.id, memberId));
 
     return success({ message: "Member removed" });
