@@ -16,7 +16,7 @@ import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, dateInputValue, formatDate } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -652,12 +652,8 @@ export default function TeamPage() {
         description: team.description || "",
         budgetMin: team.budgetMin || "",
         budgetMax: team.budgetMax || "",
-        exchangeDate: team.exchangeDate
-          ? new Date(team.exchangeDate).toISOString().split("T")[0]
-          : "",
-        wishlistDeadline: team.wishlistDeadline
-          ? new Date(team.wishlistDeadline).toISOString().split("T")[0]
-          : "",
+        exchangeDate: dateInputValue(team.exchangeDate),
+        wishlistDeadline: dateInputValue(team.wishlistDeadline),
       });
     }
     setIsEditTeamModalOpen(true);
