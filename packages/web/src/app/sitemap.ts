@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://giftwhisper.online";
+  const baseUrl = "https://elfmatch.com";
 
   return [
     {

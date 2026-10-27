@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Read the terms and conditions for using GiftWhisper, the free Secret Santa gift exchange organizer.",
   alternates: {
-    canonical: "https://giftwhisper.online/terms",
+    canonical: "https://elfmatch.com/terms",
   },
 };
 
@@ -194,10 +194,10 @@ export default function TermsPage() {
             <p className="text-cream/70">
               For questions about these Terms, please contact us at{" "}
               <a
-                href="mailto:hello@giftwhisper.online"
+                href="mailto:hello@elfmatch.com"
                 className="text-gold hover:text-gold-light"
               >
-                hello@giftwhisper.online
+                hello@elfmatch.com
               </a>
               .
             </p>

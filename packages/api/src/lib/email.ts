@@ -1,7 +1,7 @@
 import Mailgun from "mailgun.js";
 import FormData from "form-data";
 
-const FROM_EMAIL = () => process.env.FROM_EMAIL || "info@giftwhisper.online";
+const FROM_EMAIL = () => process.env.FROM_EMAIL || "info@mg.elfmatch.com";
 const FRONTEND_URL = () => process.env.FRONTEND_URL || "http://localhost:3000";
 
 let mailgunClient: ReturnType<Mailgun["client"]> | undefined;

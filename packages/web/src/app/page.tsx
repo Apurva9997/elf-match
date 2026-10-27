@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Create your free Secret Santa gift exchange in 2 minutes. Perfect for office parties, family gatherings & friend groups. Features wishlists, exclusion rules & automatic matching.",
   alternates: {
-    canonical: "https://giftwhisper.online",
+    canonical: "https://elfmatch.com",
   },
 };
 

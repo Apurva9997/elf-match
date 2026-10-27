@@ -6,7 +6,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://giftwhisper.online"),
+  metadataBase: new URL("https://elfmatch.com"),
   title: {
     default:
       "GiftWhisper - Free Secret Santa Generator & Gift Exchange Organizer",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://giftwhisper.online",
+    url: "https://elfmatch.com",
     siteName: "GiftWhisper",
     title:
       "GiftWhisper - Free Secret Santa Generator & Gift Exchange Organizer",
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   alternates: {
-    canonical: "https://giftwhisper.online",
+    canonical: "https://elfmatch.com",
   },
   verification: {
     // Add these after setting up Google Search Console

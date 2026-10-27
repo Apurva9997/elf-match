@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Learn how to organize your Secret Santa gift exchange with GiftWhisper. Create an exchange, invite participants, and let us handle the matching. It takes just 2 minutes!",
   alternates: {
-    canonical: "https://giftwhisper.online/how-it-works",
+    canonical: "https://elfmatch.com/how-it-works",
   },
   openGraph: {
     title: "How GiftWhisper Works - Secret Santa Made Simple",

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     "Get answers to common questions about organizing Secret Santa gift exchanges. Learn how to set up exchanges, invite participants, create wishlists, and more.",
   alternates: {
-    canonical: "https://giftwhisper.online/faq",
+    canonical: "https://elfmatch.com/faq",
   },
   openGraph: {
     title: "Secret Santa FAQ - Common Questions Answered",
@@ -102,7 +102,7 @@ const faqs = [
   {
     question: "How do I contact support?",
     answer:
-      "You can reach us at hello@giftwhisper.online for any questions, feedback, or issues. We typically respond within 24 hours.",
+      "You can reach us at hello@elfmatch.com for any questions, feedback, or issues. We typically respond within 24 hours.",
   },
 ];
 
@@ -157,7 +157,7 @@ export default function FAQPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="mailto:hello@giftwhisper.online"
+                href="mailto:hello@elfmatch.com"
                 className="px-6 py-3 border border-gold/30 text-cream rounded-lg hover:bg-gold/10 transition-colors"
               >
                 Contact Support

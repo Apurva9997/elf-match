@@ -122,7 +122,7 @@ All rate limit middleware errors are captured by Sentry for alerting.
 ```bash
 # Test auth endpoint (5 requests per 15 min)
 for i in {1..6}; do
-  curl -X POST https://apis.giftwhisper.online/auth/magic-link \
+  curl -X POST https://elfmatch.com/api/auth/magic-link \
     -H "Content-Type: application/json" \
     -d '{"email":"test@example.com"}' \
     -i
@@ -133,7 +133,7 @@ done
 ### Check Headers
 
 ```bash
-curl -i https://apis.giftwhisper.online/teams \
+curl -i https://elfmatch.com/api/teams \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Response includes:

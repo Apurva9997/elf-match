@@ -1,5 +1,5 @@
 [build.environment]
-  # FRONTEND_URL is a public production URL (https://giftwhisper.online) hardcoded
+  # FRONTEND_URL is a public production URL (https://elfmatch.com) hardcoded
   # in canonical/SEO metadata — not a secret, so exclude from secrets scanning.
   # ENCRYPTION_SALT is an app-specific key derivation salt, not a direct secret.
   SECRETS_SCAN_OMIT_KEYS = "FRONTEND_URL,ENCRYPTION_SALT"

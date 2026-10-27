@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Learn how GiftWhisper collects, uses, and protects your personal information when you use our Secret Santa gift exchange platform.",
   alternates: {
-    canonical: "https://giftwhisper.online/privacy",
+    canonical: "https://elfmatch.com/privacy",
   },
 };
 
@@ -168,10 +168,10 @@ export default function PrivacyPage() {
               If you have questions about this Privacy Policy or your personal
               data, please contact us at{" "}
               <a
-                href="mailto:hello@giftwhisper.online"
+                href="mailto:hello@elfmatch.com"
                 className="text-gold hover:text-gold-light"
               >
-                hello@giftwhisper.online
+                hello@elfmatch.com
               </a>
               .
             </p>

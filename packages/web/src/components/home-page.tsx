@@ -377,7 +377,7 @@ export function HomePage() {
                 </li>
                 <li>
                   <a
-                    href="mailto:hello@giftwhisper.online"
+                    href="mailto:hello@elfmatch.com"
                     className="text-cream/50 hover:text-cream transition-colors"
                   >
                     Contact Us

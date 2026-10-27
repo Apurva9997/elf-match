@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "Discover all the features that make GiftWhisper the best free Secret Santa organizer. Wishlists, exclusion rules, automatic matching, email notifications, and more.",
   alternates: {
-    canonical: "https://giftwhisper.online/features",
+    canonical: "https://elfmatch.com/features",
   },
   openGraph: {
     title: "GiftWhisper Features - The Complete Secret Santa Solution",

@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard/", "/api/", "/auth/verify/"],
       },
     ],
-    sitemap: "https://giftwhisper.online/sitemap.xml",
+    sitemap: "https://elfmatch.com/sitemap.xml",
   };
 }
