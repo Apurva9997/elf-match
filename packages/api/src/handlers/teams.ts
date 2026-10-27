@@ -317,13 +317,6 @@ async function _getTeamStatus(
       return notFound("Team not found");
     }
 
-    const [allMembersCount] = await db
-      .select({ count: count() })
-      .from(teamMembers)
-      .where(eq(teamMembers.teamId, teamId));
-
-    const totalMembers = allMembersCount?.count ?? 0;
-
     const acceptedMembers = await db.query.teamMembers.findMany({
       where: and(
         eq(teamMembers.teamId, teamId),
@@ -362,7 +355,7 @@ async function _getTeamStatus(
 
     return success({
       status: team.status,
-      totalMembers,
+      totalMembers: acceptedMembersCount,
       membersWithWishlist,
       membersWithAddress,
       pendingInvitations: pendingCount?.count ?? 0,

@@ -811,14 +811,8 @@ export default function TeamPage() {
                     status &&
                     !status.hasAssignments && (
                       <span className="text-cream/50 text-xs hidden sm:inline">
-                        Need{" "}
-                        {Math.max(
-                          0,
-                          3 -
-                            (status.totalMembers -
-                              (status.pendingInvitations || 0))
-                        )}{" "}
-                        more members to start matching
+                        Need {Math.max(0, 3 - status.totalMembers)} more joined
+                        people to start matching
                       </span>
                     )
                   )}
@@ -900,7 +894,7 @@ export default function TeamPage() {
               <div className="text-2xl font-bold text-gold">
                 {status.totalMembers}
               </div>
-              <div className="text-cream/60 text-sm">Members</div>
+              <div className="text-cream/60 text-sm">Joined</div>
             </Card>
             <Card className="text-center py-4">
               <div className="text-2xl font-bold text-gold">
