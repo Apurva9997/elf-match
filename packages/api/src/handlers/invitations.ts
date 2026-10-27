@@ -212,6 +212,9 @@ async function _declineInvitation(
   params: RouteParams
 ): Promise<Response> {
   try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
     const token = params.token;
     if (!token) return error("Invitation token required", 400);
 
@@ -226,6 +229,13 @@ async function _declineInvitation(
 
     if (!invitation) {
       return notFound("Invitation not found or already used");
+    }
+
+    if (
+      invitation.invitedEmail &&
+      invitation.invitedEmail !== user.email.toLowerCase()
+    ) {
+      return forbidden("This invitation was sent to a different email address");
     }
 
     await db
