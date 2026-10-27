@@ -1014,12 +1014,13 @@ export default function TeamPage() {
                             <Badge variant="warning">Pending</Badge>
                             {isAdmin && (
                               <button
+                                type="button"
                                 onClick={() =>
                                   resendInvitationMutation.mutate(member.id)
                                 }
                                 disabled={resendInvitationMutation.isPending}
-                                className="p-1.5 text-cream/50 hover:text-gold transition-colors disabled:opacity-50"
-                                title="Resend invitation email"
+                                aria-label={`Resend invitation to ${member.invitedEmail || "this person"}`}
+                                className="p-1.5 text-ink-faint hover:text-cranberry disabled:opacity-50"
                               >
                                 {resendInvitationMutation.isPending ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
