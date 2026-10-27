@@ -791,6 +791,7 @@ export default function TeamPage() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  aria-label="Your profile"
                   className="text-cream/70 hover:text-cream"
                 >
                   <Avatar
