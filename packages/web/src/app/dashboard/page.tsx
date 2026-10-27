@@ -324,7 +324,7 @@ export default function DashboardPage() {
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl">🎁</span>
               <span className="font-display text-xl font-semibold text-cream">
-                Elf Match
+                ElfMatch
               </span>
             </Link>
             <div className="flex items-center space-x-4">

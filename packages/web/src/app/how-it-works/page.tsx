@@ -5,12 +5,12 @@ import { PublicNav } from "@/components/public-nav";
 export const metadata: Metadata = {
   title: "How It Works - Set Up Secret Santa in 3 Easy Steps",
   description:
-    "Learn how to organize your Secret Santa gift exchange with Elf Match. Create an exchange, invite participants, and let us handle the matching. It takes just 2 minutes!",
+    "Learn how to organize your Secret Santa gift exchange with ElfMatch. Create an exchange, invite participants, and let us handle the matching. It takes just 2 minutes!",
   alternates: {
     canonical: "https://elfmatch.com/how-it-works",
   },
   openGraph: {
-    title: "How Elf Match Works - Secret Santa Made Simple",
+    title: "How ElfMatch Works - Secret Santa Made Simple",
     description:
       "Create, invite, match. Three simple steps to organize your perfect gift exchange.",
   },
@@ -86,7 +86,7 @@ export default function HowItWorksPage() {
               <span className="text-gradient-gold">4 Simple Steps</span>
             </h1>
             <p className="text-xl text-cream/70 max-w-2xl mx-auto">
-              From setup to gift exchange - here&apos;s exactly how Elf Match
+              From setup to gift exchange - here&apos;s exactly how ElfMatch
               makes organizing your Secret Santa effortless.
             </p>
           </div>
@@ -182,7 +182,7 @@ export default function HowItWorksPage() {
             </h2>
             <p className="text-cream/70 mb-6 max-w-xl mx-auto">
               Join others who&apos;ve made their gift exchanges stress-free with
-              Elf Match.
+              ElfMatch.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

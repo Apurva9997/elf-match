@@ -1,6 +1,6 @@
 {
-  "name": "Elf Match - Secret Santa Generator",
-  "short_name": "Elf Match",
+  "name": "ElfMatch - Secret Santa Generator",
+  "short_name": "ElfMatch",
   "description": "Create your free Secret Santa gift exchange in 2 minutes",
   "start_url": "/",
   "display": "standalone",

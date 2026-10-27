@@ -209,7 +209,7 @@ function LoginPageContent() {
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">🎁</span>
               <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                Welcome to Elf Match
+                Welcome to ElfMatch
               </h1>
               <p className="text-cream/60">
                 {step === "email"

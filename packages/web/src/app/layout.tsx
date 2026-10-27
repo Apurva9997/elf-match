@@ -8,11 +8,12 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   metadataBase: new URL("https://elfmatch.com"),
   title: {
-    default: "Elf Match — organize a Secret Santa gift exchange",
-    template: "%s | Elf Match",
+    default:
+      "ElfMatch - Free Secret Santa Generator & Gift Exchange Organizer",
+    template: "%s | ElfMatch",
   },
   description:
-    "Elf Match helps you organize a gift exchange: set a budget and date, invite participants, manage exclusions, collect wishlists, and privately assign recipients.",
+    "Create your free Secret Santa gift exchange in 2 minutes. Organize office parties, family exchanges & friend groups with wishlists, exclusion rules & automatic matching. No signup required to start!",
   keywords: [
     "secret santa",
     "secret santa generator",
@@ -29,9 +30,9 @@ export const metadata: Metadata = {
     "wishlist maker",
     "secret santa with exclusions",
   ],
-  authors: [{ name: "Elf Match" }],
-  creator: "Elf Match",
-  publisher: "Elf Match",
+  authors: [{ name: "ElfMatch" }],
+  creator: "ElfMatch",
+  publisher: "ElfMatch",
   formatDetection: {
     email: false,
     address: false,
@@ -41,24 +42,25 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://elfmatch.com",
-    siteName: "Elf Match",
-    title: "Elf Match — organize a Secret Santa gift exchange",
+    siteName: "ElfMatch",
+    title:
+      "ElfMatch - Free Secret Santa Generator & Gift Exchange Organizer",
     description:
-      "Set a budget and date, invite the group, keep particular pairs apart, and send each person only their own recipient.",
+      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Elf Match — a gift exchange, with the names kept private",
+        alt: "ElfMatch - Free Secret Santa Generator",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Elf Match — organize a Secret Santa gift exchange",
+    title: "ElfMatch - Free Secret Santa Generator",
     description:
-      "Set a budget and date, invite the group, keep particular pairs apart, and send each person only their own recipient.",
+      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
     images: ["/og-image.png"],
     creator: "@elfmatch",
   },

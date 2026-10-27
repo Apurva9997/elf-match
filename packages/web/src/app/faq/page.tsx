@@ -13,26 +13,26 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Secret Santa FAQ - Common Questions Answered",
     description:
-      "Everything you need to know about organizing a Secret Santa gift exchange with Elf Match.",
+      "Everything you need to know about organizing a Secret Santa gift exchange with ElfMatch.",
   },
 };
 
 // FAQ data structured for SEO (can also be used for FAQ schema markup)
 const faqs = [
   {
-    question: "What is Elf Match?",
+    question: "What is ElfMatch?",
     answer:
-      "Elf Match is a free online tool that helps you organize Secret Santa and gift exchange events. You can create exchanges, invite participants via email, build wishlists, set up exclusion rules (so couples don't get each other), and automatically match everyone with a random person to gift.",
+      "ElfMatch is a free online tool that helps you organize Secret Santa and gift exchange events. You can create exchanges, invite participants via email, build wishlists, set up exclusion rules (so couples don't get each other), and automatically match everyone with a random person to gift.",
   },
   {
-    question: "Is Elf Match really free?",
+    question: "Is ElfMatch really free?",
     answer:
-      "Yes, Elf Match is 100% free to use. There are no hidden fees, no premium tiers, and no credit card required. We believe organizing gift exchanges should be simple and accessible to everyone.",
+      "Yes, ElfMatch is 100% free to use. There are no hidden fees, no premium tiers, and no credit card required. We believe organizing gift exchanges should be simple and accessible to everyone.",
   },
   {
     question: "How many people can join a Secret Santa exchange?",
     answer:
-      "You need at least 3 people to create a Secret Santa exchange (otherwise there's no mystery!). There's no upper limit - Elf Match can handle exchanges of any size, whether it's a small family gathering or a large office party.",
+      "You need at least 3 people to create a Secret Santa exchange (otherwise there's no mystery!). There's no upper limit - ElfMatch can handle exchanges of any size, whether it's a small family gathering or a large office party.",
   },
   {
     question: "How do I invite people to my Secret Santa exchange?",
@@ -90,9 +90,9 @@ const faqs = [
       "Pending invitations are shown in the exchange overview. The admin can resend invitation emails if needed. You should wait until everyone has accepted before triggering the assignment, as pending members won't be included in the matching.",
   },
   {
-    question: "Can I use Elf Match for non-Christmas gift exchanges?",
+    question: "Can I use ElfMatch for non-Christmas gift exchanges?",
     answer:
-      "Of course! While 'Secret Santa' is traditionally associated with Christmas, Elf Match works for any occasion - birthdays, Diwali, Hanukkah, office events, team building, or just for fun. Simply create an exchange and set your own date.",
+      "Of course! While 'Secret Santa' is traditionally associated with Christmas, ElfMatch works for any occasion - birthdays, Diwali, Hanukkah, office events, team building, or just for fun. Simply create an exchange and set your own date.",
   },
   {
     question: "Is my data secure?",

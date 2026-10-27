@@ -319,7 +319,7 @@ export function HomePage() {
               <div className="flex items-center space-x-2 mb-4">
                 <span className="text-2xl">🎁</span>
                 <span className="font-display text-xl font-semibold text-cream">
-                  Elf Match
+                  ElfMatch
                 </span>
               </div>
               <p className="text-cream/50 text-sm max-w-md">
@@ -387,7 +387,7 @@ export function HomePage() {
             </div>
           </div>
           <div className="pt-8 border-t border-gold/10 text-center text-cream/40 text-sm">
-            © {new Date().getFullYear()} Elf Match. All rights reserved.
+            © {new Date().getFullYear()} ElfMatch. All rights reserved.
           </div>
         </div>
       </footer>
