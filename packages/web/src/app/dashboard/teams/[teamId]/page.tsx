@@ -1029,7 +1029,7 @@ export default function TeamPage() {
                 )}
               </div>
               {team.description && (
-                <p className="text-cream/60 mb-4">{team.description}</p>
+                <p className="mb-4 text-ink-soft">{team.description}</p>
               )}
               <div className="flex flex-wrap items-center gap-3">
                 <Badge

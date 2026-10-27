@@ -34,7 +34,7 @@ function VerifyContent() {
   }, [isLoaded, isSignedIn, router, searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="flex justify-center px-4 py-16">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
