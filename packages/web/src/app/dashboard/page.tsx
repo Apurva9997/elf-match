@@ -334,8 +334,14 @@ export default function DashboardPage() {
                   {user?.name || user?.email}
                 </span>
               </Link>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                aria-label="Sign out"
+              >
                 <LogOut className="w-4 h-4" />
+                <span className="ml-2 hidden sm:inline">Sign out</span>
               </Button>
             </div>
           </div>
@@ -444,7 +450,7 @@ export default function DashboardPage() {
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Create Team
+            Create an exchange
           </Button>
         </div>
 
@@ -520,7 +526,7 @@ export default function DashboardPage() {
           <Input
             {...register("name")}
             label="Exchange Name"
-            placeholder="e.g., Office Secret Santa 2024, Family Gift Exchange"
+            placeholder="Cousins, December"
             error={errors.name?.message}
             autoFocus
           />
@@ -568,7 +574,7 @@ export default function DashboardPage() {
               Cancel
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
-              Create Team
+              Create exchange
             </Button>
           </div>
         </form>
