@@ -67,14 +67,14 @@ export function Onboarding({
             title: "Welcome to Elf Match",
             description:
               "We'll help you set up your first gift exchange in 3 simple steps.",
-            icon: <Gift className="w-8 h-8 text-gold" />,
+            icon: <Gift className="w-8 h-8 text-cranberry" />,
           },
           {
             id: "create-team",
             title: "Create Your First Exchange",
             description:
               "Start by creating an exchange for your Secret Santa. You can invite friends, family, or coworkers to join.",
-            icon: <Users className="w-8 h-8 text-gold" />,
+            icon: <Users className="w-8 h-8 text-cranberry" />,
             action: {
               label: "Create Exchange",
               onClick: () => {
@@ -88,14 +88,14 @@ export function Onboarding({
             title: "Add Your Delivery Address",
             description:
               "Once you've created an exchange, add your delivery address so your Secret Santa knows where to send your gift. You can do this in the exchange page.",
-            icon: <MapPin className="w-8 h-8 text-gold" />,
+            icon: <MapPin className="w-8 h-8 text-cranberry" />,
           },
           {
             id: "add-wishlist",
             title: "Build Your Wishlist",
             description:
               "Add items to your wishlist so your Secret Santa knows what you'd like. You can add multiple items with links and price estimates.",
-            icon: <Gift className="w-8 h-8 text-gold" />,
+            icon: <Gift className="w-8 h-8 text-cranberry" />,
           },
         ];
 
@@ -106,14 +106,14 @@ export function Onboarding({
             title: `Welcome to ${firstTeamName || "your exchange"}`,
             description:
               "As the exchange admin, here's what you need to do to get your gift exchange started.",
-            icon: <Users className="w-8 h-8 text-gold" />,
+            icon: <Users className="w-8 h-8 text-cranberry" />,
           },
           {
             id: "invite-members",
             title: "Invite Members",
             description:
               "Invite friends, family, or coworkers to join your Secret Santa exchange. You'll need at least 3 members to start the gift exchange.",
-            icon: <UserPlus className="w-8 h-8 text-gold" />,
+            icon: <UserPlus className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },
           {
@@ -121,7 +121,7 @@ export function Onboarding({
             title: "Add Your Delivery Address",
             description:
               "Add your delivery address so your Secret Santa knows where to send your gift. All members should add their addresses too.",
-            icon: <MapPin className="w-8 h-8 text-gold" />,
+            icon: <MapPin className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },
           {
@@ -129,7 +129,7 @@ export function Onboarding({
             title: "Build Your Wishlist",
             description:
               "Add items to your wishlist so your Secret Santa knows what you'd like. Encourage other members to add their wishlists too!",
-            icon: <Gift className="w-8 h-8 text-gold" />,
+            icon: <Gift className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },
         ];
@@ -141,14 +141,14 @@ export function Onboarding({
             title: `Welcome to ${firstTeamName || "the exchange"}`,
             description:
               "You've been invited to join a gift exchange. Let's get you set up so you can receive your gift!",
-            icon: <Gift className="w-8 h-8 text-gold" />,
+            icon: <Gift className="w-8 h-8 text-cranberry" />,
           },
           {
             id: "add-address",
             title: "Add Your Delivery Address",
             description:
               "First, add your delivery address so your Secret Santa knows where to send your gift. This is required to participate.",
-            icon: <MapPin className="w-8 h-8 text-gold" />,
+            icon: <MapPin className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },
           {
@@ -156,7 +156,7 @@ export function Onboarding({
             title: "Build Your Wishlist",
             description:
               "Add items to your wishlist so your Secret Santa knows what you'd like. You can add multiple items with links and price estimates in ₹.",
-            icon: <Gift className="w-8 h-8 text-gold" />,
+            icon: <Gift className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },
         ];
@@ -210,7 +210,7 @@ export function Onboarding({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-50 bg-evergreen-deep/50"
             onClick={handleSkip}
           />
 
@@ -227,8 +227,10 @@ export function Onboarding({
                 <CardContent className="pt-8 pb-6">
                   {/* Close button */}
                   <button
+                    type="button"
                     onClick={handleSkip}
-                    className="absolute top-4 right-4 text-cream/60 hover:text-cream transition-colors"
+                    aria-label="Close"
+                    className="absolute top-4 right-4 text-ink-soft hover:text-ink"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -239,10 +241,10 @@ export function Onboarding({
                       <div
                         key={index}
                         className={cn(
-                          "h-2 rounded-full transition-all",
+                          "h-1.5 rounded-full transition-all",
                           index <= currentStep
-                            ? "bg-gold w-8"
-                            : "bg-cream/20 w-2"
+                            ? "bg-cranberry w-8"
+                            : "bg-rule w-2"
                         )}
                       />
                     ))}
@@ -250,17 +252,17 @@ export function Onboarding({
 
                   {/* Icon */}
                   <div className="flex justify-center mb-6">
-                    <div className="w-20 h-20 rounded-full bg-gold/20 flex items-center justify-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-cranberry-soft">
                       {step.icon}
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="text-center mb-8">
-                    <h2 className="text-2xl font-display font-bold text-cream mb-3">
+                    <h2 className="font-display text-2xl text-ink mb-3">
                       {step.title}
                     </h2>
-                    <p className="text-cream/70 text-lg leading-relaxed">
+                    <p className="text-lg leading-relaxed text-ink-soft">
                       {step.description}
                     </p>
                   </div>
@@ -268,23 +270,25 @@ export function Onboarding({
                   {/* Navigation arrows */}
                   <div className="flex items-center justify-between">
                     <button
+                      type="button"
                       onClick={handlePrevious}
                       disabled={isFirstStep}
+                      aria-label="Previous step"
                       className={cn(
-                        "p-2 rounded-full transition-colors",
+                        "rounded-full p-2",
                         isFirstStep
-                          ? "text-cream/20 cursor-not-allowed"
-                          : "text-cream/60 hover:text-cream hover:bg-cream/10"
+                          ? "cursor-not-allowed text-rule"
+                          : "text-ink-soft hover:bg-ivory-deep hover:text-ink"
                       )}
                     >
                       <ArrowLeft className="w-6 h-6" />
                     </button>
 
                     <button
+                      type="button"
                       onClick={isLastStep ? handleSkip : handleNext}
-                      className={cn(
-                        "p-2 rounded-full transition-colors text-cream/60 hover:text-cream hover:bg-cream/10"
-                      )}
+                      aria-label={isLastStep ? "Close" : "Next step"}
+                      className="rounded-full p-2 text-ink-soft hover:bg-ivory-deep hover:text-ink"
                     >
                       <ArrowRight className="w-6 h-6" />
                     </button>
