@@ -53,8 +53,9 @@ const config: Config = {
       },
       fontFamily: {
         display: ["Fraunces", "Iowan Old Style", "Palatino", "serif"],
-        sans: ["Source Sans 3", "system-ui", "sans-serif"],
-        mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
+        // Quoted: an unquoted "3" makes the whole font-family declaration invalid.
+        sans: ['"Source Sans 3"', "system-ui", "sans-serif"],
+        mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
       },
       boxShadow: {
         paper: "0 1px 0 rgba(28, 25, 21, 0.04), 0 18px 40px -28px rgba(28, 25, 21, 0.45)",

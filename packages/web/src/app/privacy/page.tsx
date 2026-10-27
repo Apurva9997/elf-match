@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           </p>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               1. Information We Collect
             </h2>
             <p className="text-cream/70 mb-4">
@@ -57,7 +57,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               2. How We Use Your Information
             </h2>
             <p className="text-cream/70 mb-4">We use your information to:</p>
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               3. Information Sharing
             </h2>
             <p className="text-cream/70 mb-4">
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               4. Data Security
             </h2>
             <p className="text-cream/70">
@@ -111,7 +111,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               5. Data Retention
             </h2>
             <p className="text-cream/70">
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               6. Your Rights
             </h2>
             <p className="text-cream/70 mb-4">You have the right to:</p>
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               7. Cookies and Analytics
             </h2>
             <p className="text-cream/70">
@@ -148,7 +148,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               8. Contact Us
             </h2>
             <p className="text-cream/70">
@@ -165,7 +165,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               9. Changes to This Policy
             </h2>
             <p className="text-cream/70">

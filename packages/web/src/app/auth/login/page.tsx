@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { oauthConfig } from "@/lib/oauth-config";
 import { useClerk, useSignIn } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -59,6 +59,7 @@ function AppleIcon({ className }: { className?: string }) {
 }
 
 function LoginPageContent() {
+  const reduceMotion = useReducedMotion();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
@@ -204,9 +205,9 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={reduceMotion ? { duration: 0 } : { duration: 0.25 }}
         className="w-full max-w-md"
       >
         <Link

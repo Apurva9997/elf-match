@@ -33,7 +33,7 @@ export default function TermsPage() {
           </p>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               1. Acceptance of Terms
             </h2>
             <p className="text-cream/70">
@@ -44,7 +44,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               2. Description of Service
             </h2>
             <p className="text-cream/70">
@@ -56,7 +56,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               3. User Accounts
             </h2>
             <p className="text-cream/70 mb-4">
@@ -74,7 +74,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               4. Acceptable Use
             </h2>
             <p className="text-cream/70 mb-4">You agree not to:</p>
@@ -91,7 +91,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               5. User Content
             </h2>
             <p className="text-cream/70">
@@ -104,7 +104,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               6. Privacy
             </h2>
             <p className="text-cream/70">
@@ -118,7 +118,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               7. Service Availability
             </h2>
             <p className="text-cream/70">
@@ -130,7 +130,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               8. Disclaimer of Warranties
             </h2>
             <p className="text-cream/70">
@@ -142,7 +142,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               9. Limitation of Liability
             </h2>
             <p className="text-cream/70">
@@ -155,7 +155,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               10. Termination
             </h2>
             <p className="text-cream/70">
@@ -166,7 +166,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               11. Changes to Terms
             </h2>
             <p className="text-cream/70">
@@ -178,7 +178,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-display font-semibold text-cream mb-4">
+            <h2 className="text-xl font-display font-semibold text-ink mb-4">
               12. Contact
             </h2>
             <p className="text-cream/70">

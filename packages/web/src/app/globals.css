@@ -15,6 +15,17 @@
   --ink-faint: #6f675c;
 }
 
+/* Tailwind emits an unquoted "Source Sans 3", and the digit makes that
+   declaration invalid. These names stay quoted here. */
+body,
+.font-sans {
+  font-family: "Source Sans 3", system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
 @layer base {
   body {
     @apply bg-ivory text-ink font-sans antialiased;
@@ -32,7 +43,8 @@
   h2,
   h3,
   h4 {
-    @apply font-display text-ink;
+    @apply font-display;
+    color: inherit;
   }
 
   ::selection {

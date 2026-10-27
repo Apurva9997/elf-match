@@ -103,7 +103,7 @@ export function HomePage() {
         <section className="border-t border-rule bg-evergreen text-ivory">
           <div className="mx-auto grid max-w-page gap-6 px-4 py-14 sm:px-6 md:grid-cols-[1.3fr_0.7fr] md:items-end">
             <div>
-              <h2 className="max-w-xl font-display text-3xl leading-tight sm:text-4xl">
+              <h2 className="max-w-xl font-display text-3xl leading-tight text-ivory sm:text-4xl">
                 When you confirm, the names are sent. They cannot be redrawn.
               </h2>
               <p className="mt-4 max-w-xl leading-relaxed text-ivory/80">

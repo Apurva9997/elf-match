@@ -35,7 +35,7 @@ import { z } from "zod";
 
 const createTeamSchema = z
   .object({
-    name: z.string().min(1, "Team name is required").max(255),
+    name: z.string().min(1, "Exchange name is required").max(255),
     description: z.string().optional(),
     budgetMin: z.string().optional(),
     budgetMax: z.string().optional(),

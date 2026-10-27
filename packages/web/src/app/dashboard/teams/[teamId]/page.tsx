@@ -77,7 +77,7 @@ const addressSchema = z.object({
 
 const updateTeamSchema = z
   .object({
-    name: z.string().min(1, "Team name is required").max(255),
+    name: z.string().min(1, "Exchange name is required").max(255),
     description: z.string().optional(),
     budgetMin: z.string().optional(),
     budgetMax: z.string().optional(),
@@ -238,20 +238,24 @@ export default function TeamPage() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
-      setIsInviteModalOpen(false);
       const invited = result.results.filter((item) => item.status === "invited");
       const invalid = result.results.filter((item) => item.status === "invalid");
       const skipped = result.results.filter(
         (item) => item.status !== "invited" && item.status !== "invalid"
       );
       if (invited.length === 0) {
-        toast.error(
-          invalid.length > 0
-            ? "No invitation was sent. Check the email addresses."
-            : "No new invitation was sent. Those addresses are already on this exchange."
-        );
+        if (invalid.length > 0) {
+          inviteForm.setError("emails", {
+            message: "None of those look like email addresses.",
+          });
+        } else {
+          inviteForm.setError("emails", {
+            message: "Those addresses are already on this exchange.",
+          });
+        }
         return;
       }
+      setIsInviteModalOpen(false);
       const notes = [
         skipped.length > 0
           ? `${skipped.length} already on this exchange`
@@ -267,7 +271,9 @@ export default function TeamPage() {
       );
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to send invitations");
+      inviteForm.setError("emails", {
+        message: error.message || "Couldn't send those invitations.",
+      });
     },
   });
 
@@ -573,8 +579,10 @@ export default function TeamPage() {
       .split(/[,\n]/)
       .map((e: string) => e.trim())
       .filter((e: string) => e);
-    await inviteMutation.mutateAsync(emailList);
-    inviteForm.reset();
+    const result = await inviteMutation.mutateAsync(emailList);
+    if (result.results.some((item) => item.status === "invited")) {
+      inviteForm.reset();
+    }
   };
 
   // Debounced auto-save function
@@ -1086,47 +1094,63 @@ export default function TeamPage() {
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
               Before you draw
             </p>
-            <ol className="mt-3 divide-y divide-rule text-sm">
+            <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
               {[
                 {
-                  done: true,
-                  label: "Name and date",
+                  done: Boolean(team.exchangeDate),
+                  label: team.exchangeDate
+                    ? formatDate(team.exchangeDate)
+                    : "Date missing",
                   detail: team.exchangeDate
-                    ? `Exchange on ${formatDate(team.exchangeDate)}.`
-                    : "No exchange date yet. Add one so the invitation agrees with this page.",
+                    ? "Exchange day"
+                    : "Add one so the invitation agrees with this page.",
                 },
                 {
                   done: status.totalMembers >= 3,
-                  label: "Three people joined",
+                  label:
+                    status.totalMembers === 1
+                      ? "1 joined"
+                      : `${status.totalMembers} joined`,
                   detail:
                     status.totalMembers >= 3
-                      ? `${status.totalMembers} have joined.`
-                      : `${status.totalMembers} joined. ${Math.max(0, 3 - status.totalMembers)} more needed. Pending invitations are left out.`,
+                      ? "Enough to draw"
+                      : `${Math.max(0, 3 - status.totalMembers)} more needed. Pending invitations are left out.`,
                 },
                 {
                   done: status.pendingInvitations === 0,
-                  label: "No one still invited",
+                  label:
+                    status.pendingInvitations === 0
+                      ? "No one waiting"
+                      : status.pendingInvitations === 1
+                        ? "1 still invited"
+                        : `${status.pendingInvitations} still invited`,
                   detail:
                     status.pendingInvitations > 0
-                      ? `${status.pendingInvitations} still invited. They will not be in the draw.`
+                      ? "They will not be in the draw."
                       : "Everyone invited has joined.",
                 },
                 {
                   done: false,
                   label: "Preview, then send",
                   detail:
-                    "Preview shows you every pairing. Sending emails the names. They cannot be redrawn.",
+                    "You see every pairing. Sending emails the names, and they cannot be redrawn.",
                 },
-              ].map((step, index) => (
-                <li key={step.label} className="flex gap-3 py-2">
-                  <span className="font-mono text-cranberry">{`0${index + 1}`}</span>
-                  <span>
-                    <span className="font-medium text-ink">{step.label}. </span>
-                    <span className="text-ink-soft">{step.detail}</span>
+              ].map((step) => (
+                <li
+                  key={step.label}
+                  className="border border-rule bg-ivory px-3 py-2"
+                >
+                  <span
+                    className={
+                      step.done ? "font-medium text-ink" : "font-medium text-cranberry"
+                    }
+                  >
+                    {step.label}
                   </span>
+                  <span className="mt-0.5 block text-ink-soft">{step.detail}</span>
                 </li>
               ))}
-            </ol>
+            </ul>
             <p className="mt-3 text-sm text-ink-soft">
               {status.membersWithWishlist} of {status.totalMembers} have a wishlist.
               {team.wishlistDeadline
@@ -1205,7 +1229,7 @@ export default function TeamPage() {
           {activeTab === "overview" && (
             <Card>
               <CardHeader>
-                <CardTitle>Team Members</CardTitle>
+                <CardTitle>People</CardTitle>
                 <CardDescription>
                   {
                     team.members.filter(
@@ -1229,27 +1253,27 @@ export default function TeamPage() {
                   {team.members.map((member) => (
                     <div
                       key={member.id}
-                      className="tag-press flex items-center justify-between border border-rule bg-ivory-card p-3"
+                      className="tag-press flex flex-col gap-3 border border-rule bg-ivory-card p-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <Avatar
                           name={member.user?.name || member.invitedEmail || "U"}
                           src={member.user?.avatarUrl}
                         />
-                        <div>
-                          <div className="text-cream font-medium">
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-ink">
                             {member.user?.name || member.invitedEmail}
                           </div>
                           {member.invitationStatus === "pending" &&
                             member.user?.name &&
                             member.invitedEmail && (
-                              <div className="text-cream/50 text-sm">
+                              <div className="truncate text-sm text-ink-soft">
                                 {member.invitedEmail}
                               </div>
                             )}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:shrink-0 sm:justify-end">
                         {member.role === "admin" && (
                           <Badge variant="gold">Admin</Badge>
                         )}
@@ -2127,7 +2151,7 @@ export default function TeamPage() {
       <Modal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        title="Invite Members"
+        title="Invite people"
       >
         <form
           onSubmit={inviteForm.handleSubmit(handleInvite)}
@@ -2135,7 +2159,7 @@ export default function TeamPage() {
         >
           <Textarea
             {...inviteForm.register("emails")}
-            label="Email Addresses"
+            label="Email addresses"
             placeholder="Enter emails separated by commas or new lines"
             className="min-h-[120px]"
             error={
@@ -2152,7 +2176,7 @@ export default function TeamPage() {
             </Button>
             <Button type="submit" isLoading={inviteMutation.isPending}>
               <Mail className="w-4 h-4 mr-2" />
-              Send Invitations
+              Send invitations
             </Button>
           </div>
         </form>
