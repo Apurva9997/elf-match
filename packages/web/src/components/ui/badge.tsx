@@ -8,11 +8,11 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variants = {
-  default: "bg-midnight-100 text-cream/70",
-  success: "bg-success/20 text-success",
-  warning: "bg-warning/20 text-warning",
-  error: "bg-error/20 text-error",
-  gold: "bg-gold/20 text-gold",
+  default: "bg-ivory-deep text-ink-soft",
+  success: "bg-evergreen-soft text-evergreen",
+  warning: "bg-[#F3E8D4] text-[#6E4A22]",
+  error: "bg-cranberry-soft text-cranberry",
+  gold: "bg-evergreen-soft text-evergreen",
 };
 
 export function Badge({
@@ -23,7 +23,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+        "inline-flex items-center px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
         variants[variant],
         className
       )}

@@ -183,7 +183,7 @@ function LoginPageContent() {
   if (isLoading || isAuthenticated || !signInLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-evergreen border-t-transparent" />
       </div>
     );
   }
@@ -198,7 +198,7 @@ function LoginPageContent() {
       >
         <Link
           href="/"
-          className="inline-flex items-center text-cream/60 hover:text-cream transition-colors mb-8"
+          className="mb-8 inline-flex items-center text-ink-soft hover:text-ink"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to home
@@ -206,15 +206,17 @@ function LoginPageContent() {
 
         <Card>
           <CardContent className="pt-8 pb-6">
-            <div className="text-center mb-8">
-              <span className="text-4xl mb-4 block">🎁</span>
-              <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                Welcome to ElfMatch
+            <div className="mb-8">
+              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
+                Elf Match
+              </p>
+              <h1 className="mt-2 font-display text-3xl text-evergreen">
+                {step === "email" ? "Sign in to your exchanges" : "Enter the code"}
               </h1>
-              <p className="text-cream/60">
+              <p className="mt-2 text-ink-soft">
                 {step === "email"
-                  ? "Sign in to organize your gift exchange"
-                  : `Enter the code we sent to ${submittedEmail}`}
+                  ? "Use the same email that received an invitation, or the one you used to create an exchange."
+                  : `We sent a 6-digit code to ${submittedEmail}.`}
               </p>
             </div>
 
@@ -256,10 +258,10 @@ function LoginPageContent() {
 
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-cream/20" />
+                        <div className="w-full border-t border-rule" />
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="px-4 bg-gradient-card text-cream/50">
+                        <span className="bg-ivory-card px-4 text-ink-faint">
                           or continue with email
                         </span>
                       </div>
@@ -285,12 +287,12 @@ function LoginPageContent() {
                     className="w-full"
                   >
                     <Mail className="w-4 h-4 mr-2" />
-                    Send Sign-in Code
+                    Email me a sign-in code
                   </Button>
                 </form>
 
-                <p className="text-center text-cream/50 text-sm mt-6">
-                  We&apos;ll email you a 6-digit sign-in code
+                <p className="mt-6 text-sm text-ink-faint">
+                  The code arrives by email. There is no password to set.
                 </p>
               </>
             )}
@@ -320,7 +322,7 @@ function LoginPageContent() {
                 <button
                   type="button"
                   onClick={() => setStep("email")}
-                  className="w-full text-cream/50 hover:text-cream text-sm transition-colors"
+                  className="w-full text-sm text-ink-faint hover:text-ink"
                 >
                   Use a different email
                 </button>
@@ -338,7 +340,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-evergreen border-t-transparent" />
         </div>
       }
     >

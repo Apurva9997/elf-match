@@ -24,16 +24,16 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold transition-all duration-300 rounded-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100";
+      "inline-flex items-center justify-center font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen";
 
     const variants = {
       primary:
-        "bg-gradient-gold text-midnight hover:shadow-glow hover:scale-[1.02] disabled:hover:shadow-none disabled:hover:scale-100",
+        "bg-evergreen text-ivory hover:bg-evergreen-deep",
       secondary:
-        "bg-midnight-100 text-cream border border-gold/20 hover:border-gold/40 hover:bg-midnight-200",
-      ghost: "text-cream/70 hover:text-cream hover:bg-midnight-100",
+        "bg-ivory-card text-evergreen border border-evergreen/25 hover:bg-evergreen-soft",
+      ghost: "text-ink-soft hover:text-ink hover:bg-ivory-deep",
       danger:
-        "bg-error/20 text-error border border-error/20 hover:bg-error/30 hover:border-error/40",
+        "bg-cranberry-soft text-cranberry border border-cranberry/20 hover:bg-cranberry/10",
     };
 
     const sizes = {

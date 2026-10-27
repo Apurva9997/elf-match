@@ -1,283 +1,143 @@
+import { PublicFooter } from "@/components/public-footer";
+import { PublicNav } from "@/components/public-nav";
 import { Metadata } from "next";
 import Link from "next/link";
-import {
-  Users,
-  Gift,
-  Shield,
-  Sparkles,
-  Mail,
-  MapPin,
-  Lock,
-  Zap,
-  RefreshCw,
-  Bell,
-  Heart,
-  CheckCircle,
-} from "lucide-react";
-import { PublicNav } from "@/components/public-nav";
 
 export const metadata: Metadata = {
-  title: "Features - Everything You Need for Secret Santa",
+  title: "What you can set",
   description:
-    "Discover all the features that make ElfMatch the best free Secret Santa organizer. Wishlists, exclusion rules, automatic matching, email notifications, and more.",
+    "Budget, dates, email invitations, wishlists with links, exclusions, a previewable draw, encrypted addresses, and gift status for the giver.",
   alternates: {
     canonical: "https://elfmatch.com/features",
   },
   openGraph: {
-    title: "ElfMatch Features - The Complete Secret Santa Solution",
+    title: "What you can set in an Elf Match exchange",
     description:
-      "Wishlists, exclusion rules, automatic matching, secure address sharing, and more. Everything you need for the perfect gift exchange.",
+      "The fields and rules an organizer actually uses: budget, invites, exclusions, wishlists, and a private draw.",
   },
 };
 
-const features = [
+const settings = [
   {
-    icon: Users,
-    title: "Unlimited Participants",
-    description:
-      "Invite as many people as you want to your exchange. Whether it's a small family gathering of 4 or a large office party of 100+, ElfMatch handles it all.",
-    highlight: "No participant limits",
+    label: "Exchange",
+    title: "Name, budget, and two dates",
+    body: "A name, an optional spend range, a wishlist deadline, and the exchange date. Participants see the same details you enter, so the invitation and the group page agree.",
   },
   {
-    icon: Gift,
-    title: "Rich Wishlists",
-    description:
-      "Create detailed wishlists with titles, descriptions, price estimates, and direct links to products. Help your Secret Santa find the perfect gift.",
-    highlight: "Add links & prices",
+    label: "People",
+    title: "Email invitations, no participant cap",
+    body: "Invite as many addresses as the exchange needs. You need at least three joined people before a draw is possible. Pending invitations stay visible, and you can resend them.",
   },
   {
-    icon: Shield,
-    title: "Exclusion Rules",
-    description:
-      "Prevent certain pairs from being matched - perfect for couples, family members, or anyone who shouldn't gift each other. Set bidirectional exclusions with one click.",
-    highlight: "Couples-friendly",
+    label: "Wishlists",
+    title: "Title, note, price, and a shop link",
+    body: "Each person can add items with a description, a price estimate, and a link. The list is readable by the group, which is how a giver finds something specific.",
   },
   {
-    icon: Sparkles,
-    title: "Smart Matching Algorithm",
-    description:
-      "Our algorithm ensures fair, truly random assignments while respecting all your exclusion rules. Preview assignments before sending to make sure everyone's happy.",
-    highlight: "Preview before sending",
+    label: "Exclusions",
+    title: "Pairs who must not match",
+    body: "One exclusion keeps two people from being assigned to each other, in either direction. The draw will not ignore a rule you saved.",
   },
   {
-    icon: Mail,
-    title: "Email Notifications",
-    description:
-      "Participants receive beautifully designed emails when they're invited, when assignments are made, and for important reminders. No one misses out.",
-    highlight: "Automatic reminders",
+    label: "The draw",
+    title: "Preview, regenerate, then confirm",
+    body: "You see every pairing before anyone else does. Generate another arrangement as many times as you like. Confirming sends each person a private email. After that, assignments are fixed.",
   },
   {
-    icon: MapPin,
-    title: "Secure Address Sharing",
-    description:
-      "Participants add their delivery address once. It's encrypted and shared only with their assigned Secret Santa - no one else can see it.",
-    highlight: "Encrypted storage",
+    label: "Addresses",
+    title: "Shared only with the assigned giver",
+    body: "A delivery address is encrypted before it is stored. Other participants do not see it. The person buying the gift does.",
   },
   {
-    icon: Lock,
-    title: "Passwordless Login",
-    description:
-      "No passwords to remember. We use secure magic links sent to your email. Click the link, and you're in. Simple and secure.",
-    highlight: "Magic link auth",
+    label: "Sign-in",
+    title: "A code by email, or Google or Apple",
+    body: "People join with a free account. Email sign-in uses a one-time code, so there is no password to invent for a once-a-year exchange.",
   },
   {
-    icon: Zap,
-    title: "2-Minute Setup",
-    description:
-      "Create your exchange in under 2 minutes. Just enter a name, set your budget, add participant emails, and you're ready to go.",
-    highlight: "Lightning fast",
-  },
-  {
-    icon: RefreshCw,
-    title: "Re-shuffle Assignments",
-    description:
-      "Not happy with the preview? Generate new random assignments as many times as you want before confirming. Get the perfect match-up.",
-    highlight: "Unlimited reshuffles",
-  },
-  {
-    icon: Bell,
-    title: "Gift Status Tracking",
-    description:
-      "Track the progress of your gift - mark it as bought, shipped, or delivered. Stay organized and never forget where you are in the process.",
-    highlight: "Progress tracking",
-  },
-  {
-    icon: Heart,
-    title: "Beautiful Experience",
-    description:
-      "A thoughtfully designed interface that makes organizing your exchange feel magical, not like a chore. Dark mode by default for comfortable viewing.",
-    highlight: "Gorgeous dark UI",
-  },
-  {
-    icon: CheckCircle,
-    title: "100% Free Forever",
-    description:
-      "No premium tiers, no feature gates, no ads. ElfMatch is completely free because we believe gift-giving should be accessible to everyone.",
-    highlight: "No hidden costs",
+    label: "After the draw",
+    title: "Gift status for the giver",
+    body: "The person buying can mark the gift bought, shipped, or delivered. Those notes stay with them. The recipient is not shown the status.",
   },
 ];
 
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
       <PublicNav />
 
-      <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Hero */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream mb-6">
-              Everything You Need for the{" "}
-              <span className="text-gradient-gold">Perfect Gift Exchange</span>
-            </h1>
-            <p className="text-xl text-cream/70 max-w-2xl mx-auto">
-              Powerful features, beautifully simple. ElfMatch has everything
-              to make your Secret Santa effortless.
-            </p>
-          </div>
+      <main className="mx-auto max-w-page px-4 pb-16 pt-10 sm:px-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
+          The desk
+        </p>
+        <h1 className="mt-3 max-w-3xl font-display text-4xl text-evergreen sm:text-5xl">
+          What you can set before anyone buys a gift.
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg text-ink-soft">
+          Elf Match is free to use: no paid tier and no card to start. These
+          are the controls on an exchange, not a catalogue of moods.
+        </p>
 
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="glass-card p-6 hover:border-gold/30 transition-all duration-300"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-6 h-6 text-midnight" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-display font-semibold text-cream">
-                        {feature.title}
-                      </h3>
-                    </div>
-                    <p className="text-cream/60 text-sm mb-3">
-                      {feature.description}
-                    </p>
-                    <span className="inline-block text-xs px-2 py-1 bg-gold/10 text-gold rounded">
-                      {feature.highlight}
-                    </span>
-                  </div>
-                </div>
+        <div className="mt-12 divide-y divide-rule border-y border-rule">
+          {settings.map((item) => (
+            <article key={item.title} className="grid gap-2 py-6 sm:grid-cols-[8rem_1fr] sm:gap-8 sm:py-7">
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+                {item.label}
+              </p>
+              <div>
+                <h2 className="font-display text-2xl text-ink">{item.title}</h2>
+                <p className="mt-2 max-w-2xl leading-relaxed text-ink-soft">{item.body}</p>
               </div>
-            ))}
-          </div>
+            </article>
+          ))}
+        </div>
 
-          {/* Comparison Section */}
-          <div className="glass-card p-8 mb-16">
-            <h2 className="text-2xl font-display font-bold text-cream mb-6 text-center">
-              Why Choose ElfMatch?
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gold/20">
-                    <th className="text-left py-3 px-4 text-cream">Feature</th>
-                    <th className="text-center py-3 px-4 text-gold">
-                      ElfMatch
-                    </th>
-                    <th className="text-center py-3 px-4 text-cream/50">
-                      Spreadsheets
-                    </th>
-                    <th className="text-center py-3 px-4 text-cream/50">
-                      Paper Slips
-                    </th>
+        <section className="mt-14">
+          <h2 className="font-display text-2xl text-evergreen">Against the usual alternatives</h2>
+          <p className="mt-2 max-w-2xl text-sm text-ink-soft">
+            A comparison of chores, not of brands. Paper slips and a spreadsheet can both draw names. They do not keep a wishlist next to a private assignment.
+          </p>
+          <div className="mt-6 overflow-x-auto border border-rule">
+            <table className="w-full min-w-[36rem] text-left text-sm">
+              <thead className="bg-ivory-deep/80 text-ink">
+                <tr>
+                  <th className="px-4 py-3 font-semibold"> </th>
+                  <th className="px-4 py-3 font-semibold">Elf Match</th>
+                  <th className="px-4 py-3 font-medium text-ink-soft">A spreadsheet</th>
+                  <th className="px-4 py-3 font-medium text-ink-soft">Paper slips</th>
+                </tr>
+              </thead>
+              <tbody className="text-ink-soft">
+                {[
+                  ["Draw that respects exclusions", "Built in", "You maintain the rules", "Hard to enforce"],
+                  ["Wishlist beside the match", "Yes", "Usually a second document", "No"],
+                  ["Who sees the full draw", "Organizer, until send", "Whoever has the file", "Whoever unfolds the slips"],
+                  ["Address only for the giver", "Yes", "Easy to overshare", "Passed by hand"],
+                  ["People in different cities", "Email invitation", "Possible", "Needs everyone present"],
+                ].map((row) => (
+                  <tr key={row[0]} className="border-t border-rule">
+                    {row.map((cell, i) => (
+                      <td key={cell} className={`px-4 py-3 ${i === 0 ? "font-medium text-ink" : ""}`}>
+                        {cell}
+                      </td>
+                    ))}
                   </tr>
-                </thead>
-                <tbody className="text-cream/70">
-                  <tr className="border-b border-gold/10">
-                    <td className="py-3 px-4">Automatic matching</td>
-                    <td className="text-center py-3 px-4 text-gold">✓</td>
-                    <td className="text-center py-3 px-4">Manual</td>
-                    <td className="text-center py-3 px-4">Manual</td>
-                  </tr>
-                  <tr className="border-b border-gold/10">
-                    <td className="py-3 px-4">Exclusion rules</td>
-                    <td className="text-center py-3 px-4 text-gold">✓</td>
-                    <td className="text-center py-3 px-4">Complex</td>
-                    <td className="text-center py-3 px-4">✗</td>
-                  </tr>
-                  <tr className="border-b border-gold/10">
-                    <td className="py-3 px-4">Wishlists</td>
-                    <td className="text-center py-3 px-4 text-gold">✓</td>
-                    <td className="text-center py-3 px-4">Separate doc</td>
-                    <td className="text-center py-3 px-4">✗</td>
-                  </tr>
-                  <tr className="border-b border-gold/10">
-                    <td className="py-3 px-4">Email notifications</td>
-                    <td className="text-center py-3 px-4 text-gold">✓</td>
-                    <td className="text-center py-3 px-4">Manual</td>
-                    <td className="text-center py-3 px-4">✗</td>
-                  </tr>
-                  <tr className="border-b border-gold/10">
-                    <td className="py-3 px-4">Secure address sharing</td>
-                    <td className="text-center py-3 px-4 text-gold">✓</td>
-                    <td className="text-center py-3 px-4">Not secure</td>
-                    <td className="text-center py-3 px-4">✗</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4">Works remotely</td>
-                    <td className="text-center py-3 px-4 text-gold">✓</td>
-                    <td className="text-center py-3 px-4">✓</td>
-                    <td className="text-center py-3 px-4">✗</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </section>
 
-          {/* CTA */}
-          <div className="text-center glass-card p-8">
-            <span className="text-5xl mb-6 block">🎁</span>
-            <h2 className="text-2xl font-display font-bold text-cream mb-4">
-              Ready to Get Started?
-            </h2>
-            <p className="text-cream/70 mb-6 max-w-xl mx-auto">
-              Create your free Secret Santa exchange in under 2 minutes. No
-              credit card, no signup fees, no catch.
-            </p>
-            <Link
-              href="/auth/login"
-              className="inline-block px-8 py-3 bg-gradient-gold text-midnight font-semibold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Create Free Exchange →
-            </Link>
-          </div>
+        <div className="mt-12">
+          <Link
+            href="/auth/login"
+            className="inline-flex bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
+          >
+            Create an exchange
+          </Link>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-gold/10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Link href="/" className="text-cream/50 hover:text-cream text-sm">
-            ← Back to Home
-          </Link>
-          <div className="flex gap-6 text-sm">
-            <Link
-              href="/faq"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
-

@@ -13,9 +13,9 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "glass-card p-6",
+          "border border-rule bg-ivory-card p-6 text-ink",
           variant === "interactive" &&
-            "cursor-pointer hover:border-gold/30 hover:shadow-glow transition-all duration-300",
+            "cursor-pointer transition-colors duration-200 hover:border-evergreen/40",
           className
         )}
         {...props}
@@ -47,7 +47,7 @@ const CardTitle = forwardRef<
   return (
     <h3
       ref={ref}
-      className={cn("text-xl font-display font-semibold text-cream", className)}
+      className={cn("font-display text-xl font-medium text-ink", className)}
       {...props}
     />
   );
@@ -62,7 +62,7 @@ const CardDescription = forwardRef<
   return (
     <p
       ref={ref}
-      className={cn("text-sm text-cream/60", className)}
+      className={cn("text-sm text-ink-soft", className)}
       {...props}
     />
   );
@@ -84,7 +84,7 @@ const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
       <div
         ref={ref}
         className={cn(
-          "flex items-center mt-4 pt-4 border-t border-gold/10",
+          "mt-4 flex items-center border-t border-rule pt-4",
           className
         )}
         {...props}

@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { storage } from "@/lib/storage";
 import { motion } from "framer-motion";
-import { CheckCircle, Gift, Loader2, XCircle } from "lucide-react";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -101,34 +101,30 @@ export default function InvitePage() {
           <CardContent className="pt-8 pb-6">
             {(status === "loading" || authLoading) && (
               <>
-                <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
-                  <Loader2 className="w-8 h-8 text-gold animate-spin" />
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center bg-evergreen-soft">
+                  <Loader2 className="h-8 w-8 animate-spin text-evergreen" />
                 </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Accepting Invitation...
-                </h1>
-                <p className="text-cream/70">
-                  Please wait while we add you to the team.
-                </p>
+                <h1 className="mb-2 font-display text-2xl text-evergreen">Opening the invitation</h1>
+                <p className="text-ink-soft">Adding you to the exchange.</p>
               </>
             )}
 
             {status === "needsAuth" && (
               <>
-                <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
-                  <Gift className="w-8 h-8 text-gold" />
-                </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  You&apos;ve been invited!
+                <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
+                  Invitation
+                </p>
+                <h1 className="mb-2 font-display text-3xl text-evergreen">
+                  You have a seat at this exchange.
                 </h1>
-                <p className="text-cream/70 mb-6">
-                  Sign in to join this Secret Santa exchange
+                <p className="mb-6 text-ink-soft">
+                  Sign in with the email that received this link. You can write a wishlist after you join.
                 </p>
                 <Button
                   onClick={() => router.push("/auth/login")}
                   className="w-full"
                 >
-                  Sign In to Join
+                  Sign in to join
                 </Button>
               </>
             )}
@@ -138,13 +134,10 @@ export default function InvitePage() {
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  You&apos;re in!
-                </h1>
-                <p className="text-cream/70">
-                  Welcome to{" "}
-                  <span className="text-gold font-medium">{teamName}</span>.
-                  Redirecting...
+                <h1 className="mb-2 font-display text-2xl text-evergreen">You&apos;re in</h1>
+                <p className="text-ink-soft">
+                  Opening{" "}
+                  <span className="font-medium text-ink">{teamName}</span>.
                 </p>
               </>
             )}
@@ -154,15 +147,15 @@ export default function InvitePage() {
                 <div className="w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mx-auto mb-6">
                   <XCircle className="w-8 h-8 text-error" />
                 </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Something went wrong
+                <h1 className="mb-2 font-display text-2xl text-evergreen">
+                  This invitation did not open
                 </h1>
-                <p className="text-cream/70 mb-6">{error}</p>
+                <p className="mb-6 text-ink-soft">{error}</p>
                 <Button
                   onClick={() => router.push("/dashboard")}
                   className="w-full"
                 >
-                  Go to Dashboard
+                  Go to your exchanges
                 </Button>
               </>
             )}

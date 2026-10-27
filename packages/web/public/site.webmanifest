@@ -1,11 +1,11 @@
 {
-  "name": "ElfMatch - Secret Santa Generator",
-  "short_name": "ElfMatch",
-  "description": "Create your free Secret Santa gift exchange in 2 minutes",
+  "name": "Elf Match",
+  "short_name": "Elf Match",
+  "description": "Organize a Secret Santa exchange: budget, invites, wishlists, and a private draw.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f1419",
-  "theme_color": "#d4af37",
+  "background_color": "#F6F1E7",
+  "theme_color": "#1E3A32",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

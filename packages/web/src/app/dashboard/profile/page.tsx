@@ -217,11 +217,8 @@ export default function ProfilePage() {
       <nav className="sticky top-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <span className="text-2xl">🎁</span>
-              <span className="font-display text-xl font-semibold text-cream">
-                ElfMatch
-              </span>
+            <Link href="/dashboard" className="font-display text-xl text-evergreen">
+              Elf Match
             </Link>
             <Link href="/dashboard">
               <Button variant="ghost" size="sm">

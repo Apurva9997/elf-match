@@ -56,7 +56,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-midnight/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-evergreen-deep/50"
             onClick={onClose}
           />
 
@@ -67,7 +67,7 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={cn(
-              "relative w-full glass-card p-6",
+              "relative w-full border border-rule bg-ivory-card p-6 text-ink shadow-paper",
               sizes[size],
               className
             )}
@@ -75,12 +75,11 @@ export function Modal({
             {/* Header */}
             {title && (
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-display font-semibold text-cream">
-                  {title}
-                </h2>
+                <h2 className="font-display text-xl text-ink">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="text-cream/50 hover:text-cream transition-colors p-1"
+                  className="p-1 text-ink-faint hover:text-ink"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -91,7 +90,8 @@ export function Modal({
             {!title && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 text-cream/50 hover:text-cream transition-colors p-1"
+                aria-label="Close"
+                className="absolute right-4 top-4 p-1 text-ink-faint hover:text-ink"
               >
                 <X className="w-5 h-5" />
               </button>

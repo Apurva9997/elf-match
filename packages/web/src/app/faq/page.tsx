@@ -1,3 +1,4 @@
+import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -6,33 +7,33 @@ import { FAQAccordion } from "./faq-accordion";
 export const metadata: Metadata = {
   title: "FAQ - Frequently Asked Questions About Secret Santa",
   description:
-    "Get answers to common questions about organizing Secret Santa gift exchanges. Learn how to set up exchanges, invite participants, create wishlists, and more.",
+    "Answers about budgets, invitations, exclusions, wishlists, and who can see a Secret Santa assignment on Elf Match.",
   alternates: {
     canonical: "https://elfmatch.com/faq",
   },
   openGraph: {
     title: "Secret Santa FAQ - Common Questions Answered",
     description:
-      "Everything you need to know about organizing a Secret Santa gift exchange with ElfMatch.",
+      "Budgets, invitations, exclusions, and who can see an assignment.",
   },
 };
 
 // FAQ data structured for SEO (can also be used for FAQ schema markup)
 const faqs = [
   {
-    question: "What is ElfMatch?",
+    question: "What is Elf Match?",
     answer:
-      "ElfMatch is a free online tool that helps you organize Secret Santa and gift exchange events. You can create exchanges, invite participants via email, build wishlists, set up exclusion rules (so couples don't get each other), and automatically match everyone with a random person to gift.",
+      "Elf Match is a free tool for organizing a Secret Santa or other gift exchange. You create an exchange, invite people by email, collect wishlists, optionally keep certain pairs from matching, and send each person a private assignment.",
   },
   {
-    question: "Is ElfMatch really free?",
+    question: "Is Elf Match free?",
     answer:
-      "Yes, ElfMatch is 100% free to use. There are no hidden fees, no premium tiers, and no credit card required. We believe organizing gift exchanges should be simple and accessible to everyone.",
+      "Yes. There is no paid tier and no card required to create an exchange or join one.",
   },
   {
     question: "How many people can join a Secret Santa exchange?",
     answer:
-      "You need at least 3 people to create a Secret Santa exchange (otherwise there's no mystery!). There's no upper limit - ElfMatch can handle exchanges of any size, whether it's a small family gathering or a large office party.",
+      "A draw needs at least three people who have joined. There is no participant cap. People with a still-open invitation are not included until they accept.",
   },
   {
     question: "How do I invite people to my Secret Santa exchange?",
@@ -52,7 +53,7 @@ const faqs = [
   {
     question: "How does the Secret Santa matching work?",
     answer:
-      "When you're ready to assign Secret Santas, click 'Assign Santas' and our algorithm will randomly match each participant with someone to gift. The algorithm ensures no one is assigned to themselves and respects all exclusion rules. Each person receives a private email revealing who they're gifting.",
+      "When at least three people have joined, you can assign Santas. The draw is random, never assigns someone to themselves, and keeps every exclusion. You preview the full list, and you can generate another set before confirming. Confirming emails each person only their own recipient.",
   },
   {
     question: "Can I see who everyone else got matched with?",
@@ -90,9 +91,9 @@ const faqs = [
       "Pending invitations are shown in the exchange overview. The admin can resend invitation emails if needed. You should wait until everyone has accepted before triggering the assignment, as pending members won't be included in the matching.",
   },
   {
-    question: "Can I use ElfMatch for non-Christmas gift exchanges?",
+    question: "Can I use Elf Match outside Christmas?",
     answer:
-      "Of course! While 'Secret Santa' is traditionally associated with Christmas, ElfMatch works for any occasion - birthdays, Diwali, Hanukkah, office events, team building, or just for fun. Simply create an exchange and set your own date.",
+      "Yes. The exchange date is yours to set. The same flow works for an office draw, a family gathering, or any other occasion where people should not see the full list of pairings.",
   },
   {
     question: "Is my data secure?",
@@ -123,78 +124,46 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen">
-      {/* FAQ Schema for SEO */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      {/* Navigation */}
       <PublicNav />
 
-      <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-display font-bold text-cream mb-4">
-              Frequently Asked Questions
-            </h1>
-            <p className="text-cream/70 text-lg">
-              Everything you need to know about organizing your Secret Santa
-              gift exchange
-            </p>
-          </div>
+      <main className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
+          Questions
+        </p>
+        <h1 className="mt-3 font-display text-4xl text-evergreen sm:text-5xl">
+          Before you send the invitations.
+        </h1>
+        <p className="mt-4 text-lg text-ink-soft">
+          Budgets, who can see a wishlist, and what happens if someone has not
+          joined yet.
+        </p>
 
+        <div className="mt-10">
           <FAQAccordion faqs={faqs} />
+        </div>
 
-          {/* CTA */}
-          <div className="mt-16 text-center p-8 glass-card">
-            <h2 className="text-2xl font-display font-semibold text-cream mb-4">
-              Still have questions?
-            </h2>
-            <p className="text-cream/70 mb-6">
-              Can&apos;t find what you&apos;re looking for? Reach out to us and
-              we&apos;ll help you out.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="mailto:hello@elfmatch.com"
-                className="px-6 py-3 border border-gold/30 text-cream rounded-lg hover:bg-gold/10 transition-colors"
-              >
-                Contact Support
-              </a>
-              <Link
-                href="/auth/login"
-                className="px-6 py-3 bg-gradient-gold text-midnight font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Create Your Exchange
-              </Link>
-            </div>
-          </div>
+        <div className="mt-12 flex flex-col gap-3 border-t border-rule pt-8 sm:flex-row">
+          <a
+            href="mailto:hello@elfmatch.com"
+            className="inline-flex items-center justify-center border border-evergreen/25 px-5 py-3 font-semibold text-evergreen hover:bg-evergreen-soft"
+          >
+            Write to hello@elfmatch.com
+          </a>
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center justify-center bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
+          >
+            Create an exchange
+          </Link>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-gold/10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Link href="/" className="text-cream/50 hover:text-cream text-sm">
-            ← Back to Home
-          </Link>
-          <div className="flex gap-6 text-sm">
-            <Link
-              href="/privacy"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

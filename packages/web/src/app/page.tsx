@@ -2,9 +2,9 @@ import { HomePage } from "@/components/home-page";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Free Secret Santa Generator - Create Gift Exchanges in Minutes",
+  title: "Organize a Secret Santa exchange",
   description:
-    "Create your free Secret Santa gift exchange in 2 minutes. Perfect for office parties, family gatherings & friend groups. Features wishlists, exclusion rules & automatic matching.",
+    "Elf Match helps you set a budget and date, invite people by email, keep pairs apart, collect wishlists, and send each person a private gift assignment.",
   alternates: {
     canonical: "https://elfmatch.com",
   },

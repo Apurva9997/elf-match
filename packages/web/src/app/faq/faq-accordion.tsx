@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 interface FAQ {
@@ -17,35 +16,39 @@ export function FAQAccordion({ faqs }: FAQAccordionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div className="space-y-4">
-      {faqs.map((faq, index) => (
-        <div
-          key={index}
-          className="glass-card overflow-hidden transition-all duration-200"
-        >
-          <button
-            onClick={() => setOpenIndex(openIndex === index ? null : index)}
-            className="w-full px-6 py-4 flex items-center justify-between text-left"
-          >
-            <span className="font-semibold text-cream pr-4">{faq.question}</span>
-            <ChevronDown
-              className={cn(
-                "w-5 h-5 text-gold transition-transform duration-200 flex-shrink-0",
-                openIndex === index && "rotate-180"
-              )}
-            />
-          </button>
-          <div
-            className={cn(
-              "px-6 overflow-hidden transition-all duration-200",
-              openIndex === index ? "pb-4 max-h-96" : "max-h-0"
-            )}
-          >
-            <p className="text-cream/70 leading-relaxed">{faq.answer}</p>
+    <div className="border-t border-rule">
+      {faqs.map((faq, index) => {
+        const open = openIndex === index;
+        const panelId = `faq-panel-${index}`;
+        const buttonId = `faq-button-${index}`;
+        return (
+          <div key={faq.question} className="border-b border-rule">
+            <h2>
+              <button
+                id={buttonId}
+                aria-expanded={open}
+                aria-controls={panelId}
+                onClick={() => setOpenIndex(open ? null : index)}
+                className="flex w-full items-start justify-between gap-4 py-4 text-left"
+              >
+                <span className="font-display text-xl text-ink">{faq.question}</span>
+                <span className="mt-1 font-mono text-sm text-cranberry" aria-hidden>
+                  {open ? "–" : "+"}
+                </span>
+              </button>
+            </h2>
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={buttonId}
+              hidden={!open}
+              className={cn("pb-5 pr-8", !open && "hidden")}
+            >
+              <p className="leading-relaxed text-ink-soft">{faq.answer}</p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
-

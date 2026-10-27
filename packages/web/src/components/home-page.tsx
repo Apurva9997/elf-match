@@ -1,396 +1,292 @@
 "use client";
 
+import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle,
-  Gift,
-  Heart,
-  Lock,
-  Shield,
-  Sparkles,
-  Users,
-  Zap,
-} from "lucide-react";
 import Link from "next/link";
 
-const features = [
-  {
-    icon: Users,
-    title: "Create Your Exchange",
-    description:
-      "Set up your Secret Santa in under 2 minutes. Invite friends, family, or coworkers via email.",
-  },
-  {
-    icon: Gift,
-    title: "Build Wishlists",
-    description:
-      "Share what you'd love to receive. Add links, descriptions, and price estimates.",
-  },
-  {
-    icon: Shield,
-    title: "Exclusion Rules",
-    description:
-      "Prevent couples or family members from being matched. You control the rules.",
-  },
-  {
-    icon: Sparkles,
-    title: "Magic Matching",
-    description:
-      "Our algorithm ensures fair, random assignments while respecting all exclusions.",
-  },
-];
-
-const benefits = [
-  { icon: Zap, text: "Set up in under 2 minutes" },
-  { icon: Lock, text: "100% free, no hidden costs" },
-  { icon: CheckCircle, text: "No app download required" },
-  { icon: Heart, text: "Works for any group size" },
+const examplePeople = [
+  { name: "Priya N.", note: "Joined · wishlist started", state: "in" },
+  { name: "Arun M.", note: "Joined · wishlist empty", state: "in" },
+  { name: "Leela K.", note: "Invitation still open", state: "wait" },
+  { name: "Dev S.", note: "Joined · three wishes", state: "in" },
 ];
 
 export function HomePage() {
   const { isAuthenticated } = useAuth();
+  const startHref = isAuthenticated ? "/dashboard" : "/auth/login";
+  const startLabel = isAuthenticated ? "Open your exchanges" : "Create an exchange";
 
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
       <PublicNav />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-6xl mb-6 block animate-float">🎁</span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-cream mb-6">
-              The Simplest Way to Organize{" "}
-              <span className="text-gradient-gold">Secret Santa</span>
+      <main>
+        <section className="mx-auto grid max-w-page items-start gap-10 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16 lg:pt-16">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-cranberry">
+              For the person organizing
+            </p>
+            <h1 className="mt-4 max-w-[16ch] font-display text-[2.6rem] font-medium leading-[1.05] text-evergreen sm:text-6xl">
+              Draw names without a hat on the table.
             </h1>
-            <p className="text-lg sm:text-xl text-cream/70 mb-4 max-w-2xl mx-auto">
-              Create your gift exchange in under 2 minutes. No spreadsheets, no
-              stress—just holiday magic.
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
+              Elf Match is where you set the budget and the date, invite people
+              by email, keep certain pairs apart, and send each person only
+              their own match.
             </p>
-            <p className="text-sm text-cream/50 mb-8">
-              ✨ 100% Free • No Credit Card Required • Works on Any Device
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
-                <Button size="md" className="w-full sm:w-auto">
-                  {isAuthenticated ? "Go to Dashboard" : "Create Free Exchange"}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                href={startHref}
+                className="inline-flex items-center justify-center bg-cranberry px-5 py-3 text-base font-semibold text-ivory hover:bg-cranberry-deep"
+              >
+                {startLabel}
               </Link>
-              <Link href="/how-it-works">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="w-full sm:w-auto"
+              {!isAuthenticated && (
+                <Link
+                  href="/auth/login"
+                  className="inline-flex items-center justify-center border border-evergreen/25 px-5 py-3 text-base font-semibold text-evergreen hover:bg-evergreen-soft"
                 >
-                  See How It Works
-                </Button>
-              </Link>
+                  Sign in to an existing exchange
+                </Link>
+              )}
             </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Social Proof / Benefits Bar */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 border-y border-gold/10 bg-midnight-50/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.text}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="flex items-center justify-center gap-2 text-cream/70"
-              >
-                <benefit.icon className="w-5 h-5 text-gold" />
-                <span className="text-sm">{benefit.text}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream mb-4">
-              Everything You Need for the Perfect Gift Exchange
-            </h2>
-            <p className="text-cream/60 max-w-2xl mx-auto">
-              Simple, elegant, and designed to make organizing Secret Santa a
-              joy, not a chore.
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-faint">
+              Next: name the exchange, choose a budget and a date, then add
+              email addresses. People join from the invitation, write a
+              wishlist, and wait for you to draw.
             </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="glass-card p-6 hover:border-gold/30 hover:shadow-glow transition-all duration-300"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-midnight" />
-                </div>
-                <h3 className="text-lg font-display font-semibold text-cream mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-cream/60 text-sm">{feature.description}</p>
-              </motion.div>
-            ))}
           </div>
-        </div>
-      </section>
 
-      {/* How It Works Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-midnight-50/30">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream mb-4">
-              Get Started in 3 Easy Steps
-            </h2>
-          </motion.div>
+          <figure className="relative">
+            <figcaption className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">
+              Example invitation — not a live exchange
+            </figcaption>
+            <div className="paper-grain relative border border-rule bg-ivory-card p-5 shadow-paper sm:p-6">
+              <div
+                aria-hidden
+                className="absolute -left-3 top-8 hidden h-16 w-6 bg-cranberry sm:block"
+                style={{ clipPath: "polygon(0 8%, 100% 0, 100% 100%, 0 92%)" }}
+              />
+              <div className="flex items-start justify-between gap-4 border-b border-dashed border-rule pb-4">
+                <div>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+                    Gift tag
+                  </p>
+                  <p className="mt-1 font-display text-2xl text-evergreen">
+                    Cousins, December
+                  </p>
+                </div>
+                <p className="border border-evergreen/20 px-2 py-1 font-mono text-[11px] uppercase tracking-wider text-evergreen">
+                  Collecting wishes
+                </p>
+              </div>
 
-          <div className="space-y-8">
-            {[
-              {
-                step: "1",
-                title: "Create Your Exchange",
-                description:
-                  "Enter a name, set your budget range, and pick the exchange date. Takes 30 seconds.",
-              },
-              {
-                step: "2",
-                title: "Invite Your Group",
-                description:
-                  "Add email addresses of everyone participating. They'll get an invite to join and create their wishlist.",
-              },
-              {
-                step: "3",
-                title: "We Handle the Rest",
-                description:
-                  "When everyone's ready, click one button to randomly match everyone. Each person gets a private email with their assignment.",
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex gap-6 items-start"
-              >
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-gold flex items-center justify-center text-midnight font-bold text-xl">
-                  {item.step}
+              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div>
+                  <dt className="text-xs uppercase tracking-wider text-ink-faint">Budget</dt>
+                  <dd className="mt-0.5 font-medium text-ink">₹500 – ₹1,000</dd>
                 </div>
                 <div>
-                  <h3 className="text-xl font-display font-semibold text-cream mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-cream/60">{item.description}</p>
+                  <dt className="text-xs uppercase tracking-wider text-ink-faint">Exchange</dt>
+                  <dd className="mt-0.5 font-medium text-ink">21 December</dd>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                <div>
+                  <dt className="text-xs uppercase tracking-wider text-ink-faint">Wishlists due</dt>
+                  <dd className="mt-0.5 font-medium text-ink">12 December</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wider text-ink-faint">People</dt>
+                  <dd className="mt-0.5 font-medium text-ink">3 joined · 1 waiting</dd>
+                </div>
+              </dl>
 
-      {/* Use Cases Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream mb-4">
-              Perfect For Any Group
-            </h2>
-          </motion.div>
+              <div className="mt-5 border-t border-rule pt-4">
+                <p className="text-xs uppercase tracking-wider text-ink-faint">Who has joined</p>
+                <ul className="mt-2 divide-y divide-rule">
+                  {examplePeople.map((person) => (
+                    <li key={person.name} className="flex items-baseline justify-between gap-3 py-2">
+                      <span className="shrink-0 font-medium text-ink">{person.name}</span>
+                      <span
+                        className={
+                          person.state === "wait"
+                            ? "text-right text-sm text-cranberry"
+                            : "text-right text-sm text-ink-soft"
+                        }
+                      >
+                        {person.note}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                emoji: "🏢",
-                title: "Office Parties",
-                description:
-                  "Organize your workplace Secret Santa without the hassle of paper slips and awkward draws.",
-              },
-              {
-                emoji: "👨‍👩‍👧‍👦",
-                title: "Family Gatherings",
-                description:
-                  "Coordinate across generations and locations. Set exclusions so couples don't get each other.",
-              },
-              {
-                emoji: "👯",
-                title: "Friend Groups",
-                description:
-                  "Make your friend group's gift exchange memorable with wishlists everyone can see.",
-              },
-            ].map((useCase, index) => (
-              <motion.div
-                key={useCase.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="glass-card p-6 text-center"
-              >
-                <span className="text-4xl mb-4 block">{useCase.emoji}</span>
-                <h3 className="text-lg font-display font-semibold text-cream mb-2">
-                  {useCase.title}
-                </h3>
-                <p className="text-cream/60 text-sm">{useCase.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <div className="mt-4 bg-evergreen-soft/70 px-4 py-3">
+                <p className="text-xs uppercase tracking-wider text-evergreen">
+                  A wishlist detail, visible to the group
+                </p>
+                <p className="mt-1 font-display text-lg text-ink">
+                  Dev asked for a linen tea towel set
+                </p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  About ₹650 · link saved · no one here is told who will buy it.
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-ink-faint">
+              Names, prices, and dates on this card are sample copy so you can
+              see the shape of an exchange. Assignments are not shown, because
+              they are not public.
+            </p>
+          </figure>
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="glass-card p-8 sm:p-12 text-center relative overflow-hidden"
-          >
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-glow opacity-50" />
-
-            <div className="relative z-10">
-              <span className="text-5xl mb-6 block">✨</span>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-cream mb-4">
-                Ready to Make Gift-Giving Effortless?
+        <section className="border-y border-rule bg-ivory-card/70">
+          <div className="mx-auto max-w-page px-4 py-14 sm:px-6">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-3xl text-evergreen sm:text-4xl">
+                What you are actually creating
               </h2>
-              <p className="text-cream/70 mb-8 max-w-xl mx-auto">
-                Create your free Secret Santa exchange in under 2 minutes. No
-                signup fees, no credit card, no catch.
+              <p className="mt-3 text-lg text-ink-soft">
+                An exchange is a named group with a spend range, two dates, a
+                list of people, and — when you decide — a private draw.
               </p>
-              <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
-                <Button size="md">
-                  {isAuthenticated
-                    ? "Go to Dashboard"
-                    : "Create Your Free Exchange"}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+            </div>
+
+            <ol className="mt-10 border-t border-rule">
+              {[
+                {
+                  n: "01",
+                  title: "Name it, price it, date it",
+                  body: "You enter a name, an optional minimum and maximum budget, a wishlist deadline, and the day gifts change hands. Everyone in the exchange can see those details.",
+                },
+                {
+                  n: "02",
+                  title: "Invite by email",
+                  body: "You add addresses. Each person gets an invitation link, creates a free account with a sign-in code, and shows up as pending until they join. You can resend an invitation that is still open.",
+                },
+                {
+                  n: "03",
+                  title: "Keep particular pairs apart",
+                  body: "Before the draw, you can exclude two people from matching. The rule runs both ways: neither is assigned the other. Couples and close relatives are the usual reason.",
+                },
+                {
+                  n: "04",
+                  title: "Draw when the list is ready",
+                  body: "You need at least three people. Pending invitations are not in the draw. You can preview the matches, generate another set, then confirm. After emails go out, the draw is fixed.",
+                },
+              ].map((step) => (
+                <li
+                  key={step.n}
+                  className="grid gap-2 border-b border-rule py-6 sm:grid-cols-[4.5rem_14rem_1fr] sm:gap-6 sm:py-7"
+                >
+                  <span className="font-mono text-sm text-cranberry">{step.n}</span>
+                  <h3 className="font-display text-2xl text-ink">{step.title}</h3>
+                  <p className="text-ink-soft leading-relaxed">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-page gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-start">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">
+              Who can see what
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-evergreen sm:text-4xl">
+              Wishlists are shared. Assignments are not.
+            </h2>
+            <p className="mt-4 text-ink-soft leading-relaxed">
+              A wishlist is how the group helps the giver. A match is how the
+              surprise stays intact. Elf Match keeps those two kinds of
+              information apart.
+            </p>
+            <dl className="mt-8 divide-y divide-rule border-y border-rule">
+              {[
+                ["Wishlist items", "Anyone in the exchange can read titles, notes, price estimates, and shop links."],
+                ["Delivery address", "Encrypted in storage. Shown only to the person assigned to give that gift."],
+                ["The draw", "You, as organizer, can preview every pairing before you send it. After that, each person sees only their own recipient."],
+                ["Gift progress", "The giver can mark a gift bought, shipped, or delivered for their own notes. The recipient does not see those updates."],
+              ].map(([term, detail]) => (
+                <div key={term} className="grid gap-1 py-4 sm:grid-cols-[11rem_1fr] sm:gap-6">
+                  <dt className="font-semibold text-ink">{term}</dt>
+                  <dd className="text-ink-soft">{detail}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="relative mb-6 lg:mt-8">
+            <div
+              aria-hidden
+              className="absolute -right-2 top-3 hidden h-[calc(100%-1.5rem)] w-full border border-rule bg-ivory-deep sm:block"
+            />
+            <article className="paper-grain relative border border-ink/15 bg-[#fffdf8] p-5 shadow-tag sm:p-7">
+              <div className="flex items-center justify-between border-b border-rule pb-3">
+                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">
+                  Folded note · example
+                </p>
+                <p className="text-xs text-ink-faint">For the giver only</p>
+              </div>
+              <h3 className="mt-4 font-display text-[1.7rem] leading-tight text-evergreen">
+                You are buying for Meera.
+              </h3>
+              <p className="mt-2 text-sm text-ink-soft">
+                This is the kind of note a participant opens after you confirm
+                the draw. It is not emailed to the rest of the group.
+              </p>
+              <div className="mt-5 space-y-3 border-t border-dashed border-rule pt-4 text-sm">
+                <p>
+                  <span className="text-ink-faint">Their list · </span>
+                  A hardcover notebook, a small brass bell, seeds for a window box.
+                </p>
+                <p>
+                  <span className="text-ink-faint">Address · </span>
+                  Shown here to the assigned giver, not on the group page.
+                </p>
+                <p>
+                  <span className="text-ink-faint">Spend · </span>
+                  Stay inside ₹500 – ₹1,000.
+                </p>
+              </div>
+              <p className="mt-5 text-xs text-ink-faint">
+                Sample names. Nothing on this note is a real assignment.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section className="border-t border-rule bg-evergreen text-ivory">
+          <div className="mx-auto grid max-w-page gap-8 px-4 py-14 sm:px-6 md:grid-cols-[1.3fr_0.7fr] md:items-end">
+            <div>
+              <h2 className="max-w-xl font-display text-3xl leading-tight sm:text-4xl">
+                When everyone has joined, you draw the names.
+              </h2>
+              <p className="mt-4 max-w-xl text-ivory/80 leading-relaxed">
+                Preview the pairings first. If a match feels wrong, generate
+                another set — exclusions still apply. Confirm only when you
+                mean to send the emails. After that, the assignments cannot be
+                changed.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 md:items-start">
+              <Link
+                href={startHref}
+                className="inline-flex items-center justify-center bg-ivory px-5 py-3 font-semibold text-evergreen hover:bg-ivory-card"
+              >
+                {startLabel}
+              </Link>
+              <Link href="/how-it-works" className="text-sm text-ivory/80 underline-offset-4 hover:underline">
+                Read the sequence in more detail
               </Link>
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-gold/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <span className="text-2xl">🎁</span>
-                <span className="font-display text-xl font-semibold text-cream">
-                  ElfMatch
-                </span>
-              </div>
-              <p className="text-cream/50 text-sm max-w-md">
-                The simplest way to organize Secret Santa gift exchanges.
-                Created with ❤️ for the holiday season.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-cream mb-4">Product</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    href="/features"
-                    className="text-cream/50 hover:text-cream transition-colors"
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/how-it-works"
-                    className="text-cream/50 hover:text-cream transition-colors"
-                  >
-                    How It Works
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/faq"
-                    className="text-cream/50 hover:text-cream transition-colors"
-                  >
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-cream mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="text-cream/50 hover:text-cream transition-colors"
-                  >
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/terms"
-                    className="text-cream/50 hover:text-cream transition-colors"
-                  >
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="mailto:hello@elfmatch.com"
-                    className="text-cream/50 hover:text-cream transition-colors"
-                  >
-                    Contact Us
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-gold/10 text-center text-cream/40 text-sm">
-            © {new Date().getFullYear()} ElfMatch. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

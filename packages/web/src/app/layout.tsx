@@ -7,13 +7,16 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://elfmatch.com"),
+  other: {
+    "ahrefs-site-verification":
+      "c896ed64b5c7ab5adfaa14a4b152385cd29aaf3f73a00ec1df6e0e8051b78e2f",
+  },
   title: {
-    default:
-      "ElfMatch - Free Secret Santa Generator & Gift Exchange Organizer",
-    template: "%s | ElfMatch",
+    default: "Elf Match — organize a Secret Santa exchange",
+    template: "%s | Elf Match",
   },
   description:
-    "Create your free Secret Santa gift exchange in 2 minutes. Organize office parties, family exchanges & friend groups with wishlists, exclusion rules & automatic matching. No signup required to start!",
+    "Set a budget and date, invite people by email, collect wishlists, keep particular pairs from matching, and send private gift assignments.",
   keywords: [
     "secret santa",
     "secret santa generator",
@@ -30,9 +33,9 @@ export const metadata: Metadata = {
     "wishlist maker",
     "secret santa with exclusions",
   ],
-  authors: [{ name: "ElfMatch" }],
-  creator: "ElfMatch",
-  publisher: "ElfMatch",
+  authors: [{ name: "Elf Match" }],
+  creator: "Elf Match",
+  publisher: "Elf Match",
   formatDetection: {
     email: false,
     address: false,
@@ -42,25 +45,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://elfmatch.com",
-    siteName: "ElfMatch",
-    title:
-      "ElfMatch - Free Secret Santa Generator & Gift Exchange Organizer",
+    siteName: "Elf Match",
+    title: "Elf Match — organize a Secret Santa exchange",
     description:
-      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
+      "Set a budget and date, invite people by email, collect wishlists, and send private assignments.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "ElfMatch - Free Secret Santa Generator",
+        alt: "Elf Match — a gift exchange invitation",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ElfMatch - Free Secret Santa Generator",
+    title: "Elf Match — organize a Secret Santa exchange",
     description:
-      "Create your free Secret Santa gift exchange in 2 minutes. Wishlists, exclusion rules & automatic matching included!",
+      "Set a budget and date, invite people by email, collect wishlists, and send private assignments.",
     images: ["/og-image.png"],
     creator: "@elfmatch",
   },
@@ -100,6 +102,11 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen">
         <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="u0RRy0IkQmdhl4Pwds0Clw"
+          strategy="beforeInteractive"
+        />
+        <Script
           src="https://cdn.amplitude.com/script/cafdae686221fc101d72a883c8f95324.js"
           strategy="beforeInteractive"
         />
@@ -127,21 +134,15 @@ export default function RootLayout({
           }}
         />
         <Providers>
-          {/* Background gradient */}
-          <div className="fixed inset-0 bg-gradient-radial from-midnight-50 via-midnight to-midnight -z-10" />
-
-          {/* Subtle glow effect */}
-          <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-glow -z-10 opacity-50" />
-
           {children}
 
           <Toaster
             position="top-center"
             toastOptions={{
               style: {
-                background: "#1a1f2e",
-                border: "1px solid rgba(212, 175, 55, 0.2)",
-                color: "#f5f0e8",
+                background: "#FFFCF6",
+                border: "1px solid #DDD4C4",
+                color: "#1C1915",
               },
             }}
           />

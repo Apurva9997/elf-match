@@ -1,10 +1,11 @@
+import { PublicFooter } from "@/components/public-footer";
+import { PublicNav } from "@/components/public-nav";
 import { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Learn how ElfMatch collects, uses, and protects your personal information when you use our Secret Santa gift exchange platform.",
+    "How Elf Match collects, uses, and protects personal information for a gift exchange.",
   alternates: {
     canonical: "https://elfmatch.com/privacy",
   },
@@ -13,23 +14,11 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl">🎁</span>
-              <span className="font-display text-xl font-semibold text-cream">
-                ElfMatch
-              </span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav />
 
-      <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+      <main className="pb-16 px-4 sm:px-6 lg:px-8 pt-10">
         <article className="max-w-3xl mx-auto prose prose-invert prose-gold">
-          <h1 className="text-3xl font-display font-bold text-cream mb-8">
+          <h1 className="text-3xl font-display text-evergreen mb-8">
             Privacy Policy
           </h1>
 
@@ -47,7 +36,7 @@ export default function PrivacyPage() {
               1. Information We Collect
             </h2>
             <p className="text-cream/70 mb-4">
-              When you use ElfMatch, we collect the following information:
+              When you use Elf Match, we collect the following information:
             </p>
             <ul className="list-disc pl-6 text-cream/70 space-y-2">
               <li>
@@ -78,7 +67,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-cream/70 mb-4">We use your information to:</p>
             <ul className="list-disc pl-6 text-cream/70 space-y-2">
-              <li>Provide and operate the ElfMatch service</li>
+              <li>Provide and operate the Elf Match service</li>
               <li>
                 Send you important notifications about your gift exchanges
               </li>
@@ -155,8 +144,10 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-cream/70">
               We use cookies and similar technologies to provide functionality
-              and analyze usage. We use Amplitude for analytics to understand
-              how users interact with our service and improve the experience.
+              and analyze usage. We use Amplitude to understand how people
+              move through the product. We also use Ahrefs Web Analytics,
+              which is cookie-free, to count visits and see which pages are
+              used. Neither is used to sell personal information.
             </p>
           </section>
 
@@ -190,14 +181,7 @@ export default function PrivacyPage() {
         </article>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-gold/10">
-        <div className="max-w-6xl mx-auto text-center">
-          <Link href="/" className="text-cream/50 hover:text-cream text-sm">
-            ← Back to Home
-          </Link>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

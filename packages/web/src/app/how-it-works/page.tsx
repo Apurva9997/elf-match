@@ -1,236 +1,140 @@
+import { PublicFooter } from "@/components/public-footer";
+import { PublicNav } from "@/components/public-nav";
 import { Metadata } from "next";
 import Link from "next/link";
-import { PublicNav } from "@/components/public-nav";
 
 export const metadata: Metadata = {
-  title: "How It Works - Set Up Secret Santa in 3 Easy Steps",
+  title: "How an exchange runs",
   description:
-    "Learn how to organize your Secret Santa gift exchange with ElfMatch. Create an exchange, invite participants, and let us handle the matching. It takes just 2 minutes!",
+    "Name the exchange, set a budget and dates, invite people by email, add exclusions, then preview and send private assignments.",
   alternates: {
     canonical: "https://elfmatch.com/how-it-works",
   },
   openGraph: {
-    title: "How ElfMatch Works - Secret Santa Made Simple",
+    title: "How an Elf Match exchange runs",
     description:
-      "Create, invite, match. Three simple steps to organize your perfect gift exchange.",
+      "From the invitation to the private draw: what the organizer does, and what each person sees.",
   },
 };
 
 const steps = [
   {
     number: "01",
-    title: "Create Your Exchange",
-    description:
-      "Start by giving your exchange a name - 'Office Secret Santa 2024' or 'Family Gift Exchange'. Then set your budget range and pick the exchange date. The whole process takes about 30 seconds.",
+    title: "Create the exchange",
+    body: "Give it a name people will recognize in the invitation. Add a minimum and maximum budget if you want everyone spending in the same range. Set a wishlist deadline and the day gifts are exchanged. Those fields are visible to everyone who joins.",
     details: [
-      "Choose a memorable name for your exchange",
-      "Set minimum and maximum budget (optional but recommended)",
-      "Pick a wishlist deadline to remind people",
-      "Set the gift exchange date",
+      "Name is required",
+      "Budget, wishlist deadline, and exchange date are optional",
+      "You can edit the details later, before the draw is sent",
     ],
-    emoji: "✨",
   },
   {
     number: "02",
-    title: "Invite Your Participants",
-    description:
-      "Add the email addresses of everyone you want to include. They'll receive a beautiful invitation email with a link to join. They can create their account, add their wishlist, and enter their delivery address.",
+    title: "Invite people by email",
+    body: "Enter the addresses of the people who should be in the draw. Each one receives an invitation link. They create a free account — a sign-in code by email, or Google or Apple if they prefer — then join, write a wishlist, and can add a delivery address.",
     details: [
-      "Enter emails one by one or paste a list",
-      "Participants get automatic invitation emails",
-      "Track who has accepted and who's still pending",
-      "Resend invitations with one click if needed",
+      "Open invitations stay marked as pending",
+      "You can resend an invitation that has not been accepted",
+      "Pending people are not included when you draw names",
     ],
-    emoji: "💌",
   },
   {
     number: "03",
-    title: "Set Up Exclusions (Optional)",
-    description:
-      "Want to make sure couples don't get each other? Or prevent certain pairs from matching? Add exclusion rules. Our algorithm will respect these when making assignments.",
+    title: "Add exclusions if you need them",
+    body: "An exclusion is a pair who must not be assigned to each other. It applies in both directions. Use it for couples, siblings, or anyone else who already buys for each other. You can add as many pairs as the group can still support.",
     details: [
-      "Prevent couples from being matched",
-      "Exclude family members from gifting each other",
-      "Rules work both ways automatically",
-      "Add as many exclusions as you need",
+      "Set before you confirm the draw",
+      "The preview respects every exclusion",
+      "If the rules make a draw impossible, you will need to loosen them",
     ],
-    emoji: "🛡️",
   },
   {
     number: "04",
-    title: "Generate & Send Assignments",
-    description:
-      "When everyone has joined and added their wishlists, click 'Assign Santas'. Preview the random assignments, reshuffle if needed, then confirm. Everyone gets a private email revealing who they're gifting.",
+    title: "Preview, then send the draw",
+    body: "When at least three people have joined, you can assign Santas. Look at the full preview first — only you see every pairing. Generate another set if you want a different arrangement. Confirm when you are ready to email each person their own recipient. After those emails go out, the assignments cannot be changed.",
     details: [
-      "Preview all assignments before sending",
-      "Regenerate as many times as you want",
-      "Assignments respect all exclusion rules",
-      "Each person gets a private email with their match",
+      "No one is assigned themselves",
+      "Each participant receives only their own match",
+      "The recipient’s wishlist and delivery address open for that giver",
     ],
-    emoji: "🎁",
   },
 ];
 
 export default function HowItWorksPage() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
       <PublicNav />
 
-      <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Hero */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream mb-6">
-              Organize Secret Santa in{" "}
-              <span className="text-gradient-gold">4 Simple Steps</span>
-            </h1>
-            <p className="text-xl text-cream/70 max-w-2xl mx-auto">
-              From setup to gift exchange - here&apos;s exactly how ElfMatch
-              makes organizing your Secret Santa effortless.
+      <main className="mx-auto max-w-page px-4 pb-16 pt-10 sm:px-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
+          Sequence
+        </p>
+        <h1 className="mt-3 max-w-3xl font-display text-4xl text-evergreen sm:text-5xl">
+          How an exchange goes from a name to a private draw.
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg text-ink-soft">
+          Four things you do as the organizer. Nothing here is automatic until
+          you confirm the assignments.
+        </p>
+
+        <ol className="mt-12 border-t border-rule">
+          {steps.map((step) => (
+            <li key={step.number} className="grid gap-4 border-b border-rule py-8 lg:grid-cols-[5rem_1fr_16rem] lg:gap-8">
+              <span className="font-mono text-sm text-cranberry">{step.number}</span>
+              <div>
+                <h2 className="font-display text-2xl text-ink">{step.title}</h2>
+                <p className="mt-3 max-w-2xl leading-relaxed text-ink-soft">{step.body}</p>
+              </div>
+              <ul className="space-y-2 border-l border-rule pl-4 text-sm text-ink-soft">
+                {step.details.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+
+        <section className="mt-14 grid gap-8 border border-rule bg-ivory-card p-6 sm:p-8 lg:grid-cols-2">
+          <div>
+            <h2 className="font-display text-2xl text-evergreen">After the emails go out</h2>
+            <p className="mt-3 text-ink-soft leading-relaxed">
+              The giver opens their assignment, reads the wishlist, and — if one
+              was saved — the delivery address. They can mark the gift bought,
+              shipped, or delivered for themselves. The person receiving the
+              gift does not see that progress.
             </p>
           </div>
-
-          {/* Steps */}
-          <div className="space-y-12 mb-16">
-            {steps.map((step, index) => (
-              <div key={step.number} className="glass-card p-8">
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex-shrink-0 text-center md:text-left">
-                    <span className="text-5xl block mb-2">{step.emoji}</span>
-                    <span className="text-gold font-mono text-sm">
-                      Step {step.number}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-display font-bold text-cream mb-3">
-                      {step.title}
-                    </h2>
-                    <p className="text-cream/70 mb-4">{step.description}</p>
-                    <ul className="space-y-2">
-                      {step.details.map((detail, i) => (
-                        <li
-                          key={i}
-                          className="flex items-start gap-2 text-cream/60 text-sm"
-                        >
-                          <span className="text-gold mt-1">✓</span>
-                          {detail}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Connector line */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute left-1/2 -bottom-6 w-px h-12 bg-gradient-to-b from-gold/30 to-transparent" />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* After Assignment Section */}
-          <div className="glass-card p-8 mb-16">
-            <h2 className="text-2xl font-display font-bold text-cream mb-6 text-center">
-              What Happens After Assignments?
-            </h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <span className="text-3xl block mb-3">📋</span>
-                <h3 className="font-semibold text-cream mb-2">
-                  View Your Match
-                </h3>
-                <p className="text-cream/60 text-sm">
-                  See who you&apos;re gifting, their wishlist, and delivery
-                  address all in one place.
-                </p>
-              </div>
-              <div className="text-center">
-                <span className="text-3xl block mb-3">🛒</span>
-                <h3 className="font-semibold text-cream mb-2">Shop & Track</h3>
-                <p className="text-cream/60 text-sm">
-                  Mark your gift as bought, shipped, or delivered to stay
-                  organized.
-                </p>
-              </div>
-              <div className="text-center">
-                <span className="text-3xl block mb-3">🎉</span>
-                <h3 className="font-semibold text-cream mb-2">Spread Joy</h3>
-                <p className="text-cream/60 text-sm">
-                  Watch the gift exchange come together and make someone&apos;s
-                  day special.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Time Estimate */}
-          <div className="text-center mb-16">
-            <div className="inline-block glass-card px-8 py-4">
-              <span className="text-5xl font-bold text-gold">2</span>
-              <span className="text-2xl text-cream/70 ml-2">minutes</span>
-              <p className="text-cream/50 text-sm mt-2">
-                Average time to set up an exchange
-              </p>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="text-center glass-card p-8">
-            <h2 className="text-2xl font-display font-bold text-cream mb-4">
-              Ready to Start Your Exchange?
-            </h2>
-            <p className="text-cream/70 mb-6 max-w-xl mx-auto">
-              Join others who&apos;ve made their gift exchanges stress-free with
-              ElfMatch.
+          <div className="border border-dashed border-rule bg-ivory p-5">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+              Envelope · what the email carries
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/auth/login"
-                className="inline-block px-8 py-3 bg-gradient-gold text-midnight font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Create Free Exchange →
-              </Link>
-              <Link
-                href="/features"
-                className="inline-block px-8 py-3 border border-gold/30 text-cream rounded-lg hover:bg-gold/10 transition-colors"
-              >
-                See All Features
-              </Link>
-            </div>
+            <p className="mt-3 font-display text-xl text-ink">
+              “You are buying for one person in Cousins, December.”
+            </p>
+            <p className="mt-2 text-sm text-ink-soft">
+              The message names their recipient and links them into the
+              exchange. It does not list the rest of the draw.
+            </p>
           </div>
+        </section>
+
+        <div className="mt-12 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center justify-center bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
+          >
+            Create an exchange
+          </Link>
+          <Link
+            href="/faq"
+            className="inline-flex items-center justify-center border border-evergreen/25 px-5 py-3 font-semibold text-evergreen hover:bg-evergreen-soft"
+          >
+            Common questions
+          </Link>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-gold/10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Link href="/" className="text-cream/50 hover:text-cream text-sm">
-            ← Back to Home
-          </Link>
-          <div className="flex gap-6 text-sm">
-            <Link
-              href="/faq"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-cream/50 hover:text-cream transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
-

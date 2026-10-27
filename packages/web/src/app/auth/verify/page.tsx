@@ -40,15 +40,11 @@ function VerifyContent() {
           <CardContent className="pt-8 pb-6">
             {!timedOut && (
               <>
-                <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
-                  <Loader2 className="w-8 h-8 text-gold animate-spin" />
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center bg-evergreen-soft">
+                  <Loader2 className="h-8 w-8 animate-spin text-evergreen" />
                 </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Verifying...
-                </h1>
-                <p className="text-cream/70">
-                  Please wait while we sign you in.
-                </p>
+                <h1 className="mb-2 font-display text-2xl text-evergreen">Checking the code</h1>
+                <p className="text-ink-soft">Please wait while we sign you in.</p>
               </>
             )}
 
@@ -57,12 +53,8 @@ function VerifyContent() {
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Welcome back!
-                </h1>
-                <p className="text-cream/70">
-                  You&apos;re signed in. Redirecting to dashboard...
-                </p>
+                <h1 className="mb-2 font-display text-2xl text-evergreen">Signed in</h1>
+                <p className="text-ink-soft">Opening your exchanges.</p>
               </>
             )}
 
@@ -71,18 +63,15 @@ function VerifyContent() {
                 <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
                   <XCircle className="w-8 h-8 text-red-400" />
                 </div>
-                <h1 className="text-2xl font-display font-bold text-cream mb-2">
-                  Sign-in Failed
-                </h1>
-                <p className="text-cream/70 mb-6">
-                  This sign-in link may have expired or already been used.
-                  Please request a new one.
+                <h1 className="mb-2 font-display text-2xl text-evergreen">That code did not work</h1>
+                <p className="mb-6 text-ink-soft">
+                  The link may have expired or already been used. Request a new code.
                 </p>
                 <Link
                   href="/auth/login"
-                  className="w-full inline-flex items-center justify-center font-semibold transition-all duration-300 rounded-lg px-6 py-3 text-base bg-gradient-gold text-midnight hover:shadow-glow hover:scale-[1.02]"
+                  className="inline-flex w-full items-center justify-center bg-evergreen px-6 py-3 font-semibold text-ivory hover:bg-evergreen-deep"
                 >
-                  Back to Sign In
+                  Back to sign in
                 </Link>
               </>
             )}
@@ -98,7 +87,7 @@ export default function VerifyPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-gold animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-evergreen" />
         </div>
       }
     >

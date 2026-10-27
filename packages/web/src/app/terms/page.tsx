@@ -1,10 +1,12 @@
+import { PublicFooter } from "@/components/public-footer";
+import { PublicNav } from "@/components/public-nav";
 import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Read the terms and conditions for using ElfMatch, the free Secret Santa gift exchange organizer.",
+    "Terms for using Elf Match, a free organizer for Secret Santa and other gift exchanges.",
   alternates: {
     canonical: "https://elfmatch.com/terms",
   },
@@ -13,23 +15,11 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl">🎁</span>
-              <span className="font-display text-xl font-semibold text-cream">
-                ElfMatch
-              </span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav />
 
-      <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+      <main className="px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         <article className="max-w-3xl mx-auto prose prose-invert prose-gold">
-          <h1 className="text-3xl font-display font-bold text-cream mb-8">
+          <h1 className="mb-8 font-display text-3xl text-evergreen">
             Terms of Service
           </h1>
 
@@ -47,7 +37,7 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p className="text-cream/70">
-              By accessing or using ElfMatch (&quot;the Service&quot;), you
+              By accessing or using Elf Match (&quot;the Service&quot;), you
               agree to be bound by these Terms of Service. If you do not agree
               to these terms, please do not use the Service.
             </p>
@@ -58,7 +48,7 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p className="text-cream/70">
-              ElfMatch is a free online platform that helps users organize
+              Elf Match is a free online platform that helps users organize
               Secret Santa and gift exchange events. The Service allows users to
               create exchanges, invite participants, create wishlists, set
               exclusion rules, and automatically match participants.
@@ -205,14 +195,7 @@ export default function TermsPage() {
         </article>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-gold/10">
-        <div className="max-w-6xl mx-auto text-center">
-          <Link href="/" className="text-cream/50 hover:text-cream text-sm">
-            ← Back to Home
-          </Link>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
