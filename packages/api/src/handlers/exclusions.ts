@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, exclusions, teamMembers } from "../db/index.js";
 import { getUserFromRequest } from "../lib/auth.js";
@@ -147,8 +147,16 @@ async function _addExclusion(
     const existing = await db.query.exclusions.findFirst({
       where: and(
         eq(exclusions.teamId, teamId),
-        eq(exclusions.member1Id, member1Id),
-        eq(exclusions.member2Id, member2Id)
+        or(
+          and(
+            eq(exclusions.member1Id, member1Id),
+            eq(exclusions.member2Id, member2Id)
+          ),
+          and(
+            eq(exclusions.member1Id, member2Id),
+            eq(exclusions.member2Id, member1Id)
+          )
+        )
       ),
     });
 
