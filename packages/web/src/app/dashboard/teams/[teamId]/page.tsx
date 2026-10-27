@@ -141,6 +141,7 @@ export default function TeamPage() {
   );
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+  const wishlistSaveChain = useRef(Promise.resolve());
   const pincodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Queries
@@ -218,18 +219,28 @@ export default function TeamPage() {
   });
 
   const updateWishlistMutation = useMutation({
-    mutationFn: (items: WishItemForm[]) =>
-      api.updateWishlist(
-        teamId,
-        items.map((item) => ({
-          title: item.title,
-          description: item.description,
-          url: item.url || undefined,
-          priceEstimate: item.priceEstimate
-            ? parseFloat(item.priceEstimate)
-            : undefined,
-        }))
-      ),
+    mutationFn: (items: WishItemForm[]) => {
+      const save = wishlistSaveChain.current.then(() =>
+        api.updateWishlist(
+          teamId,
+          items.map((item) => ({
+            title: item.title,
+            description: item.description,
+            url: item.url || undefined,
+            priceEstimate: item.priceEstimate
+              ? parseFloat(item.priceEstimate)
+              : undefined,
+          }))
+        )
+      );
+      // A later edit must not be overwritten by an earlier save that
+      // finishes second. Keep the chain moving even when one save fails.
+      wishlistSaveChain.current = save.then(
+        () => undefined,
+        () => undefined
+      );
+      return save;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
