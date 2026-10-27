@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,620;0,9..144,700;1,9..144,500;1,9..144,620&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+@import "../fonts/fonts.css";
 
 @tailwind base;
 @tailwind components;
@@ -112,6 +112,18 @@
     }
   }
 
+  @keyframes assignment-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    @keyframes assignment-in {
+      from { opacity: 1; }
+      to { opacity: 1; }
+    }
+  }
+
   @keyframes paper-fall {
     0% { transform: translateY(-12px) rotate(0deg); opacity: 0; }
     20% { opacity: 1; }
@@ -197,12 +209,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  html {
+    scroll-behavior: auto;
   }
 }

@@ -87,7 +87,12 @@ async function _inviteMembers(
       return notFound("Team not found");
     }
 
-    const results: Array<{ email: string; status: string; error?: string }> =
+    const results: Array<{
+      email: string;
+      status: string;
+      error?: string;
+      inviteUrl?: string;
+    }> =
       invalid.map((email) => ({
         email,
         status: "invalid",
@@ -135,6 +140,7 @@ async function _inviteMembers(
           userId: existingUser?.id,
           invitedEmail: normalizedEmail,
           invitationToken: tokenHash,
+          invitationLinkToken: token,
           invitationStatus: "pending",
           role: "member",
         });
@@ -143,10 +149,20 @@ async function _inviteMembers(
           normalizedEmail,
           team.name,
           user.name || user.email,
-          token
+          token,
+          {
+            exchangeDate: team.exchangeDate,
+            wishlistDeadline: team.wishlistDeadline,
+            budgetMin: team.budgetMin,
+            budgetMax: team.budgetMax,
+          }
         );
 
-        results.push({ email: normalizedEmail, status: "invited" });
+        results.push({
+          email: normalizedEmail,
+          status: "invited",
+          inviteUrl: `${process.env.FRONTEND_URL || "http://localhost:3000"}/invite/${token}`,
+        });
       } catch (err) {
         const code =
           err && typeof err === "object" && "code" in err
@@ -271,6 +287,7 @@ async function _acceptInvitation(
         userId: user.id,
         invitationStatus: "accepted",
         invitationToken: null,
+        invitationLinkToken: null,
         joinedAt: new Date(),
       })
       .where(eq(teamMembers.id, invitation.id));
@@ -315,7 +332,11 @@ async function _declineInvitation(
 
     await db
       .update(teamMembers)
-      .set({ invitationStatus: "declined", invitationToken: null })
+      .set({
+        invitationStatus: "declined",
+        invitationToken: null,
+        invitationLinkToken: null,
+      })
       .where(eq(teamMembers.id, invitation.id));
 
     return success({ message: "Invitation declined" });
@@ -543,6 +564,7 @@ async function _acceptInvitationDirect(
         userId: user.id,
         invitationStatus: "accepted",
         invitationToken: null,
+        invitationLinkToken: null,
         joinedAt: new Date(),
       })
       .where(eq(teamMembers.id, invitation.id));
@@ -582,7 +604,11 @@ async function _declineInvitationDirect(
 
     await db
       .update(teamMembers)
-      .set({ invitationStatus: "declined", invitationToken: null })
+      .set({
+        invitationStatus: "declined",
+        invitationToken: null,
+        invitationLinkToken: null,
+      })
       .where(eq(teamMembers.id, invitation.id));
 
     return success({ message: "Invitation declined" });
@@ -644,10 +670,15 @@ async function _resendInvitation(
     const token = uuidv4();
     const tokenHash = hashToken(token);
     const previousToken = pendingMember.invitationToken;
+    const previousLink = pendingMember.invitationLinkToken;
 
     await db
       .update(teamMembers)
-      .set({ invitationToken: tokenHash, invitedAt: new Date() })
+      .set({
+        invitationToken: tokenHash,
+        invitationLinkToken: token,
+        invitedAt: new Date(),
+      })
       .where(eq(teamMembers.id, memberId));
 
     try {
@@ -655,7 +686,13 @@ async function _resendInvitation(
         pendingMember.invitedEmail,
         team.name,
         user.name || user.email,
-        token
+        token,
+        {
+          exchangeDate: team.exchangeDate,
+          wishlistDeadline: team.wishlistDeadline,
+          budgetMin: team.budgetMin,
+          budgetMax: team.budgetMax,
+        }
       );
     } catch (emailErr) {
       // Keep the link the person may already have. A failed resend
@@ -664,6 +701,7 @@ async function _resendInvitation(
         .update(teamMembers)
         .set({
           invitationToken: previousToken,
+          invitationLinkToken: previousLink,
           invitedAt: pendingMember.invitedAt,
         })
         .where(eq(teamMembers.id, memberId));

@@ -217,13 +217,6 @@ async function _getGifteeWishlist(
       );
     }
 
-    if (!assignment.revealedAt) {
-      await db
-        .update(assignments)
-        .set({ revealedAt: new Date() })
-        .where(eq(assignments.id, assignment.id));
-    }
-
     return success({
       giftee: {
         name: assignment.receiver.user?.name || "Unknown",

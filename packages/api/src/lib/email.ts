@@ -31,6 +31,105 @@ interface EmailOptions {
   text?: string;
 }
 
+interface ExchangeFacts {
+  exchangeDate?: string | null;
+  wishlistDeadline?: string | null;
+  budgetMin?: string | null;
+  budgetMax?: string | null;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatMailDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function budgetLine(facts: ExchangeFacts): string | null {
+  if (!facts.budgetMin || !facts.budgetMax) return null;
+  return `₹${Number(facts.budgetMin).toLocaleString("en-IN")} – ₹${Number(facts.budgetMax).toLocaleString("en-IN")}`;
+}
+
+function paperEmail(heading: string, bodyHtml: string, text: string) {
+  const year = new Date().getFullYear();
+  const safeHeading = escapeHtml(heading);
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${safeHeading}</title>
+</head>
+<body style="margin:0;padding:0;background:#F6F1E7;color:#1C1915;font-family:Georgia,'Iowan Old Style',Palatino,serif;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" style="max-width:480px;width:100%;border-collapse:collapse;background:#FFFCF6;border:1px solid #DDD4C4;">
+          <tr>
+            <td style="padding:28px 28px 8px 28px;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#8E3A42;">
+              Elf Match
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 8px 28px;font-size:28px;line-height:1.2;color:#1E3A32;">
+              ${safeHeading}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 28px 28px 28px;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:16px;line-height:1.55;color:#5C564C;">
+              ${bodyHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 28px;border-top:1px solid #DDD4C4;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:12px;color:#6F675C;">
+              © ${year} Elf Match. Assignments stay with the person who is giving.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  return { html, text };
+}
+
+function factRows(facts: ExchangeFacts): { html: string; text: string } {
+  const rows: Array<[string, string]> = [];
+  const budget = budgetLine(facts);
+  const wishlists = formatMailDate(facts.wishlistDeadline);
+  const exchange = formatMailDate(facts.exchangeDate);
+  if (budget) rows.push(["Budget", budget]);
+  if (wishlists) rows.push(["Wishlists due", wishlists]);
+  if (exchange) rows.push(["Exchange", exchange]);
+  if (rows.length === 0) return { html: "", text: "" };
+  const html = `<table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 20px 0;">${rows
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:6px 0;color:#6F675C;font-size:13px;">${label}</td><td style="padding:6px 0;text-align:right;color:#1C1915;">${escapeHtml(value)}</td></tr>`
+    )
+    .join("")}</table>`;
+  const text = rows.map(([label, value]) => `${label}: ${value}`).join("\n");
+  return { html, text };
+}
+
+function paperButton(href: string, label: string): string {
+  return `<a href="${href}" style="display:inline-block;background:#8E3A42;color:#F6F1E7;text-decoration:none;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:16px;font-weight:600;padding:12px 20px;">${escapeHtml(label)}</a>`;
+}
+
 export async function sendEmail({
   to,
   subject,
@@ -58,82 +157,38 @@ export async function sendInvitationEmail(
   email: string,
   teamName: string,
   inviterName: string,
-  token: string
+  token: string,
+  facts: ExchangeFacts = {}
 ): Promise<void> {
   const inviteLink = `${FRONTEND_URL()}/invite/${token}`;
+  const host = inviterName.split(" ")[0] || "The organizer";
+  const name = teamName;
+  const factsBlock = factRows(facts);
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>You're invited to ElfMatch</title>
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0F1419; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td align="center" style="padding: 40px 20px;">
-            <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <tr>
-                <td align="center" style="padding-bottom: 32px;">
-                  <span style="font-size: 48px;">🎁</span>
-                  <h1 style="color: #FFF8E7; font-size: 28px; margin: 16px 0 0 0; font-weight: 600;">
-                    You're Invited!
-                  </h1>
-                </td>
-              </tr>
-              <tr>
-                <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
-                  <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
-                    Join "${teamName}"
-                  </h2>
-                  <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
-                    <strong style="color: #D4A853;">${inviterName}</strong> has invited you to join their Secret Santa gift exchange! Click below to accept and start adding items to your wishlist.
-                  </p>
-                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
-                    <tr>
-                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${inviteLink}" target="_blank"
-                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
-                          🎄 Accept Invitation
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 32px 0 0 0;">
-                    If you don't want to participate, you can simply ignore this email.
-                  </p>
-                </td>
-              </tr>
-              <tr>
-                <td align="center" style="padding-top: 32px;">
-                  <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                    © ${new Date().getFullYear()} ElfMatch. Made with ❤️
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
-
-  const text = `
-You're invited to join "${teamName}" Secret Santa!
-
-${inviterName} has invited you to join their Secret Santa gift exchange.
-
-Click this link to accept: ${inviteLink}
-
-If you don't want to participate, you can simply ignore this email.
-  `.trim();
+  const { html, text } = paperEmail(
+    `${host} invited you to ${name}.`,
+    `<p style="margin:0 0 16px 0;">This is a Secret Santa exchange. You will write a wishlist. After the names are drawn, only the person buying for you can read it. Your delivery address, if you add one, is shown only to that person.</p>
+     ${factsBlock.html}
+     <p style="margin:0 0 20px 0;">Sign in with this email address. A different email will not see the seat.</p>
+     ${paperButton(inviteLink, "Open the invitation")}`,
+    [
+      `${inviterName.split(" ")[0] || "The organizer"} invited you to ${teamName}.`,
+      "",
+      "This is a Secret Santa exchange. You will write a wishlist. After the names are drawn, only the person buying for you can read it.",
+      factsBlock.text,
+      "",
+      "Sign in with this email address. A different email will not see the seat.",
+      "",
+      `Open the invitation: ${inviteLink}`,
+    ]
+      .filter((line) => line !== undefined)
+      .join("\n")
+      .trim()
+  );
 
   await sendEmail({
     to: email,
-    subject: `🎁 ${inviterName} invited you to ElfMatch`,
+    subject: `${inviterName.split(" ")[0] || "Someone"} invited you to ${teamName}`,
     html,
     text,
   });
@@ -145,85 +200,25 @@ export async function sendAssignmentEmail(
   gifteeName: string,
   teamId: string
 ): Promise<void> {
-  const dashboardLink = `${FRONTEND_URL()}/dashboard/teams/${teamId}`;
+  const dashboardLink = `${FRONTEND_URL()}/dashboard/teams/${teamId}?tab=assignment`;
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Your ElfMatch is ready</title>
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0F1419; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td align="center" style="padding: 40px 20px;">
-            <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <tr>
-                <td align="center" style="padding-bottom: 32px;">
-                  <span style="font-size: 48px;">🎅</span>
-                  <h1 style="color: #FFF8E7; font-size: 28px; margin: 16px 0 0 0; font-weight: 600;">
-                    Ho Ho Ho!
-                  </h1>
-                </td>
-              </tr>
-              <tr>
-                <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
-                  <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
-                    Your Secret Santa Match is Ready!
-                  </h2>
-                  <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
-                    The assignments for <strong style="color: #D4A853;">"${teamName}"</strong> are in!
-                  </p>
-                  <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
-                    You'll be getting a gift for: <strong style="color: #4ADE80; font-size: 20px;">${gifteeName}</strong>
-                  </p>
-                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
-                    <tr>
-                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${dashboardLink}" target="_blank"
-                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
-                          🎁 View Their Wishlist
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 32px 0 0 0;">
-                    Remember, keep it a secret! 🤫
-                  </p>
-                </td>
-              </tr>
-              <tr>
-                <td align="center" style="padding-top: 32px;">
-                  <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                    © ${new Date().getFullYear()} ElfMatch. Made with ❤️
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
-
-  const text = `
-Your Secret Santa Match is Ready!
-
-The assignments for "${teamName}" are in!
-
-You'll be getting a gift for: ${gifteeName}
-
-Open your exchange to see their wishlist: ${dashboardLink}
-
-Remember, keep it a secret! 🤫
-  `.trim();
+  const { html, text } = paperEmail(
+    `You are buying for ${gifteeName}.`,
+    `<p style="margin:0 0 16px 0;">The names for ${escapeHtml(teamName)} have been sent. This email names only your recipient. Sign in to see their wishlist and, if they saved one, their delivery address.</p>
+     ${paperButton(dashboardLink, "Open your assignment")}`,
+    [
+      `You are buying for ${gifteeName}.`,
+      "",
+      `The names for ${teamName} have been sent. This email names only your recipient.`,
+      "Sign in to see their wishlist and, if they saved one, their delivery address.",
+      "",
+      `Open your assignment: ${dashboardLink}`,
+    ].join("\n")
+  );
 
   await sendEmail({
     to: email,
-    subject: `🎅 Your ElfMatch for "${teamName}" is ready!`,
+    subject: `You are buying for ${gifteeName} — ${teamName}`,
     html,
     text,
   });
@@ -242,85 +237,26 @@ export async function sendReminderEmail(
 
   const missingItemsList = missingItems.map((item) => `• ${item}`).join("\n");
   const missingItemsHtml = missingItems
-    .map((item) => `<li style="margin-bottom: 8px;">${item}</li>`)
+    .map((item) => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`)
     .join("");
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Reminder from ElfMatch</title>
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0F1419; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td align="center" style="padding: 40px 20px;">
-            <table role="presentation" style="max-width: 480px; width: 100%; border-collapse: collapse;">
-              <tr>
-                <td align="center" style="padding-bottom: 32px;">
-                  <span style="font-size: 48px;">⏰</span>
-                  <h1 style="color: #FFF8E7; font-size: 28px; margin: 16px 0 0 0; font-weight: 600;">
-                    Friendly Reminder
-                  </h1>
-                </td>
-              </tr>
-              <tr>
-                <td style="background: linear-gradient(135deg, #1A2332 0%, #232D3F 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(212, 168, 83, 0.2);">
-                  <h2 style="color: #FFF8E7; font-size: 24px; margin: 0 0 16px 0; font-weight: 500;">
-                    Don't forget to complete your profile!
-                  </h2>
-                  <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
-                    The deadline for <strong style="color: #D4A853;">"${teamName}"</strong> is <strong style="color: #FBBF24;">${deadline}</strong>.
-                  </p>
-                  <p style="color: #9CA3AF; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
-                    You still need to:
-                  </p>
-                  <ul style="color: #F87171; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0; padding-left: 20px;">
-                    ${missingItemsHtml}
-                  </ul>
-                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
-                    <tr>
-                      <td align="center" style="border-radius: 8px; background-color: #D4A853;">
-                        <a href="${dashboardLink}" target="_blank"
-                           style="display: inline-block; background-color: #D4A853; color: #0F1419; text-decoration: none; font-size: 16px; font-weight: 600; padding: 16px 40px; border-radius: 8px; border: 1px solid #D4A853;">
-                          ✏️ Complete Now
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              <tr>
-                <td align="center" style="padding-top: 32px;">
-                  <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                    © ${new Date().getFullYear()} ElfMatch. Made with ❤️
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
-
-  const text = `
-Friendly Reminder: Complete your Secret Santa profile!
-
-The deadline for "${teamName}" is ${deadline}.
-
-You still need to:
-${missingItemsList}
-
-Visit ${dashboardLink} to complete your profile.
-  `.trim();
+  const { html, text } = paperEmail(
+    `${teamName} still needs a detail from you.`,
+    `<p style="margin:0 0 16px 0;">Wishlists are due ${escapeHtml(deadline)}. You still need to:</p>
+     <ul style="margin:0 0 20px 0;padding-left:20px;color:#1C1915;">${missingItemsHtml}</ul>
+     ${paperButton(dashboardLink, "Open the exchange")}`,
+    [
+      `${teamName} still needs a detail from you.`,
+      "",
+      `Wishlists are due ${deadline}. You still need to:`,
+      missingItemsList,
+      "",
+      `Open the exchange: ${dashboardLink}`,
+    ].join("\n")
+  );
 
   await sendEmail({
     to: email,
-    subject: `⏰ Reminder: Complete your "${teamName}" profile on ElfMatch`,
+    subject: `${teamName} still needs a detail from you`,
     html,
     text,
   });

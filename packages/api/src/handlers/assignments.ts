@@ -296,6 +296,16 @@ async function _getAssignment(
       return success({ assigned: false, message: "Assignments have not been made yet." });
     }
 
+    // viewedAt is the screen open. revealedAt is the email delivery, and
+    // the missing-email count depends on it staying untouched here.
+    const firstView = !assignment.viewedAt;
+    if (firstView) {
+      await db
+        .update(assignments)
+        .set({ viewedAt: new Date() })
+        .where(eq(assignments.id, assignment.id));
+    }
+
     return success({
       assigned: true,
       giftee: {
@@ -304,6 +314,7 @@ async function _getAssignment(
       },
       giftStatus: assignment.giftStatus,
       revealedAt: assignment.revealedAt,
+      firstView,
     });
   } catch (err) {
     console.error("Error getting assignment:", err);

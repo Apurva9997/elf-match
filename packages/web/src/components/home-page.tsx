@@ -23,7 +23,7 @@ const steps = [
   {
     n: "04",
     title: "Draw when the list is ready",
-    body: "You need at least three people. Pending invitations are not in the draw. You can preview the matches, generate another set, then confirm. After emails go out, the draw is fixed.",
+    body: "You need at least three people who have joined. Pending invitations are left out. You can preview the matches, generate another set, then confirm. After emails go out, the draw is fixed.",
   },
 ];
 
@@ -35,18 +35,20 @@ export function HomePage() {
         <section className="mx-auto grid max-w-page items-start gap-10 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16 lg:pt-14">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
-              Secret Santa, for the person organizing
+              A Secret Santa draw, without the hat
             </p>
-            <h1 className="mt-4 max-w-[14ch] font-display text-[2.5rem] font-medium leading-[1.05] text-evergreen sm:text-6xl sm:leading-[1.02]">
-              Draw the names. Keep the matches private.
+            <h1 className="mt-4 max-w-[16ch] font-display text-[2.5rem] font-medium leading-[1.05] text-evergreen sm:text-6xl sm:leading-[1.02]">
+              Draw the names. Send each person only theirs.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
-              Set the budget and the date, keep couples apart, and send each
-              person only their own name. The hat stays out of the hat.
+              For the person organizing a family or an office exchange. Set the
+              budget and the date, keep couples apart, and preview every pairing
+              before anyone is emailed.
             </p>
             <HomeActions />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
-              Free. Next you will name the exchange and set a date. No card, no password.
+              Free. Next you will sign in, then name the exchange. Budgets are
+              in rupees. No card, no password.
             </p>
           </div>
           <SampleExchange />
@@ -77,15 +79,15 @@ export function HomePage() {
             Who can see what
           </p>
           <h2 className="mt-3 max-w-xl font-display text-3xl text-evergreen sm:text-4xl">
-            Wishlists are shared. Assignments are not.
+            A wishlist is for the giver. The draw is not for the group.
           </h2>
           <p className="mt-4 max-w-2xl text-ink-soft">
-            A wishlist is how the group helps the giver. A match is how the
-            surprise stays intact.
+            You write what you would like. After the names are sent, only the
+            person buying for you can read it.
           </p>
           <dl className="mt-8 max-w-3xl divide-y divide-rule border-y border-rule">
             {[
-              ["Wishlist items", "Anyone in the exchange can read titles, notes, price estimates, and shop links."],
+              ["Wishlist items", "You write a title, a note, a price estimate, and a shop link. After the draw, only your assigned giver can read them."],
               ["Delivery address", "Encrypted in storage. Shown only to the person assigned to give that gift."],
               ["The draw", "You, as organizer, can preview every pairing before you send it. After that, each person sees only their own recipient."],
               ["Gift progress", "The giver can mark a gift bought, shipped, or delivered for their own notes. The recipient does not see those updates."],
@@ -109,9 +111,14 @@ export function HomePage() {
                 wrong. Confirm only when you mean to send the emails.
               </p>
             </div>
-            <Link href="/how-it-works" className="text-sm text-ivory underline-offset-4 hover:underline">
-              How a Secret Santa exchange runs
-            </Link>
+            <div className="flex flex-col gap-3 text-sm">
+              <Link href="/how-it-works" className="text-ivory underline-offset-4 hover:underline">
+                How a Secret Santa exchange runs
+              </Link>
+              <Link href="/auth/login?intent=join" className="text-ivory/80 underline-offset-4 hover:underline">
+                Were you invited? Open the link in the email, or sign in with that address.
+              </Link>
+            </div>
           </div>
         </section>
       </main>

@@ -48,14 +48,16 @@ export default function FamilyAndOfficePage() {
               People join from an email link, including people in another
               city. Pending invitations are not in the draw. After you confirm,
               each person sees only their own recipient, plus that
-              person&apos;s wishlist and delivery address.
+              person&apos;s wishlist and delivery address. No one else in the
+              office can read either.
             </p>
           </section>
         </div>
 
         <p className="mt-10 max-w-2xl text-ink-soft">
-          Wishlists stay visible to the group. Assignments do not. A draw needs
-          at least three people who have joined.
+          A wishlist is private until the draw, then visible only to the assigned
+          giver. A draw needs at least three people who have joined. Budgets
+          are in rupees.
         </p>
         <Link
           href="/auth/login?intent=create"

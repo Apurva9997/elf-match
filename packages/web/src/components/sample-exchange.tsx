@@ -102,9 +102,9 @@ export function SampleExchange() {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="mt-3 text-sm font-semibold text-evergreen underline-offset-2 hover:underline"
+        className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-evergreen underline-offset-2 hover:underline"
       >
-        {open ? "Show the group tag" : "Show a participant’s note"}
+        {open ? "Show the group tag" : "Show what one person receives"}
       </button>
     </figure>
   );

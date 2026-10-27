@@ -128,7 +128,7 @@ export function Onboarding({
             id: "add-wishlist",
             title: "Build Your Wishlist",
             description:
-              "Add items to your wishlist so your Secret Santa knows what you'd like. Encourage other members to add their wishlists too!",
+              "Add items to your wishlist. After the draw, only the person buying for you can read them.",
             icon: <Gift className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },

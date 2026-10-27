@@ -55,7 +55,7 @@ const steps = [
     details: [
       "No one is assigned themselves",
       "Each participant receives only their own match",
-      "The recipient’s wishlist and delivery address open for that giver",
+      "Only that giver can open the recipient’s wishlist and delivery address",
     ],
   },
 ];

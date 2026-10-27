@@ -80,6 +80,9 @@ export const teamMembers = pgTable(
       .default("pending")
       .notNull(),
     invitationToken: varchar("invitation_token", { length: 255 }).unique(),
+    // The link the organizer can copy. The hash above is what acceptance checks.
+    // Cleared when the invitation is accepted, declined, or cancelled.
+    invitationLinkToken: varchar("invitation_link_token", { length: 255 }),
     invitedEmail: varchar("invited_email", { length: 255 }),
     invitedAt: timestamp("invited_at").defaultNow(),
     joinedAt: timestamp("joined_at"),
@@ -133,6 +136,7 @@ export const assignments = pgTable(
       .references(() => teamMembers.id)
       .notNull(),
     revealedAt: timestamp("revealed_at"),
+    viewedAt: timestamp("viewed_at"),
     giftStatus: varchar("gift_status", { length: 50 })
       .default("pending")
       .notNull(),

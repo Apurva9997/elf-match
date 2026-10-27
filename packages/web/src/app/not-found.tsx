@@ -23,12 +23,20 @@ export default function NotFound() {
           The link may be old. An exchange, an invitation, and an assignment
           are never listed here.
         </p>
-        <Link
-          href="/"
-          className="mt-8 inline-flex bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
-        >
-          Back to Elf Match
-        </Link>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/"
+            className="inline-flex bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
+          >
+            Back to Elf Match
+          </Link>
+          <Link
+            href="/auth/login"
+            className="inline-flex px-5 py-3 font-semibold text-evergreen underline-offset-2 hover:underline"
+          >
+            Sign in
+          </Link>
+        </div>
       </main>
       <PublicFooter />
     </div>

@@ -11,6 +11,16 @@ interface ApiResponse<T> {
   };
 }
 
+export class ApiError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+  }
+}
+
 class ApiClient {
   private _tokenGetter: (() => Promise<string | null>) | null = null;
 
@@ -54,7 +64,10 @@ class ApiClient {
     const data: ApiResponse<T> = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || "Something went wrong");
+      throw new ApiError(
+        data.error?.message || "Something went wrong",
+        data.error?.code
+      );
     }
 
     return data.data as T;
@@ -124,7 +137,12 @@ class ApiClient {
   // Invitations
   async inviteMembers(teamId: string, emails: string[]) {
     return this.request<{
-      results: Array<{ email: string; status: string; error?: string }>;
+      results: Array<{
+        email: string;
+        status: string;
+        error?: string;
+        inviteUrl?: string;
+      }>;
     }>(`/teams/${teamId}/invite`, {
       method: "POST",
       body: JSON.stringify({ emails }),
@@ -366,6 +384,7 @@ export interface TeamMember {
   role: string;
   invitationStatus: string;
   invitedEmail: string | null;
+  invitationLinkToken: string | null;
   joinedAt: string | null;
   user: {
     id: string;
@@ -466,6 +485,7 @@ export interface Assignment {
   };
   giftStatus?: string;
   revealedAt?: string;
+  firstView?: boolean;
   message?: string;
 }
 

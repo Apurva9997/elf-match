@@ -48,7 +48,7 @@ const faqs = [
   {
     question: "Can I set a budget for the gift exchange?",
     answer:
-      "Yes! When creating your exchange, you can set a minimum and maximum budget. This is displayed to all participants so everyone knows how much to spend. The budget is shown in the exchange details and on wishlists.",
+      "Yes. You can set a minimum and maximum, in rupees. Everyone who joins can see that range. There is no other currency.",
   },
   {
     question: "How does the Secret Santa matching work?",
@@ -58,7 +58,7 @@ const faqs = [
   {
     question: "Can I see who everyone else got matched with?",
     answer:
-      "As the exchange admin, you can preview all assignments before sending them out. However, once assignments are sent, each participant only sees their own assignment. This keeps the surprise intact!",
+      "As the organizer, you can preview every pairing before you send it. After the emails go out, each person sees only their own recipient. A participant never sees the rest of the draw.",
   },
   {
     question: "What if I want to redo the assignments?",
@@ -71,9 +71,14 @@ const faqs = [
       "Yes. Sign in with a one-time email code, or with Google. Use the same email the invitation was sent to. Signing in with a different email will not accept that seat.",
   },
   {
+    question: "Who can read my wishlist?",
+    answer:
+      "You can. After the draw, only the person assigned to give you a gift can read the titles, notes, price estimates, and shop links. The rest of the exchange cannot.",
+  },
+  {
     question: "Can I add items to my wishlist with links?",
     answer:
-      "Absolutely! For each wishlist item, you can add a title, description, price estimate, and a link to where the item can be purchased (like Amazon, Flipkart, etc.). This makes it easy for your Secret Santa to find exactly what you want.",
+      "Yes. Each item can have a title, a note, a price estimate in rupees, and a link to a shop. After the draw, your assigned giver uses that list to choose a gift.",
   },
   {
     question: "Is my delivery address shared with everyone?",
@@ -108,27 +113,8 @@ const faqs = [
 ];
 
 export default function FAQPage() {
-  // Generate FAQ Schema for SEO
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  };
-
   return (
     <div className="min-h-screen">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-
       <PublicNav />
 
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6">

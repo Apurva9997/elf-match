@@ -217,6 +217,16 @@ async function _getTeam(
       with: {
         creator: { columns: { id: true, name: true } },
         members: {
+          columns: {
+            id: true,
+            teamId: true,
+            userId: true,
+            role: true,
+            invitationStatus: true,
+            invitedEmail: true,
+            invitationLinkToken: true,
+            joinedAt: true,
+          },
           with: {
             user: { columns: { id: true, name: true, avatarUrl: true } },
           },
@@ -228,7 +238,17 @@ async function _getTeam(
       return notFound("Team not found");
     }
 
-    return success({ ...team, role: membership.role, membershipId: membership.id });
+    const isOrganizer = membership.role === "admin";
+    return success({
+      ...team,
+      role: membership.role,
+      membershipId: membership.id,
+      members: team.members.map((member) => ({
+        ...member,
+        // A participant must not receive someone else's invitation link.
+        invitationLinkToken: isOrganizer ? member.invitationLinkToken : null,
+      })),
+    });
   } catch (err) {
     console.error("Error getting team:", err);
     return serverError("Failed to get team");

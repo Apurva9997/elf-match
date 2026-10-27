@@ -230,7 +230,7 @@ function LoginPageContent() {
                     ? "Start an exchange"
                     : joining
                       ? "Join the exchange"
-                      : "Welcome back"}
+                      : "Sign in"}
               </h1>
               <p className="mt-2 text-ink-soft">
                 {step === "code"
@@ -239,7 +239,7 @@ function LoginPageContent() {
                     ? "Use an email you will still check in December. We will send a 6-digit code. No password."
                     : joining
                       ? "Use the email that received the invitation. A different email will not see the seat."
-                      : "Use the email on the exchange. We will send a 6-digit code."}
+                      : "Sign in with the email on the exchange. We will send a 6-digit code. No password."}
               </p>
             </div>
 
@@ -303,6 +303,13 @@ function LoginPageContent() {
                     placeholder="you@example.com"
                     error={emailForm.formState.errors.email?.message}
                   />
+
+                  {creating && (
+                    <ul className="space-y-1 text-sm text-ink-soft">
+                      <li>You will name the exchange, set a date, and invite people by email.</li>
+                      <li>It is free. Budgets are in rupees.</li>
+                    </ul>
+                  )}
 
                   <Button
                     type="submit"

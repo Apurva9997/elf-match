@@ -9,6 +9,7 @@ const links = [
   { href: "/features", label: "What you can set" },
   { href: "/family-and-office", label: "Family or office" },
   { href: "/faq", label: "Questions" },
+  { href: "/secret-santa-with-exclusions", label: "Exclusions" },
 ];
 
 export function PublicNav() {

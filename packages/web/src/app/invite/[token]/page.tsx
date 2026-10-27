@@ -126,11 +126,11 @@ export default function InvitePage() {
                   )}
                 </dl>
                 <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-                  Wishlists are visible to the group. Your delivery address is shown only to the person assigned to give you a gift.
+                  You will write a wishlist. After the draw, only the person buying for you can read it. Your delivery address, if you add one, is shown only to that person.
                 </p>
                 {preview.status !== "pending" ? (
                   <p className="mt-4 text-sm text-cranberry">
-                    This invitation is no longer open. Ask {preview.hostName} to resend it.
+                    This invitation to {preview.exchangeName} is no longer open. Ask {preview.hostName} to resend it.
                   </p>
                 ) : authLoading ? (
                   <p className="mt-6 text-sm text-ink-soft">Checking your account.</p>
@@ -143,7 +143,7 @@ export default function InvitePage() {
                         className="mt-4 w-full"
                         onClick={() => logout()}
                       >
-                        Sign out and use the invited email
+                        Sign out and use {error.match(/sent to ([^\s]+)\./)?.[1] || "the invited email"}
                       </Button>
                     )}
                   </div>

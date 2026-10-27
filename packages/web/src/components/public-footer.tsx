@@ -37,6 +37,11 @@ export function PublicFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/secret-santa-with-exclusions" className="text-ink-soft hover:text-ink">
+                Keep couples apart
+              </Link>
+            </li>
+            <li>
               <Link href="/family-and-office" className="text-ink-soft hover:text-ink">
                 Family or office
               </Link>

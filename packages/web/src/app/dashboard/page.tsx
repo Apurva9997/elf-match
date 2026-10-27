@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
+import { track } from "@/lib/analytics";
 import { api, type TeamWithRole } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { formatShortDate } from "@/lib/utils";
@@ -27,7 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -225,7 +226,8 @@ function DashboardContent() {
       setIsCreateModalOpen(false);
       reset();
       refetchTeams();
-      toast.success(`Exchange "${team.name}" created!`);
+      track("exchange_created", { intent: "create", role: "admin" });
+      toast.success(`${team.name} is ready. Invite the first person.`);
       router.push(`/dashboard/teams/${team.id}`);
     } catch (error) {
       console.error("Failed to create team:", error);
@@ -327,11 +329,28 @@ function DashboardContent() {
     return firstTeam.role === "admin" ? "admin" : "member";
   };
 
+  const createFromIntent = useRef(false);
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/auth/login");
     }
   }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (
+      createFromIntent.current ||
+      authLoading ||
+      teamsLoading ||
+      !user ||
+      searchParams.get("new") !== "1"
+    ) {
+      return;
+    }
+    createFromIntent.current = true;
+    setIsOnboardingOpen(false);
+    setIsCreateModalOpen(true);
+    router.replace("/dashboard");
+  }, [authLoading, teamsLoading, user, searchParams, router]);
 
   if (!authLoading && !user) {
     return null;
@@ -402,8 +421,8 @@ function DashboardContent() {
           >
             <div className="flex items-center gap-2 mb-4">
               <Mail className="w-5 h-5 text-gold" />
-              <h2 className="text-xl font-display font-semibold text-cream">
-                Pending Invitations
+              <h2 className="text-xl font-display text-evergreen">
+                Invitations waiting for you
               </h2>
               <Badge variant="gold" className="ml-2">
                 {pendingInvitations.length}
@@ -466,7 +485,7 @@ function DashboardContent() {
                             ) : (
                               <>
                                 <Check className="w-4 h-4 mr-1" />
-                                Join Team
+                                Join
                               </>
                             )}
                           </Button>
@@ -483,11 +502,11 @@ function DashboardContent() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-cream mb-1">
-              Your Gift Exchanges
+            <h1 className="text-3xl font-display text-evergreen mb-1">
+              Your exchanges
             </h1>
-            <p className="text-cream/60">
-              All your Secret Santa exchanges in one place
+            <p className="text-ink-soft">
+              Secret Santa exchanges on this account
             </p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -540,12 +559,12 @@ function DashboardContent() {
                 <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
                   <Gift className="w-8 h-8 text-gold" />
                 </div>
-                <h2 className="text-xl font-display font-semibold text-cream mb-2">
+                <h2 className="text-xl font-display text-evergreen mb-2">
                   No exchanges yet
                 </h2>
-                <p className="text-cream/60 mb-6 max-w-md mx-auto">
-                  Create your first Secret Santa exchange and invite friends,
-                  family, or coworkers to join the gift exchange.
+                <p className="text-ink-soft mb-6 max-w-md mx-auto">
+                  Name one, set a date, and invite people by email. Budgets are
+                  in rupees.
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -567,7 +586,8 @@ function DashboardContent() {
         <form onSubmit={handleSubmit(onCreateTeam)} className="space-y-4">
           <Input
             {...register("name")}
-            label="Exchange Name"
+            label="Exchange name"
+            id="exchange-name"
             placeholder="Cousins, December"
             error={errors.name?.message}
             autoFocus
@@ -579,18 +599,19 @@ function DashboardContent() {
             placeholder="Our annual family gift exchange..."
           />
 
+          <p className="text-sm text-ink-soft">Budgets are in rupees. Leave both blank if the group has no range.</p>
           <div className="grid grid-cols-2 gap-4">
             <Input
               {...register("budgetMin")}
               type="number"
-              label="Min Budget (₹)"
+              label="Min budget, rupees"
               placeholder="500"
               error={errors.budgetMin?.message}
             />
             <Input
               {...register("budgetMax")}
               type="number"
-              label="Max Budget (₹)"
+              label="Max budget, rupees"
               placeholder="2000"
             />
           </div>

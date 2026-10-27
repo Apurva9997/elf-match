@@ -22,6 +22,8 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           className={cn(
             "input-field min-h-[100px] resize-y",
             error && "border-error/50 focus:border-error focus:ring-error/10",
@@ -29,7 +31,11 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           {...props}
         />
-        {error && <p className="mt-1.5 text-sm text-error">{error}</p>}
+        {error && (
+          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-error">
+            {error}
+          </p>
+        )}
       </div>
     );
   }

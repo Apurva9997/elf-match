@@ -22,6 +22,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           className={cn(
             "input-field",
             error && "border-error/50 focus:border-error focus:ring-error/10",
@@ -29,7 +31,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           {...props}
         />
-        {error && <p className="mt-1.5 text-sm text-error">{error}</p>}
+        {error && (
+          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-error">
+            {error}
+          </p>
+        )}
       </div>
     );
   }

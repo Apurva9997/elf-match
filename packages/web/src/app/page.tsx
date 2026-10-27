@@ -34,48 +34,12 @@ const webAppSchema = {
     "Free organizer for Secret Santa and other gift exchanges. Set a budget and date, invite people by email, keep particular pairs from matching, collect wishlists, and send private assignments.",
 };
 
-const howToSchema = {
-  "@context": "https://schema.org",
-  "@type": "HowTo",
-  name: "How to organize a Secret Santa exchange",
-  description:
-    "Create an Elf Match exchange, invite people by email, add exclusions, and send a private draw.",
-  step: [
-    {
-      "@type": "HowToStep",
-      name: "Name the exchange",
-      text: "Enter a name, an optional budget range, a wishlist deadline, and the exchange date.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Invite by email",
-      text: "Add email addresses. Each person joins from the invitation and can write a wishlist.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Keep pairs apart",
-      text: "Add exclusions so particular people are not assigned to each other.",
-    },
-    {
-      "@type": "HowToStep",
-      name: "Send the private draw",
-      text: "Preview the assignments, then confirm. Each person receives only their own recipient.",
-    },
-  ],
-};
-
-// Server component wrapper for SEO - actual content rendered by client component
-// but search engines will see the static HTML structure
 export default function Page() {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
       <HomePage />
     </>

@@ -31,7 +31,7 @@ const settings = [
   {
     label: "Wishlists",
     title: "Title, note, price, and a shop link",
-    body: "Each person can add items with a description, a price estimate, and a link. The list is readable by the group, which is how a giver finds something specific.",
+    body: "Each person can add items with a description, a price estimate, and a link. After the draw, only the assigned giver can read that list.",
   },
   {
     label: "Exclusions",
@@ -109,7 +109,7 @@ export default function FeaturesPage() {
               <tbody className="text-ink-soft">
                 {[
                   ["Draw that respects exclusions", "Built in", "You maintain the rules", "Hard to enforce"],
-                  ["Wishlist beside the match", "Yes", "Usually a second document", "No"],
+                  ["Wishlist beside the match", "Shown to the assigned giver", "Usually a second document", "No"],
                   ["Who sees the full draw", "Organizer, until send", "Whoever has the file", "Whoever unfolds the slips"],
                   ["Address only for the giver", "Yes", "Easy to overshare", "Passed by hand"],
                   ["People in different cities", "Email invitation", "Possible", "Needs everyone present"],

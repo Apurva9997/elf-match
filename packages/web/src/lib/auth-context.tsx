@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth as useClerkAuth, useClerk, useUser } from "@clerk/nextjs";
+import { track } from "./analytics";
 import { api, type User } from "./api";
 
 interface AuthContextType {
@@ -48,7 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsFetchingUser(true);
     api
       .getMe()
-      .then(setUser)
+      .then((me) => {
+        setUser(me);
+        const created = new Date(clerkUser.createdAt || 0).getTime();
+        if (created && Date.now() - created < 10 * 60 * 1000) {
+          const seen = sessionStorage.getItem("elfmatch-signup-tracked");
+          if (seen !== me.id) {
+            sessionStorage.setItem("elfmatch-signup-tracked", me.id);
+            track("signup_completed");
+          }
+        }
+      })
       .catch(() => {
         // Fall back to Clerk user data so the app stays functional even
         // when the backend /auth/me endpoint is temporarily unavailable.

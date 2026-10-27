@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/terms(.*)",
   "/privacy(.*)",
   "/family-and-office(.*)",
+  "/secret-santa-with-exclusions(.*)",
   "/api(.*)",
   "/sitemap.xml",
   "/robots.txt",
@@ -36,8 +37,18 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Protect non-public routes
   if (!isPublicRoute(req) && !userId) {
+    const path = req.nextUrl.pathname;
+    const isAppSurface =
+      path.startsWith("/dashboard") || path.startsWith("/api");
+
+    // An unknown public URL must 404. Sending it to sign-in hides the
+    // not-found page and teaches crawlers that every typo is a login.
+    if (!isAppSurface) {
+      return NextResponse.rewrite(new URL("/not-found", req.url));
+    }
+
     const loginUrl = new URL("/auth/login", req.url);
-    loginUrl.searchParams.set("redirect", req.nextUrl.pathname);
+    loginUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(loginUrl);
   }
 });

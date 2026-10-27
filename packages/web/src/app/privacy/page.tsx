@@ -23,12 +23,7 @@ export default function PrivacyPage() {
           </h1>
 
           <p className="text-cream/70 mb-6">
-            Last updated:{" "}
-            {new Date().toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
+            Last updated: 27 October 2026
           </p>
 
           <section className="mb-8">
@@ -56,7 +51,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-cream">Wishlist items:</strong> Gift
-                preferences you choose to share with your group.
+                preferences. After the draw, only your assigned giver can read them.
               </li>
             </ul>
           </section>
@@ -88,8 +83,9 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-6 text-cream/70 space-y-2">
               <li>
                 <strong className="text-cream">Within your exchange:</strong>{" "}
-                Your wishlist is visible to your group members. Your delivery
-                address is shared only with your assigned Secret Santa.
+                Your wishlist is visible to you, and after the draw to the
+                person assigned to give you a gift. Your delivery address is
+                shared only with that person.
               </li>
               <li>
                 <strong className="text-cream">Service providers:</strong> We
