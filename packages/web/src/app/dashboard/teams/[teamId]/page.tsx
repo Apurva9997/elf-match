@@ -1170,9 +1170,10 @@ export default function TeamPage() {
                                     autoFocus
                                   />
                                   <button
+                                    type="button"
                                     onClick={() => handleRemoveWishItem(index)}
+                                    aria-label={`Remove ${item.title || "wishlist item"}`}
                                     className="p-2 text-error/60 hover:text-error transition-colors"
-                                    title="Delete"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
