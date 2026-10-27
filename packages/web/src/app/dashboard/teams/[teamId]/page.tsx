@@ -941,6 +941,8 @@ export default function TeamPage() {
           ).map((tab) => (
             <button
               key={tab}
+              type="button"
+              aria-current={activeTab === tab ? "page" : undefined}
               onClick={() => setActiveTab(tab)}
               className={cn(
                 "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
