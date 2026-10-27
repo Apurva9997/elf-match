@@ -1,9 +1,8 @@
 "use client";
 
 import { ElfMark } from "@/components/mark";
-import { AuthContext, useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
-import { useContext } from "react";
 
 const links = [
   { href: "/how-it-works", label: "How it works" },
@@ -12,8 +11,7 @@ const links = [
 ];
 
 export function PublicNav() {
-  const auth = useContext(AuthContext);
-  const { isAuthenticated } = auth ?? useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-ivory/90 backdrop-blur-sm">
