@@ -55,7 +55,11 @@ export function HomePage() {
             <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-faint">
               Next: name the exchange, choose a budget and a date, then add
               email addresses. People join from the invitation, write a
-              wishlist, and wait for you to draw.
+              wishlist, and wait for you to draw.{" "}
+              <Link href="/how-it-works" className="text-evergreen underline-offset-2 hover:underline">
+                See the full sequence
+              </Link>
+              .
             </p>
           </div>
 
@@ -279,7 +283,10 @@ export function HomePage() {
                 {startLabel}
               </Link>
               <Link href="/how-it-works" className="text-sm text-ivory/80 underline-offset-4 hover:underline">
-                Read the sequence in more detail
+                How a Secret Santa exchange runs
+              </Link>
+              <Link href="/faq" className="text-sm text-ivory/80 underline-offset-4 hover:underline">
+                Questions about exclusions and privacy
               </Link>
             </div>
           </div>

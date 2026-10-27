@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "What you can set",
+  title: "Secret Santa features: budget, exclusions, wishlists",
   description:
     "Budget, dates, email invitations, wishlists with links, exclusions, a previewable draw, encrypted addresses, and gift status for the giver.",
   alternates: {

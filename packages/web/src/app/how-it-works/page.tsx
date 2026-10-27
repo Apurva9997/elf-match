@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "How an exchange runs",
+  title: "How to organize a Secret Santa exchange",
   description:
     "Name the exchange, set a budget and dates, invite people by email, add exclusions, then preview and send private assignments.",
   alternates: {

@@ -33,7 +33,7 @@ export function PublicFooter() {
             </li>
             <li>
               <Link href="/faq" className="text-ink-soft hover:text-ink">
-                Questions
+                Secret Santa questions
               </Link>
             </li>
           </ul>

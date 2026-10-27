@@ -51,10 +51,10 @@ export const metadata: Metadata = {
       "Set a budget and date, invite people by email, collect wishlists, and send private assignments.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Elf Match — a gift exchange invitation",
+        alt: "Elf Match — an example gift exchange invitation",
       },
     ],
   },
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     title: "Elf Match — organize a Secret Santa exchange",
     description:
       "Set a budget and date, invite people by email, collect wishlists, and send private assignments.",
-    images: ["/og-image.png"],
+    images: ["/twitter-image"],
     creator: "@elfmatch",
   },
   robots: {

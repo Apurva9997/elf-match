@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FAQAccordion } from "./faq-accordion";
 
 export const metadata: Metadata = {
-  title: "FAQ - Frequently Asked Questions About Secret Santa",
+  title: "Secret Santa FAQ: budgets, exclusions, and private draws",
   description:
     "Answers about budgets, invitations, exclusions, wishlists, and who can see a Secret Santa assignment on Elf Match.",
   alternates: {
