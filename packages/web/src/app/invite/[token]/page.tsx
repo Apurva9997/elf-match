@@ -121,7 +121,11 @@ export default function InvitePage() {
                   Sign in with the email that received this link. You can write a wishlist after you join.
                 </p>
                 <Button
-                  onClick={() => router.push("/auth/login")}
+                  onClick={() =>
+                    router.push(
+                      `/auth/login?redirect=${encodeURIComponent(`/invite/${token}`)}`
+                    )
+                  }
                   className="w-full"
                 >
                   Sign in to join
