@@ -111,28 +111,37 @@ export default function RootLayout({
         />
         <Script
           src="https://cdn.amplitude.com/script/cafdae686221fc101d72a883c8f95324.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
         <Script
           id="amplitude-init"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
-              window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
-                fetchRemoteConfig: true,
-                autocapture: {
-                  attribution: true,
-                  fileDownloads: true,
-                  formInteractions: true,
-                  pageViews: true,
-                  sessions: true,
-                  elementInteractions: true,
-                  networkTracking: true,
-                  webVitals: true,
-                  frustrationInteractions: true
+              (function () {
+                var path = location.pathname;
+                var privateSurface = path.indexOf("/dashboard") === 0 || path.indexOf("/invite/") === 0;
+                if (!privateSurface && window.sessionReplay) {
+                  window.amplitude.add(window.sessionReplay.plugin({
+                    sampleRate: 0.1,
+                    privacyConfig: { defaultMaskLevel: "conservative" }
+                  }));
                 }
-              });
+                window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
+                  fetchRemoteConfig: false,
+                  autocapture: {
+                    attribution: true,
+                    fileDownloads: true,
+                    formInteractions: false,
+                    pageViews: true,
+                    sessions: true,
+                    elementInteractions: false,
+                    networkTracking: false,
+                    webVitals: true,
+                    frustrationInteractions: false
+                  }
+                });
+              })();
             `,
           }}
         />

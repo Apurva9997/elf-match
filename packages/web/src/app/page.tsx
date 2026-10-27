@@ -3,8 +3,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Secret Santa Generator — Free Gift Exchange Organizer | Elf Match",
+    absolute: "Secret Santa generator for a private draw | Elf Match",
   },
   description:
     "Free Secret Santa generator. Set a budget and exchange date, invite people by email, keep couples apart, collect wishlists, and send each person a private assignment.",

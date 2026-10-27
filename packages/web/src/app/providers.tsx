@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MotionConfig } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
@@ -35,7 +36,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthWrapper>{children}</AuthWrapper>
+        <MotionConfig reducedMotion="user">
+          <AuthWrapper>{children}</AuthWrapper>
+        </MotionConfig>
       </AuthProvider>
     </QueryClientProvider>
   );

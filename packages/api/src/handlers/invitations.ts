@@ -145,6 +145,44 @@ async function _inviteMembers(
   }
 }
 
+async function _previewInvitation(
+  _req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const token = params.token;
+    if (!token) return error("Invitation token required", 400);
+
+    const invitation = await db.query.teamMembers.findFirst({
+      where: eq(teamMembers.invitationToken, hashToken(token)),
+      with: {
+        team: {
+          with: { creator: { columns: { name: true } } },
+        },
+      },
+    });
+
+    if (!invitation?.team) {
+      return notFound("Invitation not found or already used");
+    }
+
+    const host = invitation.team.creator?.name?.split(" ")[0] || "The organizer";
+
+    return success({
+      status: invitation.invitationStatus,
+      exchangeName: invitation.team.name,
+      hostName: host,
+      exchangeDate: invitation.team.exchangeDate,
+      wishlistDeadline: invitation.team.wishlistDeadline,
+      budgetMin: invitation.team.budgetMin,
+      budgetMax: invitation.team.budgetMax,
+    });
+  } catch (err) {
+    console.error("Error previewing invitation:", err);
+    return serverError("Failed to open invitation");
+  }
+}
+
 async function _acceptInvitation(
   req: Request,
   params: RouteParams
@@ -537,6 +575,9 @@ export const inviteMembers = wrapHandler(_inviteMembers, {
   useUserId: true,
 });
 
+export const previewInvitation = wrapHandler(_previewInvitation, {
+  limiter: rateLimiters.authenticatedRead,
+});
 export const acceptInvitation = wrapHandler(_acceptInvitation, {
   limiter: rateLimiters.authenticatedWrite,
   useUserId: true,

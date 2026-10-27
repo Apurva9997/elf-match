@@ -12,6 +12,7 @@
   --evergreen: #1e3a32;
   --cranberry: #8e3a42;
   --rule: #ddd4c4;
+  --ink-faint: #6f675c;
 }
 
 @layer base {
@@ -93,6 +94,36 @@
 
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 text-xs font-semibold tracking-wide uppercase;
+  }
+
+  .tag-press {
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .tag-press:active {
+    transform: scale(0.985);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tag-press,
+    .tag-press:active {
+      transform: none;
+      transition: none;
+    }
+  }
+
+  @keyframes paper-fall {
+    0% { transform: translateY(-12px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translateY(72px) rotate(18deg); opacity: 0; }
+  }
+
+  .paper-fall {
+    animation: paper-fall 700ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .paper-fall { animation: none; opacity: 0; }
   }
 
   .badge-success {

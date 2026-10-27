@@ -28,7 +28,7 @@ const config: Config = {
         ink: {
           DEFAULT: "#1C1915",
           soft: "#5C564C",
-          faint: "#8A8276",
+          faint: "#6F675C",
         },
         rule: "#DDD4C4",
         // Legacy aliases so authenticated screens keep compiling

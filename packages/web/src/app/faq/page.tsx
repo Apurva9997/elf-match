@@ -155,7 +155,7 @@ export default function FAQPage() {
             Write to hello@elfmatch.com
           </a>
           <Link
-            href="/auth/login"
+            href="/auth/login?intent=create"
             className="inline-flex items-center justify-center bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
           >
             Create an exchange

@@ -7,6 +7,7 @@ import Link from "next/link";
 const links = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/features", label: "What you can set" },
+  { href: "/family-and-office", label: "Family or office" },
   { href: "/faq", label: "Questions" },
 ];
 
@@ -52,7 +53,7 @@ export function PublicNav() {
                 Sign in
               </Link>
               <Link
-                href="/auth/login"
+                href="/auth/login?intent=create"
                 className="bg-cranberry px-2.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:px-3.5"
               >
                 <span className="sm:hidden">Create</span>

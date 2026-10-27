@@ -3,164 +3,160 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { track } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth-context";
-import { storage } from "@/lib/storage";
-import { motion } from "framer-motion";
-import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+
+type Preview = {
+  status: string;
+  exchangeName: string;
+  hostName: string;
+  exchangeDate: string | null;
+  wishlistDeadline: string | null;
+  budgetMin: string | null;
+  budgetMax: string | null;
+};
 
 export default function InvitePage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
   const { user, isLoading: authLoading } = useAuth();
-  const [status, setStatus] = useState<
-    "loading" | "success" | "error" | "needsAuth"
-  >("loading");
-  const [teamName, setTeamName] = useState("");
+  const reduce = useReducedMotion();
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinedName, setJoinedName] = useState("");
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      // Store the invitation token and redirect to login
-      storage.setItem("pendingInvitation", token);
-      setStatus("needsAuth");
-      return;
-    }
-
-    const acceptInvitation = async () => {
-      try {
-        const result = await api.acceptInvitation(token);
-        setTeamName(result.team.name);
-        setStatus("success");
-        toast.success(`Joined ${result.team.name}!`);
-
-        // Redirect after a brief delay
-        setTimeout(() => {
-          router.push(`/dashboard/teams/${result.team.id}`);
-        }, 2000);
-      } catch (err) {
-        setStatus("error");
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to accept invitation";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
-    };
-
-    acceptInvitation();
-  }, [token, user, authLoading, router]);
-
-  // Check for pending invitation after login
-  useEffect(() => {
-    if (user && status === "needsAuth") {
-      const checkPendingInvitation = async () => {
-        const pendingToken = await storage.getItem("pendingInvitation");
-        if (pendingToken === token) {
-          await storage.removeItem("pendingInvitation");
-          setStatus("loading");
-
-          try {
-            const result = await api.acceptInvitation(token);
-            setTeamName(result.team.name);
-            setStatus("success");
-            toast.success(`Joined ${result.team.name}!`);
-
-            setTimeout(() => {
-              router.push(`/dashboard/teams/${result.team.id}`);
-            }, 2000);
-          } catch (err) {
-            setStatus("error");
-            const errorMessage =
-              err instanceof Error
-                ? err.message
-                : "Failed to accept invitation";
-            setError(errorMessage);
-            toast.error(errorMessage);
-          }
+    let cancelled = false;
+    api
+      .previewInvitation(token)
+      .then((result) => {
+        if (!cancelled) setPreview(result);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "This invitation did not open");
         }
-      };
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
-      checkPendingInvitation();
+  const join = async () => {
+    setJoining(true);
+    try {
+      const result = await api.acceptInvitation(token);
+      track("invitation_accepted", { role: "member" });
+      setJoinedName(result.team.name);
+      window.setTimeout(() => {
+        router.push(`/dashboard/teams/${result.team.id}`);
+      }, reduce ? 0 : 700);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "This invitation did not open");
+      setJoining(false);
     }
-  }, [user, status, token, router]);
+  };
+
+  const budget =
+    preview?.budgetMin && preview.budgetMax
+      ? `₹${Number(preview.budgetMin)} – ₹${Number(preview.budgetMax)}`
+      : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={reduce ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className="w-full max-w-md"
       >
-        <Card className="text-center">
+        <Card>
           <CardContent className="pt-8 pb-6">
-            {(status === "loading" || authLoading) && (
-              <>
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center bg-evergreen-soft">
-                  <Loader2 className="h-8 w-8 animate-spin text-evergreen" />
-                </div>
-                <h1 className="mb-2 font-display text-2xl text-evergreen">Opening the invitation</h1>
-                <p className="text-ink-soft">Adding you to the exchange.</p>
-              </>
+            {!preview && !error && (
+              <p className="text-ink-soft">Opening the invitation.</p>
             )}
 
-            {status === "needsAuth" && (
+            {error && (
               <>
-                <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
-                  Invitation
-                </p>
-                <h1 className="mb-2 font-display text-3xl text-evergreen">
-                  You have a seat at this exchange.
-                </h1>
-                <p className="mb-6 text-ink-soft">
-                  Sign in with the email that received this link. You can write a wishlist after you join.
-                </p>
-                <Button
-                  onClick={() =>
-                    router.push(
-                      `/auth/login?redirect=${encodeURIComponent(`/invite/${token}`)}`
-                    )
-                  }
-                  className="w-full"
-                >
-                  Sign in to join
-                </Button>
-              </>
-            )}
-
-            {status === "success" && (
-              <>
-                <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="w-8 h-8 text-success" />
-                </div>
-                <h1 className="mb-2 font-display text-2xl text-evergreen">You&apos;re in</h1>
-                <p className="text-ink-soft">
-                  Opening{" "}
-                  <span className="font-medium text-ink">{teamName}</span>.
-                </p>
-              </>
-            )}
-
-            {status === "error" && (
-              <>
-                <div className="w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mx-auto mb-6">
-                  <XCircle className="w-8 h-8 text-error" />
-                </div>
-                <h1 className="mb-2 font-display text-2xl text-evergreen">
+                <h1 className="font-display text-3xl text-evergreen">
                   This invitation did not open
                 </h1>
-                <p className="mb-6 text-ink-soft">{error}</p>
-                <Button
-                  onClick={() => router.push("/dashboard")}
-                  className="w-full"
-                >
+                <p className="mt-3 text-ink-soft">{error}</p>
+                <p className="mt-3 text-sm text-ink-soft">
+                  Ask the organizer to resend it, or sign in with the email that received the link.
+                </p>
+                <Button onClick={() => router.push("/dashboard")} className="mt-6 w-full">
                   Go to your exchanges
                 </Button>
+              </>
+            )}
+
+            {preview && !joinedName && (
+              <>
+                <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
+                  Invitation
+                </p>
+                <h1 className="mt-2 font-display text-3xl text-evergreen">
+                  {preview.hostName} invited you to {preview.exchangeName}.
+                </h1>
+                <dl className="mt-5 space-y-2 text-sm text-ink-soft">
+                  {preview.exchangeDate && (
+                    <div className="flex justify-between gap-4">
+                      <dt>Exchange</dt>
+                      <dd className="text-ink">{formatDate(preview.exchangeDate)}</dd>
+                    </div>
+                  )}
+                  {preview.wishlistDeadline && (
+                    <div className="flex justify-between gap-4">
+                      <dt>Wishlists due</dt>
+                      <dd className="text-ink">{formatDate(preview.wishlistDeadline)}</dd>
+                    </div>
+                  )}
+                  {budget && (
+                    <div className="flex justify-between gap-4">
+                      <dt>Budget</dt>
+                      <dd className="text-ink">{budget}</dd>
+                    </div>
+                  )}
+                </dl>
+                <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+                  Wishlists are visible to the group. Your delivery address is shown only to the person assigned to give you a gift.
+                </p>
+                {preview.status !== "pending" ? (
+                  <p className="mt-4 text-sm text-cranberry">
+                    This invitation is no longer open. Ask {preview.hostName} to resend it.
+                  </p>
+                ) : authLoading ? (
+                  <p className="mt-6 text-sm text-ink-soft">Checking your account.</p>
+                ) : user ? (
+                  <Button onClick={join} isLoading={joining} className="mt-6 w-full">
+                    Join {preview.exchangeName}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        `/auth/login?intent=join&redirect=${encodeURIComponent(`/invite/${token}`)}`
+                      )
+                    }
+                    className="mt-6 w-full"
+                  >
+                    Sign in to join
+                  </Button>
+                )}
+              </>
+            )}
+
+            {joinedName && (
+              <>
+                <h1 className="font-display text-3xl text-evergreen">You&apos;re in.</h1>
+                <p className="mt-3 text-ink-soft">Opening {joinedName}.</p>
               </>
             )}
           </CardContent>

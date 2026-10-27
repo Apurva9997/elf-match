@@ -31,7 +31,7 @@ const steps = [
   {
     number: "02",
     title: "Invite people by email",
-    body: "Enter the addresses of the people who should be in the draw. Each one receives an invitation link. They create a free account — a sign-in code by email, or Google or Apple if they prefer — then join, write a wishlist, and can add a delivery address.",
+    body: "Enter the addresses of the people who should be in the draw. Each one receives an invitation link. They create a free account — a sign-in code by email, or Google if they prefer — then join, write a wishlist, and can add a delivery address.",
     details: [
       "Open invitations stay marked as pending",
       "You can resend an invitation that has not been accepted",

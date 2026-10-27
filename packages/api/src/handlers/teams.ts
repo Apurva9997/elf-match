@@ -12,6 +12,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { optionalIsoDateSchema } from "../lib/dates.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
 
 const createTeamSchema = z.object({
@@ -22,14 +23,8 @@ const createTeamSchema = z.object({
     .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
   budgetMin: z.number().positive().optional(),
   budgetMax: z.number().positive().optional(),
-  exchangeDate: z
-    .string()
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
-  wishlistDeadline: z
-    .string()
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  exchangeDate: optionalIsoDateSchema,
+  wishlistDeadline: optionalIsoDateSchema,
 });
 
 const updateTeamSchema = z.object({
@@ -45,16 +40,8 @@ const updateTeamSchema = z.object({
     .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
   budgetMin: z.number().positive().nullable().optional(),
   budgetMax: z.number().positive().nullable().optional(),
-  exchangeDate: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
-  wishlistDeadline: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val ? sanitizeTransform("text")(val) : val)),
+  exchangeDate: optionalIsoDateSchema,
+  wishlistDeadline: optionalIsoDateSchema,
 });
 
 async function _createTeam(

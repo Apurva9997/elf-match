@@ -50,8 +50,8 @@ const settings = [
   },
   {
     label: "Sign-in",
-    title: "A code by email, or Google or Apple",
-    body: "People join with a free account. Email sign-in uses a one-time code, so there is no password to invent for a once-a-year exchange.",
+    title: "A code by email, or Google",
+    body: "People join with a free account. Email sign-in uses a one-time code, so there is no password to invent for a once-a-year exchange. Apple sign-in appears only when it is switched on for this site.",
   },
   {
     label: "After the draw",
@@ -129,7 +129,7 @@ export default function FeaturesPage() {
 
         <div className="mt-12">
           <Link
-            href="/auth/login"
+            href="/auth/login?intent=create"
             className="inline-flex bg-cranberry px-5 py-3 font-semibold text-ivory hover:bg-cranberry-deep"
           >
             Create an exchange

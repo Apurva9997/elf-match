@@ -36,6 +36,11 @@ export function PublicFooter() {
                 Secret Santa questions
               </Link>
             </li>
+            <li>
+              <Link href="/family-and-office" className="text-ink-soft hover:text-ink">
+                Family or office
+              </Link>
+            </li>
           </ul>
         </div>
         <div>

@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
+import { track } from "@/lib/analytics";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { cn, dateInputValue, formatDate } from "@/lib/utils";
@@ -100,6 +101,8 @@ export default function TeamPage() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [confirmRemind, setConfirmRemind] = useState(false);
+  const [sentDraw, setSentDraw] = useState(false);
   const [wishItems, setWishItems] = useState<WishItemForm[]>([]);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
@@ -274,10 +277,10 @@ export default function TeamPage() {
       api.updateTeam(teamId, {
         name: data.name,
         description: data.description || undefined,
-        budgetMin: data.budgetMin ? parseFloat(data.budgetMin) : undefined,
-        budgetMax: data.budgetMax ? parseFloat(data.budgetMax) : undefined,
-        exchangeDate: data.exchangeDate || undefined,
-        wishlistDeadline: data.wishlistDeadline || undefined,
+        budgetMin: data.budgetMin ? parseFloat(data.budgetMin) : null,
+        budgetMax: data.budgetMax ? parseFloat(data.budgetMax) : null,
+        exchangeDate: data.exchangeDate || null,
+        wishlistDeadline: data.wishlistDeadline || null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
@@ -300,12 +303,11 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
-      setIsAssignModalOpen(false);
       setAssignmentStep("intro");
       setPreviewData(null);
-      toast.success(
-        "Assignments sent! Everyone will receive an email with their Secret Santa."
-      );
+      setSentDraw(true);
+      track("draw_confirmed", { role: "admin" });
+      toast.success("Assignments emailed. They cannot be changed.");
     },
     onError: (error: Error) => {
       toast.error(
@@ -331,6 +333,21 @@ export default function TeamPage() {
       toast.error(
         error.message || "Couldn't update gift status. Please try again."
       );
+    },
+  });
+
+  const remindMutation = useMutation({
+    mutationFn: () => api.sendReminders(teamId),
+    onSuccess: (result) => {
+      setConfirmRemind(false);
+      toast.success(
+        result.results.filter((item) => item.sent).length > 0
+          ? "Reminders sent to people missing a list or address."
+          : "Everyone who has joined already has a list and an address."
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Couldn't send reminders.");
     },
   });
 
@@ -811,19 +828,11 @@ export default function TeamPage() {
                     <UserPlus className="w-4 h-4 mr-2" />
                     Invite
                   </Button>
-                  {status?.canAssign ? (
+                  {status?.canAssign && (
                     <Button size="sm" onClick={handleOpenAssignModal}>
                       <Sparkles className="w-4 h-4 mr-2" />
                       Assign Santas
                     </Button>
-                  ) : (
-                    status &&
-                    !status.hasAssignments && (
-                      <span className="text-cream/50 text-xs hidden sm:inline">
-                        Need {Math.max(0, 3 - status.totalMembers)} more joined
-                        people to start matching
-                      </span>
-                    )
                   )}
                 </>
               )}
@@ -878,13 +887,18 @@ export default function TeamPage() {
                       : "Completed"}
                 </Badge>
                 {team.exchangeDate && (
-                  <span className="text-cream/50 text-sm">
+                  <span className="text-sm text-ink-soft">
                     Exchange: {formatDate(team.exchangeDate)}
                   </span>
                 )}
+                {team.wishlistDeadline && (
+                  <span className="text-sm text-ink-soft">
+                    Wishlists due: {formatDate(team.wishlistDeadline)}
+                  </span>
+                )}
                 {team.budgetMin && team.budgetMax && (
-                  <span className="text-cream/50 text-sm">
-                    Budget: ₹{team.budgetMin} - ₹{team.budgetMax}
+                  <span className="text-sm text-ink-soft">
+                    Budget: ₹{team.budgetMin} – ₹{team.budgetMax}
                   </span>
                 )}
               </div>
@@ -892,43 +906,53 @@ export default function TeamPage() {
           </div>
         </motion.div>
 
-        {/* Status Cards */}
-        {status && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
-          >
-            <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">
-                {status.totalMembers}
-              </div>
-              <div className="text-cream/60 text-sm">Joined</div>
-            </Card>
-            <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">
-                {status.membersWithWishlist}
-              </div>
-              <div className="text-cream/60 text-sm">Wishlists</div>
-            </Card>
-            <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">
-                {status.membersWithAddress}
-              </div>
-              <div className="text-cream/60 text-sm">Addresses</div>
-            </Card>
-            <Card className="text-center py-4">
-              <div className="text-2xl font-bold text-gold">
-                {status.completionPercentage}%
-              </div>
-              <div className="text-cream/60 text-sm">Complete</div>
-            </Card>
-          </motion.div>
+        {status && isAdmin && !status.hasAssignments && (
+          <div className="mb-8 border border-rule bg-ivory-card px-4 py-4">
+            <p className="font-medium text-ink">
+              {status.totalMembers} joined
+              {status.pendingInvitations > 0
+                ? `, ${status.pendingInvitations} still invited`
+                : ""}
+              .{" "}
+              {team.wishlistDeadline
+                ? `Wishlists due ${formatDate(team.wishlistDeadline)}.`
+                : "No wishlist deadline set."}
+            </p>
+            <ul className="mt-3 space-y-1 text-sm text-ink-soft">
+              <li>
+                {status.totalMembers >= 3
+                  ? "Enough people have joined to draw."
+                  : `Invite until three people have joined. ${Math.max(0, 3 - status.totalMembers)} more needed.`}
+              </li>
+              <li>
+                {status.membersWithWishlist} of {status.totalMembers} have a wishlist.
+              </li>
+              <li>Draw only when you mean to email the assignments. They cannot be redrawn.</li>
+            </ul>
+            <div className="mt-4">
+              {confirmRemind ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm text-ink">
+                    Email people who joined and are missing a wishlist or address?
+                  </p>
+                  <Button size="sm" onClick={() => remindMutation.mutate()} isLoading={remindMutation.isPending}>
+                    Send reminders
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmRemind(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="secondary" onClick={() => setConfirmRemind(true)}>
+                  Remind people missing a list or address
+                </Button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-1 mb-6 p-1 bg-midnight-50 rounded-lg w-fit">
+        <div role="tablist" aria-label="Exchange" className="mb-6 flex flex-wrap gap-1 border border-rule bg-ivory-card p-1 w-fit">
           {(isAdmin
             ? ([
                 "overview",
@@ -942,13 +966,14 @@ export default function TeamPage() {
             <button
               key={tab}
               type="button"
-              aria-current={activeTab === tab ? "page" : undefined}
+              role="tab"
+              aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                "px-4 py-2 text-sm font-medium transition-colors duration-180",
                 activeTab === tab
-                  ? "bg-gradient-gold text-midnight"
-                  : "text-cream/60 hover:text-cream"
+                  ? "bg-evergreen text-ivory"
+                  : "text-ink-soft hover:text-ink"
               )}
             >
               {tab === "overview" && <Users className="w-4 h-4 inline mr-2" />}
@@ -1000,7 +1025,7 @@ export default function TeamPage() {
                   {team.members.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-midnight-50"
+                      className="tag-press flex items-center justify-between border border-rule bg-ivory-card p-3"
                     >
                       <div className="flex items-center space-x-3">
                         <Avatar
@@ -1026,7 +1051,9 @@ export default function TeamPage() {
                         )}
                         {member.invitationStatus === "pending" && (
                           <>
-                            <Badge variant="warning">Pending</Badge>
+                            <span className="text-sm text-cranberry transition-colors duration-200">
+                              Invitation open
+                            </span>
                             {isAdmin && (
                               <button
                                 type="button"
@@ -1693,14 +1720,14 @@ export default function TeamPage() {
                         <Sparkles className="w-8 h-8 text-gold" />
                       </div>
                       <h3 className="text-xl font-display font-semibold text-cream mb-2">
-                        Assignments Coming Soon
+                        No assignment yet
                       </h3>
                       <p className="text-cream/60 mb-4">
                         {isAdmin
                           ? status?.canAssign
-                            ? "You can now assign Secret Santas! Click the button above."
-                            : `You need at least 3 joined people to start matching. ${status?.totalMembers ?? 0} have joined so far.`
-                          : "The exchange admin will assign Secret Santas once everyone is ready."}
+                            ? "Three people have joined. Draw when you mean to email the assignments."
+                            : `${status?.totalMembers ?? 0} joined. A draw needs three.`
+                          : "The organizer sends assignments when the group is ready. You will see only your own recipient."}
                       </p>
                       {isAdmin && status?.canAssign && (
                         <Button onClick={handleOpenAssignModal}>
@@ -1923,18 +1950,52 @@ export default function TeamPage() {
           setIsAssignModalOpen(false);
           setAssignmentStep("intro");
           setPreviewData(null);
+          setSentDraw(false);
         }}
         title={
-          assignmentStep === "intro"
+          sentDraw
+            ? "Sent"
+            : assignmentStep === "intro"
             ? "Assign Secret Santas"
             : assignmentStep === "preview"
               ? "Review Assignments"
-              : "Confirm & Send"
+              : "Confirm and send"
         }
         size={assignmentStep === "preview" ? "lg" : "md"}
       >
+        {sentDraw && (
+          <div className="relative overflow-hidden py-8 text-center">
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-24">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <span
+                  key={index}
+                  className="paper-fall absolute top-0 h-3 w-2"
+                  style={{
+                    left: `${8 + index * 11}%`,
+                    background: index % 2 ? "#8E3A42" : "#1E3A32",
+                    animationDelay: `${index * 40}ms`,
+                  }}
+                />
+              ))}
+            </div>
+            <h3 className="font-display text-2xl text-evergreen">Sent.</h3>
+            <p className="mt-2 text-ink-soft">
+              Each person received only their own recipient. The assignments cannot be changed.
+            </p>
+            <Button
+              className="mt-6"
+              onClick={() => {
+                setIsAssignModalOpen(false);
+                setSentDraw(false);
+              }}
+            >
+              Close
+            </Button>
+          </div>
+        )}
+
         {/* Step 1: Intro */}
-        {assignmentStep === "intro" && (
+        {assignmentStep === "intro" && !sentDraw && (
           <div className="space-y-4">
             <p className="text-cream/70">
               Ready to assign Secret Santas? Here&apos;s what will happen:
@@ -1985,7 +2046,7 @@ export default function TeamPage() {
         )}
 
         {/* Step 2: Preview */}
-        {assignmentStep === "preview" && previewData && (
+        {assignmentStep === "preview" && previewData && !sentDraw && (
           <div className="space-y-4">
             <p className="text-cream/70 text-sm">
               Here&apos;s how everyone will be matched. Review the assignments
@@ -2062,7 +2123,7 @@ export default function TeamPage() {
                     Re-assign
                   </Button>
                   <Button onClick={() => setAssignmentStep("confirm")}>
-                    Looks Good
+                    Review before sending
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -2076,9 +2137,9 @@ export default function TeamPage() {
         )}
 
         {/* Step 3: Confirm */}
-        {assignmentStep === "confirm" && (
+        {assignmentStep === "confirm" && !sentDraw && (
           <div className="space-y-4">
-            <div className="text-center py-4">
+            <div className="relative text-center py-4">
               <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-8 h-8 text-gold" />
               </div>
@@ -2111,7 +2172,7 @@ export default function TeamPage() {
                 isLoading={triggerAssignmentMutation.isPending}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Confirm & Send Emails
+                Email the assignments
               </Button>
             </div>
           </div>

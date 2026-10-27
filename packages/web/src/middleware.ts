@@ -13,9 +13,12 @@ const isPublicRoute = createRouteMatcher([
   "/how-it-works(.*)",
   "/terms(.*)",
   "/privacy(.*)",
+  "/family-and-office(.*)",
   "/api(.*)",
   "/sitemap.xml",
   "/robots.txt",
+  "/opengraph-image(.*)",
+  "/twitter-image(.*)",
 ]);
 
 const isAuthRoute = createRouteMatcher([

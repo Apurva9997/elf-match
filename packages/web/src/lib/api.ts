@@ -131,6 +131,18 @@ class ApiClient {
     });
   }
 
+  async previewInvitation(token: string) {
+    return this.request<{
+      status: string;
+      exchangeName: string;
+      hostName: string;
+      exchangeDate: string | null;
+      wishlistDeadline: string | null;
+      budgetMin: string | null;
+      budgetMax: string | null;
+    }>(`/invitations/${token}`);
+  }
+
   async acceptInvitation(token: string) {
     return this.request<{ team: Team; message: string }>(
       `/invitations/${token}/accept`,
@@ -363,10 +375,10 @@ export interface TeamStatus {
 export interface CreateTeamInput {
   name: string;
   description?: string;
-  budgetMin?: number;
-  budgetMax?: number;
-  exchangeDate?: string;
-  wishlistDeadline?: string;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  exchangeDate?: string | null;
+  wishlistDeadline?: string | null;
 }
 
 export interface WishItem {

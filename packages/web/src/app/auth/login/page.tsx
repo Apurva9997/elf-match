@@ -70,10 +70,19 @@ function LoginPageContent() {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
 
   const requestedRedirect = searchParams.get("redirect") || "";
-  const redirectTo =
-    requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//")
+  const intent = searchParams.get("intent");
+  const joining =
+    intent === "join" || requestedRedirect.startsWith("/invite/");
+  const creating = intent === "create" && !joining;
+  const redirectTo = joining
+    ? requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//")
       ? requestedRedirect
-      : "/dashboard";
+      : "/dashboard"
+    : creating
+      ? "/dashboard?new=1"
+      : requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//")
+        ? requestedRedirect
+        : "/dashboard";
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -215,12 +224,22 @@ function LoginPageContent() {
                 Elf Match
               </p>
               <h1 className="mt-2 font-display text-3xl text-evergreen">
-                {step === "email" ? "Sign in to your exchanges" : "Enter the code"}
+                {step === "code"
+                  ? "Enter the code"
+                  : creating
+                    ? "Start an exchange"
+                    : joining
+                      ? "Join the exchange"
+                      : "Welcome back"}
               </h1>
               <p className="mt-2 text-ink-soft">
-                {step === "email"
-                  ? "Use the same email that received an invitation, or the one you used to create an exchange."
-                  : `We sent a 6-digit code to ${submittedEmail}.`}
+                {step === "code"
+                  ? `We sent a 6-digit code to ${submittedEmail}.`
+                  : creating
+                    ? "Use an email you will still check in December. We will send a 6-digit code. No password."
+                    : joining
+                      ? "Use the email that received the invitation. A different email will not see the seat."
+                      : "Use the email on the exchange. We will send a 6-digit code."}
               </p>
             </div>
 

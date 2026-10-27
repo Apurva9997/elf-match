@@ -32,6 +32,7 @@ const routes: Route[] = [
 
   // Invitations (before /teams/:teamId routes to avoid conflicts)
   { method: "GET", pattern: "/invitations/pending", handler: invitations.listPendingInvitations },
+  { method: "GET", pattern: "/invitations/:token", handler: invitations.previewInvitation },
   { method: "POST", pattern: "/invitations/:token/accept", handler: invitations.acceptInvitation },
   { method: "POST", pattern: "/invitations/:invitationId/accept-direct", handler: invitations.acceptInvitationDirect },
   { method: "POST", pattern: "/invitations/:token/decline", handler: invitations.declineInvitation },
