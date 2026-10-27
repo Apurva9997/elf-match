@@ -327,6 +327,7 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-4">
               <Link
                 href="/dashboard/profile"
+                aria-label="Your profile"
                 className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
               >
                 <Avatar name={user?.name || user?.email || "U"} size="sm" />
