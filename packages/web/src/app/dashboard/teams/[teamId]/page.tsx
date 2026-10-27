@@ -1595,7 +1595,11 @@ export default function TeamPage() {
               {/* My Assignment */}
               <Card>
                 <CardHeader>
-                  <CardTitle>You are buying for</CardTitle>
+                  <CardTitle>
+                    {assignment?.assigned
+                      ? "You are buying for"
+                      : "Your assignment"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {assignment?.assigned ? (
