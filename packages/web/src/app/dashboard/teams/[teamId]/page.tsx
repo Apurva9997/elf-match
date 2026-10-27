@@ -1676,7 +1676,7 @@ export default function TeamPage() {
                         {isAdmin
                           ? status?.canAssign
                             ? "You can now assign Secret Santas! Click the button above."
-                            : `You need at least 3 accepted members to start matching. Currently have ${status?.totalMembers ? status.totalMembers - (status.pendingInvitations || 0) : 0} accepted members.`
+                            : `You need at least 3 joined people to start matching. ${status?.totalMembers ?? 0} have joined so far.`
                           : "The exchange admin will assign Secret Santas once everyone is ready."}
                       </p>
                       {isAdmin && status?.canAssign && (
