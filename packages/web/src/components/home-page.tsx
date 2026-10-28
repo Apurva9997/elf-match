@@ -1,3 +1,4 @@
+import { HeroFilm } from "@/components/hero-film";
 import { HomeActions } from "@/components/home-actions";
 import { SampleExchange } from "@/components/sample-exchange";
 import { PublicFooter } from "@/components/public-footer";
@@ -32,26 +33,24 @@ export function HomePage() {
     <div className="min-h-screen">
       <PublicNav />
       <main>
-        <section className="mx-auto grid max-w-page items-start gap-10 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16 lg:pt-14">
+        <section className="mx-auto grid max-w-page items-start gap-8 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:pt-14">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
-              A Secret Santa draw, without the hat
+              Free Secret Santa for family or office
             </p>
             <h1 className="mt-4 max-w-[16ch] font-display text-[2.5rem] font-medium leading-[1.05] text-evergreen sm:text-6xl sm:leading-[1.02]">
-              Draw the names. Send each person only theirs.
+              Draw the names. Keep the giving secret.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
-              For the person organizing a family or an office exchange. Set the
-              budget and the date, keep couples apart, and preview every pairing
-              before anyone is emailed.
+              Set a rupee budget and dates, invite by email, exclude pairs, and
+              preview every match before sending the final draw.
             </p>
             <HomeActions />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
-              Free. Next you will sign in, then name the exchange. Budgets are
-              in rupees. No card, no password.
+              Free. Sign in, then name your exchange.
             </p>
           </div>
-          <SampleExchange />
+          <HeroFilm />
         </section>
 
         <section className="border-y border-rule bg-ivory-card/70">
@@ -71,6 +70,9 @@ export function HomePage() {
                 </li>
               ))}
             </ol>
+            <div className="mt-10 max-w-md">
+              <SampleExchange />
+            </div>
           </div>
         </section>
 

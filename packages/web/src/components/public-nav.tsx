@@ -16,7 +16,7 @@ export function PublicNav() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-rule bg-ivory/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 border-b border-rule bg-ivory">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5 rounded-sm">
           <ElfMark />
@@ -55,10 +55,9 @@ export function PublicNav() {
               </Link>
               <Link
                 href="/auth/login?intent=create"
-                className="bg-cranberry px-2.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:px-3.5"
+                className="hidden bg-cranberry px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:inline-flex"
               >
-                <span className="sm:hidden">Create</span>
-                <span className="hidden sm:inline">Create an exchange</span>
+                Create an exchange
               </Link>
             </>
           )}

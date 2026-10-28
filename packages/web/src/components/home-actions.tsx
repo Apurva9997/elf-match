@@ -26,7 +26,7 @@ export function HomeActions() {
   }
 
   return (
-    <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className="mt-8">
       <Link
         href="/auth/login?intent=create"
         className="inline-flex items-center justify-center bg-cranberry px-5 py-3 text-base font-semibold text-ivory hover:bg-cranberry-deep"
@@ -35,7 +35,7 @@ export function HomeActions() {
       </Link>
       <Link
         href="/auth/login?intent=join"
-        className="inline-flex items-center justify-center px-2 py-3 text-base font-semibold text-evergreen underline-offset-2 hover:underline"
+        className="mt-3 block text-base font-semibold text-evergreen underline-offset-2 hover:underline"
       >
         I have an invitation
       </Link>
