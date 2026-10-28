@@ -5,6 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { track } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth-context";
+import {
+  invitePath,
+  forgetInvite,
+  markInviteNudged,
+  rememberInvite,
+} from "@/lib/pending-invite";
 import { formatDate } from "@/lib/utils";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
@@ -33,16 +39,34 @@ export default function InvitePage() {
   const [joinedName, setJoinedName] = useState("");
 
   useEffect(() => {
+    if (token) rememberInvite(token);
+  }, [token]);
+
+  useEffect(() => {
+    if (!authLoading && user) markInviteNudged();
+  }, [authLoading, user]);
+
+  useEffect(() => {
     let cancelled = false;
     api
       .previewInvitation(token)
       .then((result) => {
-        if (!cancelled) setPreview(result);
+        if (cancelled) return;
+        const closed =
+          result.kind === "link"
+            ? result.status !== "open"
+            : result.status !== "pending";
+        if (closed) forgetInvite();
+        setPreview(result);
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "This invitation did not open");
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : "This invitation did not open";
+        if (/not found|already used|no longer open/i.test(message)) {
+          forgetInvite();
         }
+        setError(message);
       });
     return () => {
       cancelled = true;
@@ -53,6 +77,7 @@ export default function InvitePage() {
     setJoining(true);
     try {
       const result = await api.acceptInvitation(token);
+      forgetInvite();
       track("invitation_accepted", { role: "member" });
       setJoinedName(result.team.name);
       window.setTimeout(() => {
@@ -160,11 +185,12 @@ export default function InvitePage() {
                   </Button>
                 ) : (
                   <Button
-                    onClick={() =>
+                    onClick={() => {
+                      rememberInvite(token);
                       router.push(
-                        `/auth/login?intent=join&redirect=${encodeURIComponent(`/invite/${token}`)}`
-                      )
-                    }
+                        `/auth/login?intent=join&redirect=${encodeURIComponent(invitePath(token))}`
+                      );
+                    }}
                     className="mt-6 w-full"
                   >
                     Sign in to join

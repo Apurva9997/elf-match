@@ -5,6 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import { oauthConfig } from "@/lib/oauth-config";
+import {
+  invitePath,
+  inviteTokenFromPath,
+  rememberedInvite,
+} from "@/lib/pending-invite";
 import { useClerk, useSignIn } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion } from "framer-motion";
@@ -72,13 +77,19 @@ function LoginPageContent() {
 
   const requestedRedirect = searchParams.get("redirect") || "";
   const intent = searchParams.get("intent");
-  const joining =
-    intent === "join" || requestedRedirect.startsWith("/invite/");
+  const [storedInvite, setStoredInvite] = useState<string | null>(null);
+  useEffect(() => {
+    setStoredInvite(rememberedInvite());
+  }, []);
+  const inviteRedirect = inviteTokenFromPath(requestedRedirect)
+    ? requestedRedirect
+    : storedInvite
+      ? invitePath(storedInvite)
+      : "";
+  const joining = intent === "join" || Boolean(inviteRedirect);
   const creating = intent === "create" && !joining;
   const redirectTo = joining
-    ? requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//")
-      ? requestedRedirect
-      : "/dashboard"
+    ? inviteRedirect || "/dashboard"
     : creating
       ? "/dashboard?new=1"
       : requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//")
@@ -239,7 +250,9 @@ function LoginPageContent() {
                   : creating
                     ? "Use an email you will still check in December. We will send a 6-digit code. No password."
                     : joining
-                      ? "Use the email that received the invitation. A different email will not see the seat."
+                      ? inviteRedirect
+                        ? "Sign in or create your account. You will come back to the invitation and can join from there."
+                        : "Use the email that received the invitation. A different email will not see the seat."
                       : "Sign in with the email on the exchange. We will send a 6-digit code. No password."}
               </p>
             </div>

@@ -1,10 +1,19 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
+import { invitePath, rememberedInvite } from "@/lib/pending-invite";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function HomeActions() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [pendingInvite, setPendingInvite] = useState<string | null>(null);
+  useEffect(() => {
+    setPendingInvite(rememberedInvite());
+  }, []);
+  const joinHref = pendingInvite
+    ? `/auth/login?intent=join&redirect=${encodeURIComponent(invitePath(pendingInvite))}`
+    : "/auth/login?intent=join";
 
   if (isLoading) {
     return (
@@ -34,7 +43,7 @@ export function HomeActions() {
         Create an exchange
       </Link>
       <Link
-        href="/auth/login?intent=join"
+        href={joinHref}
         className="mt-3 block text-base font-semibold text-evergreen underline-offset-2 hover:underline"
       >
         I have an invitation

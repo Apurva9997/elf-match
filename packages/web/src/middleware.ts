@@ -30,9 +30,15 @@ const isAuthRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages. An invitation
+  // carried in the login URL must survive that bounce.
   if (userId && isAuthRoute(req)) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const requested = req.nextUrl.searchParams.get("redirect") || "";
+    const destination =
+      requested.startsWith("/invite/") && !requested.startsWith("//")
+        ? requested
+        : "/dashboard";
+    return NextResponse.redirect(new URL(destination, req.url));
   }
 
   // Protect non-public routes

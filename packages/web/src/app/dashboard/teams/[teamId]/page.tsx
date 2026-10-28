@@ -199,7 +199,6 @@ export default function TeamPage() {
     data: team,
     isLoading: teamLoading,
     isError: teamError,
-    error: teamErrorDetail,
     refetch: refetchTeam,
   } = useQuery({
     queryKey: ["team", teamId],
@@ -1049,23 +1048,14 @@ export default function TeamPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="text-center p-8 max-w-md">
-          <h2 className="text-xl font-display font-semibold text-ink mb-2">
-            {teamError ? "Couldn't load this exchange" : "Team not found"}
+          <h2 className="text-xl font-display font-semibold text-ink mb-6">
+            This exchange didn&apos;t load
           </h2>
-          {teamError && (
-            <p className="text-ink-soft mb-6">
-              {teamErrorDetail instanceof Error
-                ? teamErrorDetail.message
-                : "The server didn't respond. Please try again."}
-            </p>
-          )}
           <div className="flex justify-center gap-3">
             <Link href="/dashboard">
-              <Button variant="secondary">Back to Dashboard</Button>
+              <Button variant="secondary">Back</Button>
             </Link>
-            {teamError && (
-              <Button onClick={() => refetchTeam()}>Try again</Button>
-            )}
+            <Button onClick={() => refetchTeam()}>Try again</Button>
           </div>
         </Card>
       </div>

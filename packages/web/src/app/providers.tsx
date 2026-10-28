@@ -2,14 +2,39 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
-import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import {
+  invitePath,
+  inviteWasNudged,
+  rememberedInvite,
+} from "@/lib/pending-invite";
 import { Loader2 } from "lucide-react";
 
 function AuthWrapper({ children }: { children: ReactNode }) {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+  const sent = useRef(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isLoading) return;
+    if (user && !pathname.startsWith("/invite/")) {
+      const token = rememberedInvite();
+      if (token && !inviteWasNudged() && !sent.current) {
+        sent.current = true;
+        router.replace(invitePath(token));
+        return;
+      }
+    }
+    setReady(true);
+  }, [isLoading, user, pathname, router]);
+
+  const waitingForInvite =
+    Boolean(user) && !ready && !pathname.startsWith("/invite/");
+  if (isLoading || waitingForInvite) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-gold animate-spin" />

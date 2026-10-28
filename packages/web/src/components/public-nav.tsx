@@ -2,9 +2,10 @@
 
 import { ElfMark } from "@/components/mark";
 import { useAuth } from "@/lib/auth-context";
+import { invitePath, rememberedInvite } from "@/lib/pending-invite";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const links = [
   { href: "/how-it-works", label: "How it works" },
@@ -17,6 +18,13 @@ const links = [
 export function PublicNav() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
+  const [pendingInvite, setPendingInvite] = useState<string | null>(null);
+  useEffect(() => {
+    setPendingInvite(rememberedInvite());
+  }, []);
+  const signInHref = pendingInvite
+    ? `/auth/login?intent=join&redirect=${encodeURIComponent(invitePath(pendingInvite))}`
+    : "/auth/login";
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-ivory/95">
@@ -51,7 +59,7 @@ export function PublicNav() {
           ) : (
             <>
               <Link
-                href="/auth/login"
+                href={signInHref}
                 className="px-2 py-2 text-sm font-semibold text-evergreen hover:text-evergreen-deep"
               >
                 Sign in

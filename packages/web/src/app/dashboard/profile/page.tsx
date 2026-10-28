@@ -55,7 +55,6 @@ export default function ProfilePage() {
     data: profile,
     isLoading: profileLoading,
     isError: profileError,
-    error: profileErrorDetail,
     refetch: refetchProfile,
   } = useQuery({
     queryKey: ["profile"],
@@ -198,14 +197,9 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="text-center p-8 max-w-md">
-          <h2 className="text-xl font-display font-semibold text-cream mb-2">
-            Couldn&apos;t load your profile
+          <h2 className="text-xl font-display font-semibold text-cream mb-6">
+            Your profile didn&apos;t load
           </h2>
-          <p className="text-cream/60 mb-6">
-            {profileErrorDetail instanceof Error
-              ? profileErrorDetail.message
-              : "The server didn't respond. Please try again."}
-          </p>
           <div className="flex justify-center gap-3">
             <Link href="/dashboard">
               <Button variant="secondary">Back</Button>

@@ -9,6 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { track } from "@/lib/analytics";
+import {
+  forgetInvite,
+  invitePath,
+  rememberedInvite,
+} from "@/lib/pending-invite";
 import { api, type TeamWithRole } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { formatShortDate } from "@/lib/utils";
@@ -140,7 +145,6 @@ function DashboardContent() {
     data: teams,
     isLoading: teamsLoading,
     isError: teamsError,
-    error: teamsErrorDetail,
     refetch: refetchTeams,
   } = useQuery({
     queryKey: ["teams"],
@@ -328,6 +332,11 @@ function DashboardContent() {
     }
   }, [authLoading, user, router]);
 
+  const [pendingInvite, setPendingInvite] = useState<string | null>(null);
+  useEffect(() => {
+    setPendingInvite(rememberedInvite());
+  }, []);
+
   useEffect(() => {
     if (
       createFromIntent.current ||
@@ -403,6 +412,35 @@ function DashboardContent() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {pendingInvite && (
+          <Card className="mb-8 border-gold/30">
+            <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-display text-xl text-evergreen">
+                  You have an invitation waiting
+                </h2>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Open it to join the exchange. You can do that whenever you are ready.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    forgetInvite();
+                    setPendingInvite(null);
+                  }}
+                >
+                  Not now
+                </Button>
+                <Button size="sm" onClick={() => router.push(invitePath(pendingInvite))}>
+                  Review invitation
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Pending Invitations */}
         {pendingInvitations && pendingInvitations.length > 0 && (
           <motion.div
@@ -511,14 +549,9 @@ function DashboardContent() {
         {teamsError ? (
           <Card className="text-center py-12">
             <CardContent>
-              <h2 className="text-xl font-display font-semibold text-ink mb-2">
-                Couldn&apos;t load your exchanges
+              <h2 className="text-xl font-display font-semibold text-ink mb-6">
+                Your exchanges didn&apos;t load
               </h2>
-              <p className="text-ink-soft mb-6 max-w-md mx-auto">
-                {teamsErrorDetail instanceof Error
-                  ? teamsErrorDetail.message
-                  : "The server didn't respond. Please try again."}
-              </p>
               <Button onClick={() => refetchTeams()}>Try again</Button>
             </CardContent>
           </Card>
@@ -543,8 +576,7 @@ function DashboardContent() {
                   No exchanges yet
                 </h2>
                 <p className="text-ink-soft mb-6 max-w-md mx-auto">
-                  Name one, set a date, and invite people with a link or by email. Budgets are
-                  in rupees.
+                  This account has no exchanges. Name one, set a date, and invite people with a link or by email.
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />

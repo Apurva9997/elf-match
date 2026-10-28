@@ -20,11 +20,11 @@ The Google accounts `redacted@example.com` and `redacted@example.com` are the sa
 - App: http://localhost:3000
 - Clerk development instance: `ins_your_development_instance`
 - Publishable key starts with `pk_test_`. Account host: `your-instance.accounts.dev`
-- Database host: `ep-dawn-wind-a1evr80p-pooler.ap-southeast-1.aws.neon.tech`, database `neondb`
+- Database host: `ep-quiet-shadow-a199c4vm-pooler.ap-southeast-1.aws.neon.tech`, database `neondb`
 
 The development database URL is in `packages/api/.env.development`, which is gitignored. If that file is missing, ask the user for it. Do not copy the URL from `packages/api/.env`.
 
-Before any write, the connection string host is `ep-dawn-wind-a1evr80p`.
+Before any write, the connection string host is `ep-quiet-shadow-a199c4vm`.
 
 Email-code sign-in is enabled on the development instance only. Its paths are `/auth/login` and `/dashboard`, and `http://localhost:3000` is an allowed origin. Do not change the production Clerk instance.
 
