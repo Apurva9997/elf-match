@@ -144,6 +144,7 @@ function DashboardContent() {
   const {
     data: teams,
     isLoading: teamsLoading,
+    isPending: exchangesPending,
     isError: teamsError,
     refetch: refetchTeams,
   } = useQuery({
@@ -357,7 +358,7 @@ function DashboardContent() {
     return null;
   }
 
-  if (authLoading || teamsLoading || invitationsLoading) {
+  if (authLoading || teamsLoading || exchangesPending || invitationsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-gold animate-spin" />
