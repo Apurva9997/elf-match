@@ -16,7 +16,7 @@ import {
 } from "@/lib/pending-invite";
 import { api, type TeamWithRole } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { formatShortDate } from "@/lib/utils";
+import { cn, formatShortDate } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -86,34 +86,41 @@ function exchangeSentence(status: TeamWithRole["status"]) {
 }
 
 function TeamCard({ team }: { team: TeamWithRole }) {
+  const description = team.description?.trim();
+
   return (
-    <Link href={`/dashboard/teams/${team.id}`}>
-      <Card variant="interactive" className="h-full">
-        <CardHeader className="pb-2">
+    <Link href={`/dashboard/teams/${team.id}`} className="flex h-full">
+      <Card variant="interactive" className="flex h-full w-full flex-col">
+        <CardHeader className="mb-3 pb-0">
           <CardTitle className="text-lg">{team.name}</CardTitle>
           <p className="mt-1 text-sm text-ink">{exchangeSentence(team.status)}</p>
         </CardHeader>
-        <CardContent>
-          {team.description && (
-            <p className="mb-4 text-sm text-ink-soft">
-              {team.description}
-            </p>
-          )}
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center text-ink-soft">
-              {team.role === "admin" && (
-                <Badge variant="gold" className="mr-2 text-xs">
+        <CardContent className="flex flex-1 flex-col">
+          <p
+            className={cn(
+              "line-clamp-2 min-h-10 text-sm",
+              description ? "text-ink-soft" : "text-ink-faint"
+            )}
+          >
+            {description || "No description"}
+          </p>
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-ink-soft">
+              {team.role === "admin" ? (
+                <Badge variant="gold" className="text-xs">
                   Admin
                 </Badge>
+              ) : (
+                <Badge className="text-xs">Member</Badge>
               )}
-              {team.exchangeDate && (
-                <span className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {formatShortDate(team.exchangeDate)}
-                </span>
-              )}
+              <span className="flex items-center">
+                <Calendar className="mr-1 h-4 w-4" />
+                {team.exchangeDate
+                  ? formatShortDate(team.exchangeDate)
+                  : "Date not set"}
+              </span>
             </div>
-            <ChevronRight className="w-5 h-5 text-ink-faint" />
+            <ChevronRight className="h-5 w-5 shrink-0 text-ink-faint" />
           </div>
         </CardContent>
       </Card>
