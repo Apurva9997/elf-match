@@ -135,6 +135,8 @@ export default function TeamPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiveName, setArchiveName] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteName, setDeleteName] = useState("");
   const [inviteLinkUrl, setInviteLinkUrl] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
@@ -939,6 +941,18 @@ export default function TeamPage() {
     },
   });
 
+  const deleteTeamMutation = useMutation({
+    mutationFn: () => api.deleteTeam(teamId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Exchange deleted.");
+      router.push("/dashboard");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Could not delete the exchange.");
+    },
+  });
+
   const disableInviteLinkMutation = useMutation({
     mutationFn: () => api.disableInviteLink(teamId),
     onSuccess: () => {
@@ -1115,16 +1129,6 @@ export default function TeamPage() {
               </Link>
               {isAdmin && (
                 <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setArchiveName("");
-                      setArchiveOpen(true);
-                    }}
-                  >
-                    Archive
-                  </Button>
                   <Button
                     variant="secondary"
                     size="sm"
@@ -2554,6 +2558,39 @@ export default function TeamPage() {
             </div>
           )}
         </motion.div>
+
+        {isAdmin && (
+          <Card className="mt-10 border-cranberry/40">
+            <CardHeader>
+              <CardTitle>Close this exchange</CardTitle>
+              <CardDescription>
+                Archive keeps the draw and takes the exchange off the active list. Delete removes the exchange and every row that belongs to it, including a saved draw. People's accounts stay.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setArchiveName("");
+                  setArchiveOpen(true);
+                }}
+              >
+                Archive exchange
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => {
+                  setDeleteName("");
+                  setDeleteOpen(true);
+                }}
+              >
+                Delete exchange
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       {/* Invite Modal */}
@@ -2920,6 +2957,36 @@ export default function TeamPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Delete this exchange"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-ink-soft">
+            {team?.name} is removed for everyone in it, including a saved draw, invitations, wishlists, and exclusions. People&apos;s Elf Match accounts stay. This cannot be undone.
+          </p>
+          <Input
+            label={`Type “${team?.name ?? "the exchange name"}” to delete`}
+            value={deleteName}
+            onChange={(event) => setDeleteName(event.target.value)}
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-cranberry text-ivory hover:bg-cranberry-deep"
+              onClick={() => deleteTeamMutation.mutate()}
+              isLoading={deleteTeamMutation.isPending}
+              disabled={deleteName.trim() !== (team?.name ?? "")}
+            >
+              Delete exchange
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       <Modal

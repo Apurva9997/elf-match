@@ -174,7 +174,7 @@ The app uses a "Cozy Winter Night" aesthetic:
 - `GET /teams` - List user's teams
 - `GET /teams/:id` - Get team details
 - `PATCH /teams/:id` - Update team
-- `DELETE /teams/:id` - Delete an exchange that has not been drawn
+- `DELETE /teams/:id` - Delete an exchange and every row that belongs to it
 - `POST /teams/:id/archive` - Archive an exchange and take it off the active list
 - `DELETE /user/account` - Delete the signed-in account and its Clerk record
 - `POST /teams/:id/assign` - Trigger assignments

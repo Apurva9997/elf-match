@@ -369,27 +369,6 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
-            <Card className="border-cranberry/40">
-              <CardHeader>
-                <CardTitle>Delete this account</CardTitle>
-                <CardDescription>
-                  This removes the sign-in account and the Elf Match record: name, email, phone, and delivery address. An exchange you organize has to be archived first, so the group is not left without an organizer. A saved draw keeps the pair, with your name replaced by Former member.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setDeleteConfirmation("");
-                    setDeleteOpen(true);
-                  }}
-                >
-                  Delete account
-                </Button>
-              </CardContent>
-            </Card>
-
             {/* Submit Button */}
             <div className="flex justify-end gap-3">
               <Link href="/dashboard">
@@ -403,6 +382,28 @@ export default function ProfilePage() {
               </Button>
             </div>
           </form>
+
+          <Card className="mt-10 border-cranberry/40">
+            <CardHeader>
+              <CardTitle>Delete this account</CardTitle>
+              <CardDescription>
+                This removes the sign-in account and every Elf Match row for it: name, email, phone, address, and the exchanges you organize, including a saved draw. A seat in someone else's exchange is removed too. Nothing is kept.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => {
+                  setDeleteConfirmation("");
+                  setDeleteOpen(true);
+                }}
+              >
+                Delete account
+              </Button>
+            </CardContent>
+          </Card>
+
           <Modal
             isOpen={deleteOpen}
             onClose={() => setDeleteOpen(false)}
@@ -410,7 +411,7 @@ export default function ProfilePage() {
           >
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-ink-soft">
-                This cannot be undone. Type “delete my account” to remove the sign-in account and the Elf Match record.
+                This cannot be undone. Type “delete my account” to remove the sign-in account and every Elf Match row for it, including an exchange you organize.
               </p>
               <Input
                 label="Type “delete my account”"

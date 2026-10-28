@@ -1,6 +1,7 @@
 import { and, count, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
-import { assignments, db, exclusions, teamMembers, teams } from "../db/index.js";
+import { assignments, db, teamMembers, teams } from "../db/index.js";
+import { eraseTeam } from "../lib/account.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
@@ -420,23 +421,9 @@ async function _deleteTeam(
       return forbidden("Only admins can delete the team");
     }
 
-    const drawn = await db.query.assignments.findFirst({
-      where: eq(assignments.teamId, teamId),
-      columns: { id: true },
+    await db.transaction(async (tx) => {
+      await eraseTeam(tx, teamId);
     });
-    if (drawn) {
-      return error(
-        "Names have been drawn, so this exchange cannot be deleted. Archive it instead. Archiving keeps the draw and takes it off the active list.",
-        409,
-        "DRAW_LOCKED"
-      );
-    }
-
-    // Assignments and exclusions point at members without cascading,
-    // so they have to go before the exchange itself.
-    await db.delete(assignments).where(eq(assignments.teamId, teamId));
-    await db.delete(exclusions).where(eq(exclusions.teamId, teamId));
-    await db.delete(teams).where(eq(teams.id, teamId));
 
     return success({ message: "Team deleted" });
   } catch (err) {

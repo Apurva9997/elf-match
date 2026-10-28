@@ -117,10 +117,9 @@ export default function PrivacyPage() {
             <p className="text-cream/70">
               We retain your data for as long as your account is active or as
               needed to provide you services. From your profile, you can delete
-              the account. That removes the sign-in account, your name, email,
-              phone, and delivery address. An exchange you organize has to be
-              archived first. A saved draw keeps the pair, with your name
-              replaced by Former member, so the other person's gift is not lost.
+              the account. That removes the sign-in account and every Elf Match
+              row for it, including an exchange you organize and a saved draw.
+              Nothing from that account is kept.
             </p>
           </section>
 

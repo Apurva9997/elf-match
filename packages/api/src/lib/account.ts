@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 import {
   activityLog,
   assignments,
@@ -10,99 +10,70 @@ import {
   users,
 } from "../db/index.js";
 
-const forgottenName = "Former member";
+type Deleter = Pick<typeof db, "delete">;
 
-/**
- * Removes this person from Elf Match. An exchange they organize is refused
- * until they archive it, so the group is not left without an organizer.
- * Their name, email, phone, address, and wishlist are removed. A saved draw
- * keeps the pair, with the name replaced, so the other person's gift is not lost.
- */
-export async function accountDeletionBlock(userId: string): Promise<string | null> {
-  const organized = await db.query.teamMembers.findMany({
-    where: and(
-      eq(teamMembers.userId, userId),
-      eq(teamMembers.role, "admin"),
-      eq(teamMembers.invitationStatus, "accepted")
-    ),
-    with: { team: { columns: { name: true, archivedAt: true } } },
-  });
-  const stillOpen = organized.filter((seat) => !seat.team.archivedAt);
-  if (stillOpen.length === 0) return null;
-  return `Archive ${stillOpen.map((seat) => seat.team.name).join(", ")} before deleting this account. The people in it still need an organizer.`;
+/** Removes one exchange and every row that belongs to it, including a saved draw. */
+export async function eraseTeam(tx: Deleter, teamId: string): Promise<void> {
+  await tx.delete(assignments).where(eq(assignments.teamId, teamId));
+  await tx.delete(exclusions).where(eq(exclusions.teamId, teamId));
+  await tx.delete(activityLog).where(eq(activityLog.teamId, teamId));
+  await tx.delete(teams).where(eq(teams.id, teamId));
 }
 
+/**
+ * Removes this person and every row that points at them.
+ * An exchange they organize is removed with them, including a saved draw.
+ * A seat in someone else's exchange is removed, and so is any pair or
+ * exclusion that used that seat. Nothing is renamed or kept.
+ */
 export async function forgetAccount(userId: string): Promise<
   | { ok: true }
   | { ok: false; status: number; message: string }
 > {
-  const blocked = await accountDeletionBlock(userId);
-  if (blocked) return { ok: false, status: 409, message: blocked };
-
   const seats = await db.query.teamMembers.findMany({
     where: eq(teamMembers.userId, userId),
-    columns: { id: true, teamId: true },
+    columns: { id: true, teamId: true, role: true },
   });
   const seatIds = seats.map((seat) => seat.id);
-  const drawnSeatIds = seatIds.length
-    ? (
-        await db
-          .select({ id: assignments.giverId })
-          .from(assignments)
-          .where(inArray(assignments.giverId, seatIds))
-      )
-        .map((row) => row.id)
-        .concat(
-          (
-            await db
-              .select({ id: assignments.receiverId })
-              .from(assignments)
-              .where(inArray(assignments.receiverId, seatIds))
-          ).map((row) => row.id)
-        )
-    : [];
-  const drawn = new Set(drawnSeatIds);
-  const undrawnSeatIds = seatIds.filter((id) => !drawn.has(id));
+  const organizedTeamIds = seats
+    .filter((seat) => seat.role === "admin")
+    .map((seat) => seat.teamId);
 
   await db.transaction(async (tx) => {
-    if (seatIds.length > 0) {
-      await tx.delete(exclusions).where(inArray(exclusions.member1Id, seatIds));
-      await tx.delete(exclusions).where(inArray(exclusions.member2Id, seatIds));
-    }
-    // A saved draw points at the seat. Keep that seat, without the person.
-    if (drawn.size > 0) {
-      await tx
-        .update(teamMembers)
-        .set({
-          userId: null,
-          invitedEmail: forgottenName,
-          invitationToken: null,
-          invitationLinkToken: null,
-        })
-        .where(inArray(teamMembers.id, [...drawn]));
-    }
-    if (undrawnSeatIds.length > 0) {
-      await tx.delete(teamMembers).where(inArray(teamMembers.id, undrawnSeatIds));
+    for (const teamId of organizedTeamIds) {
+      await eraseTeam(tx, teamId);
     }
 
+    const remainingSeatIds = seatIds.filter(
+      (id) => !seats.some((seat) => seat.id === id && seat.role === "admin")
+    );
+    if (remainingSeatIds.length > 0) {
+      await tx
+        .delete(assignments)
+        .where(
+          or(
+            inArray(assignments.giverId, remainingSeatIds),
+            inArray(assignments.receiverId, remainingSeatIds)
+          )
+        );
+      await tx
+        .delete(exclusions)
+        .where(
+          or(
+            inArray(exclusions.member1Id, remainingSeatIds),
+            inArray(exclusions.member2Id, remainingSeatIds)
+          )
+        );
+      await tx.delete(teamMembers).where(inArray(teamMembers.id, remainingSeatIds));
+    }
+
+    await tx.delete(activityLog).where(eq(activityLog.actorId, userId));
+    await tx.delete(userAddresses).where(eq(userAddresses.userId, userId));
+    // A team this person created, but no longer organizes, stays for its members.
     await tx
       .update(teams)
       .set({ createdBy: null, updatedAt: new Date() })
       .where(eq(teams.createdBy, userId));
-    await tx.delete(activityLog).where(eq(activityLog.actorId, userId));
-    await tx.delete(userAddresses).where(eq(userAddresses.userId, userId));
-    await tx
-      .update(users)
-      .set({
-        name: forgottenName,
-        email: `forgotten-${userId}@forgotten.elfmatch`,
-        mobile: null,
-        avatarUrl: null,
-        clerkId: null,
-        preferences: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
     await tx.delete(users).where(eq(users.id, userId));
   });
 

@@ -2,7 +2,7 @@ import { createClerkClient } from "@clerk/backend";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, userAddresses, users } from "../db/index.js";
-import { accountDeletionBlock, forgetAccount } from "../lib/account.js";
+import { forgetAccount } from "../lib/account.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import {
   decryptAddress,
@@ -238,9 +238,6 @@ async function _deleteAccount(req: Request): Promise<Response> {
     if (body?.confirmation !== "delete my account") {
       return error("Type “delete my account” to confirm.", 400);
     }
-
-    const blocked = await accountDeletionBlock(user.id);
-    if (blocked) return error(blocked, 409);
 
     if (user.clerkId && process.env.CLERK_SECRET_KEY) {
       const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });

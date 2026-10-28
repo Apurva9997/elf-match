@@ -67,7 +67,7 @@ export const teams = pgTable("teams", {
   // Set when the organizer archives the exchange. The draw and wishlists stay.
   // Null means the exchange is still on the active list.
   archivedAt: timestamp("archived_at"),
-  createdBy: uuid("created_by").references(() => users.id),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -80,7 +80,7 @@ export const teamMembers = pgTable(
     teamId: uuid("team_id")
       .references(() => teams.id, { onDelete: "cascade" })
       .notNull(),
-    userId: uuid("user_id").references(() => users.id),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     role: varchar("role", { length: 50 }).default("member").notNull(),
     invitationStatus: varchar("invitation_status", { length: 50 })
       .default("pending")
@@ -136,10 +136,10 @@ export const assignments = pgTable(
       .references(() => teams.id, { onDelete: "cascade" })
       .notNull(),
     giverId: uuid("giver_id")
-      .references(() => teamMembers.id)
+      .references(() => teamMembers.id, { onDelete: "cascade" })
       .notNull(),
     receiverId: uuid("receiver_id")
-      .references(() => teamMembers.id)
+      .references(() => teamMembers.id, { onDelete: "cascade" })
       .notNull(),
     revealedAt: timestamp("revealed_at"),
     viewedAt: timestamp("viewed_at"),
@@ -164,10 +164,10 @@ export const exclusions = pgTable("exclusions", {
     .references(() => teams.id, { onDelete: "cascade" })
     .notNull(),
   member1Id: uuid("member_1_id")
-    .references(() => teamMembers.id)
+    .references(() => teamMembers.id, { onDelete: "cascade" })
     .notNull(),
   member2Id: uuid("member_2_id")
-    .references(() => teamMembers.id)
+    .references(() => teamMembers.id, { onDelete: "cascade" })
     .notNull(),
   reason: varchar("reason", { length: 255 }),
   bidirectional: boolean("bidirectional").default(true),
@@ -178,7 +178,7 @@ export const exclusions = pgTable("exclusions", {
 export const activityLog = pgTable("activity_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   teamId: uuid("team_id").references(() => teams.id, { onDelete: "cascade" }),
-  actorId: uuid("actor_id").references(() => users.id),
+  actorId: uuid("actor_id").references(() => users.id, { onDelete: "cascade" }),
   action: varchar("action", { length: 100 }).notNull(),
   details: jsonb("details"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
