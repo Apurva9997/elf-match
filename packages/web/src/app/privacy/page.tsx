@@ -116,8 +116,11 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-cream/70">
               We retain your data for as long as your account is active or as
-              needed to provide you services. You can request deletion of your
-              account and associated data at any time by contacting us.
+              needed to provide you services. From your profile, you can delete
+              the account. That removes the sign-in account, your name, email,
+              phone, and delivery address. An exchange you organize has to be
+              archived first. A saved draw keeps the pair, with your name
+              replaced by Former member, so the other person's gift is not lost.
             </p>
           </section>
 

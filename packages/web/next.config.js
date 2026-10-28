@@ -39,8 +39,8 @@ const nextConfig = {
 };
 
 module.exports = withSentryConfig(nextConfig, {
-  org: "apoorv-khandelwal",
-  project: "javascript-nextjs",
+  org: process.env.SENTRY_ORG,
+  project: "elf-match",
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: true,
   widenClientFileUpload: true,

@@ -64,6 +64,9 @@ export const teams = pgTable("teams", {
   status: varchar("status", { length: 50 })
     .default("collecting_wishes")
     .notNull(),
+  // Set when the organizer archives the exchange. The draw and wishlists stay.
+  // Null means the exchange is still on the active list.
+  archivedAt: timestamp("archived_at"),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

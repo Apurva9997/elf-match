@@ -39,7 +39,7 @@ export async function joinByInviteLink(
   user: { id: string; email: string }
 ): Promise<JoinByLinkResult> {
   const team = await findOpenLink(token);
-  if (!team) {
+  if (!team || team.archivedAt) {
     return {
       ok: false,
       status: 404,
@@ -105,7 +105,7 @@ export async function joinByInviteLink(
 
 export async function inviteLinkPreview(token: string) {
   const team = await findOpenLink(token);
-  if (!team) return null;
+  if (!team || team.archivedAt) return null;
 
   const closed = team.status === "assigned" || (await drawHasStarted(team.id));
   return {

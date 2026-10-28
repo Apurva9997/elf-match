@@ -29,6 +29,7 @@ const routes: Route[] = [
   // Profile
   { method: "GET", pattern: "/user/profile", handler: profile.getProfile },
   { method: "PATCH", pattern: "/user/profile", handler: profile.updateProfile },
+  { method: "DELETE", pattern: "/user/account", handler: profile.deleteAccount },
 
   // Invitations (before /teams/:teamId routes to avoid conflicts)
   { method: "GET", pattern: "/invitations/pending", handler: invitations.listPendingInvitations },
@@ -44,6 +45,7 @@ const routes: Route[] = [
   { method: "GET", pattern: "/teams/:teamId", handler: teams.getTeam },
   { method: "PATCH", pattern: "/teams/:teamId", handler: teams.updateTeam },
   { method: "DELETE", pattern: "/teams/:teamId", handler: teams.deleteTeam },
+  { method: "POST", pattern: "/teams/:teamId/archive", handler: teams.archiveTeam },
   { method: "GET", pattern: "/teams/:teamId/status", handler: teams.getTeamStatus },
 
   // Team invitations / members

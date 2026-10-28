@@ -91,6 +91,9 @@ async function _inviteMembers(
     if (!team) {
       return notFound("Team not found");
     }
+    if (team.archivedAt) {
+      return error("This exchange is archived. New invitations are closed.", 409);
+    }
 
     const results: Array<{
       email: string;
@@ -518,7 +521,7 @@ async function _listPendingInvitations(
       },
     });
 
-    const invitations = pendingInvitations.map((inv) => ({
+    const invitations = pendingInvitations.filter((inv) => !inv.team.archivedAt).map((inv) => ({
       id: inv.id,
       teamId: inv.teamId,
       teamName: inv.team.name,

@@ -94,6 +94,13 @@ class ApiClient {
     return this.request<UserProfile>("/user/profile");
   }
 
+  async deleteAccount(confirmation: string) {
+    return this.request<{ deleted: boolean }>("/user/account", {
+      method: "DELETE",
+      body: JSON.stringify({ confirmation }),
+    });
+  }
+
   async updateProfile(data: UserProfileInput) {
     return this.request<UserProfile>("/user/profile", {
       method: "PATCH",
@@ -121,6 +128,12 @@ class ApiClient {
     return this.request<Team>(`/teams/${teamId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
+    });
+  }
+
+  async archiveTeam(teamId: string) {
+    return this.request<{ archived: boolean }>(`/teams/${teamId}/archive`, {
+      method: "POST",
     });
   }
 

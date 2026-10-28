@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { api, type UserProfileInput } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,9 +47,12 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, logout } = useAuth();
   const queryClient = useQueryClient();
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const pincodeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
@@ -365,6 +369,27 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
+            <Card className="border-cranberry/40">
+              <CardHeader>
+                <CardTitle>Delete this account</CardTitle>
+                <CardDescription>
+                  This removes the sign-in account and the Elf Match record: name, email, phone, and delivery address. An exchange you organize has to be archived first, so the group is not left without an organizer. A saved draw keeps the pair, with your name replaced by Former member.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setDeleteConfirmation("");
+                    setDeleteOpen(true);
+                  }}
+                >
+                  Delete account
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Submit Button */}
             <div className="flex justify-end gap-3">
               <Link href="/dashboard">
@@ -378,6 +403,50 @@ export default function ProfilePage() {
               </Button>
             </div>
           </form>
+          <Modal
+            isOpen={deleteOpen}
+            onClose={() => setDeleteOpen(false)}
+            title="Delete this account"
+          >
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-ink-soft">
+                This cannot be undone. Type “delete my account” to remove the sign-in account and the Elf Match record.
+              </p>
+              <Input
+                label="Type “delete my account”"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+              />
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-cranberry text-ivory hover:bg-cranberry-deep"
+                  isLoading={deleting}
+                  disabled={deleteConfirmation.trim() !== "delete my account"}
+                  onClick={async () => {
+                    setDeleting(true);
+                    try {
+                      await api.deleteAccount(deleteConfirmation.trim());
+                      toast.success("Account deleted.");
+                      await logout();
+                      router.push("/");
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error
+                          ? err.message
+                          : "Could not delete the account."
+                      );
+                      setDeleting(false);
+                    }
+                  }}
+                >
+                  Delete account
+                </Button>
+              </div>
+            </div>
+          </Modal>
         </motion.div>
       </main>
     </div>

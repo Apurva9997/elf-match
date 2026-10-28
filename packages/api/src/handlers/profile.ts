@@ -1,6 +1,8 @@
+import { createClerkClient } from "@clerk/backend";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, userAddresses, users } from "../db/index.js";
+import { accountDeletionBlock, forgetAccount } from "../lib/account.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import {
   decryptAddress,
@@ -10,7 +12,12 @@ import {
 } from "../lib/encryption.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
-import { error, serverError, success, unauthorized } from "../lib/response.js";
+import {
+  error,
+  serverError,
+  success,
+  unauthorized,
+} from "../lib/response.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
 
 const profileUpdateSchema = z.object({
@@ -218,6 +225,46 @@ export const getProfile = wrapHandler(_getProfile, {
 });
 
 export const updateProfile = wrapHandler(_updateProfile, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+async function _deleteAccount(req: Request): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const body = (await req.json().catch(() => null)) as { confirmation?: string } | null;
+    if (body?.confirmation !== "delete my account") {
+      return error("Type “delete my account” to confirm.", 400);
+    }
+
+    const blocked = await accountDeletionBlock(user.id);
+    if (blocked) return error(blocked, 409);
+
+    if (user.clerkId && process.env.CLERK_SECRET_KEY) {
+      const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+      try {
+        await clerk.users.deleteUser(user.clerkId);
+      } catch (err) {
+        console.error("Clerk account was not deleted:", err);
+        return serverError(
+          "The sign-in account was not deleted, so the Elf Match record was left in place. Try again, or contact hello@elfmatch.com."
+        );
+      }
+    }
+
+    const forgotten = await forgetAccount(user.id);
+    if (!forgotten.ok) return error(forgotten.message, forgotten.status);
+
+    return success({ deleted: true });
+  } catch (err) {
+    console.error("Error deleting account:", err);
+    return serverError("Failed to delete the account");
+  }
+}
+
+export const deleteAccount = wrapHandler(_deleteAccount, {
   limiter: rateLimiters.authenticatedWrite,
   useUserId: true,
 });

@@ -191,6 +191,7 @@ async function _triggerAssignment(
       where: eq(teams.id, teamId),
     });
     if (!team) return notFound("Team not found");
+    if (team.archivedAt) return error("This exchange is archived.", 409);
 
     // Commit the whole draw or none of it. A second confirm that arrives
     // while this one is writing hits the giver unique index and rolls back.
@@ -450,6 +451,12 @@ async function _previewAssignment(
     });
 
     if (!adminMembership) return forbidden("Only admins can preview assignments");
+
+    const previewTeam = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+      columns: { archivedAt: true },
+    });
+    if (previewTeam?.archivedAt) return error("This exchange is archived.", 409);
 
     const existingAssignments = await db.query.assignments.findMany({
       where: eq(assignments.teamId, teamId),

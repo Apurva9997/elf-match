@@ -175,7 +175,8 @@ async function _listTeams(
       },
     });
 
-    const teamIds = memberships.map((membership) => membership.team.id);
+    const active = memberships.filter((membership) => !membership.team.archivedAt);
+    const teamIds = active.map((membership) => membership.team.id);
     const assignmentCounts = teamIds.length
       ? await db
           .select({ teamId: assignments.teamId, n: count() })
@@ -198,7 +199,7 @@ async function _listTeams(
     const assignedByTeam = new Map(assignmentCounts.map((row) => [row.teamId, row.n]));
     const membersByTeam = new Map(memberCounts.map((row) => [row.teamId, row.n]));
 
-    const teamsWithRole = memberships.map((m) => {
+    const teamsWithRole = active.map((m) => {
       const assigned = assignedByTeam.get(m.team.id) ?? 0;
       const joined = membersByTeam.get(m.team.id) ?? 0;
       // The status column can lag a saved draw, and a partial draw is not "assigned".
@@ -419,6 +420,18 @@ async function _deleteTeam(
       return forbidden("Only admins can delete the team");
     }
 
+    const drawn = await db.query.assignments.findFirst({
+      where: eq(assignments.teamId, teamId),
+      columns: { id: true },
+    });
+    if (drawn) {
+      return error(
+        "Names have been drawn, so this exchange cannot be deleted. Archive it instead. Archiving keeps the draw and takes it off the active list.",
+        409,
+        "DRAW_LOCKED"
+      );
+    }
+
     // Assignments and exclusions point at members without cascading,
     // so they have to go before the exchange itself.
     await db.delete(assignments).where(eq(assignments.teamId, teamId));
@@ -550,6 +563,48 @@ export const getTeam = wrapHandler(_getTeam, {
 });
 
 export const updateTeam = wrapHandler(_updateTeam, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+async function _archiveTeam(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const teamId = params.teamId;
+    if (!teamId) return error("Team ID required", 400);
+
+    const membership = await db.query.teamMembers.findFirst({
+      where: and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, user.id),
+        eq(teamMembers.invitationStatus, "accepted"),
+        eq(teamMembers.role, "admin")
+      ),
+    });
+    if (!membership) return forbidden("Only the organizer can archive this exchange");
+
+    await db
+      .update(teams)
+      .set({
+        archivedAt: new Date(),
+        inviteLinkToken: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(teams.id, teamId));
+
+    return success({ archived: true });
+  } catch (err) {
+    console.error("Error archiving team:", err);
+    return serverError("Failed to archive the exchange");
+  }
+}
+
+export const archiveTeam = wrapHandler(_archiveTeam, {
   limiter: rateLimiters.authenticatedWrite,
   useUserId: true,
 });

@@ -133,6 +133,8 @@ export default function TeamPage() {
     "overview" | "wishlist" | "address" | "assignment" | "exclusions"
   >("overview");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveName, setArchiveName] = useState("");
   const [inviteLinkUrl, setInviteLinkUrl] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
@@ -925,6 +927,18 @@ export default function TeamPage() {
     },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: () => api.archiveTeam(teamId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Exchange archived. It is off the active list, and the draw is kept.");
+      router.push("/dashboard");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Could not archive the exchange.");
+    },
+  });
+
   const disableInviteLinkMutation = useMutation({
     mutationFn: () => api.disableInviteLink(teamId),
     onSuccess: () => {
@@ -1101,6 +1115,16 @@ export default function TeamPage() {
               </Link>
               {isAdmin && (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setArchiveName("");
+                      setArchiveOpen(true);
+                    }}
+                  >
+                    Archive
+                  </Button>
                   <Button
                     variant="secondary"
                     size="sm"
@@ -2896,6 +2920,35 @@ export default function TeamPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={archiveOpen}
+        onClose={() => setArchiveOpen(false)}
+        title="Archive this exchange"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-ink-soft">
+            {team?.name} leaves the active list. The draw, wishlists, and addresses stay, so someone who already has a recipient can still open them. The invite link stops working. This is not a delete.
+          </p>
+          <Input
+            label={`Type “${team?.name ?? "the exchange name"}” to archive`}
+            value={archiveName}
+            onChange={(event) => setArchiveName(event.target.value)}
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setArchiveOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => archiveMutation.mutate()}
+              isLoading={archiveMutation.isPending}
+              disabled={archiveName.trim() !== (team?.name ?? "")}
+            >
+              Archive exchange
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Onboarding Modal */}
