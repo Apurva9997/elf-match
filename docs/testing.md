@@ -110,7 +110,7 @@ pnpm exec next dev --port 3000
 
 Done when the homepage HTML contains `pk_test_` and does not contain `pk_live_`, and a query to the dawn-wind database is the one the app is using.
 
-In development, invitation and assignment mail is printed in the Next.js log instead of sent. The invitation URL is in that log. There is no copy-link control in the app.
+In development, invitation and assignment mail is printed in the Next.js log instead of sent. The invitation URL is in that log. The organizer can also copy a shareable invite link from People on the exchange. That link is not in the log.
 
 ## Browser pass
 
@@ -130,7 +130,7 @@ Cover, as the user asked:
 - Do not confirm a draw. Confirmation emails every member and locks the assignments.
 - Do not delete an exchange unless the user asked. Studio December (`00000000-0000-0000-0000-000000000001`) is a development fixture. Leave it.
 
-A shared address, no per-person wishlist progress, and no copyable invitation link are known product gaps. Record a gap when the user asked for findings. Do not treat the gap as a bug to fix unless the user asked for that change.
+A shared address and no per-person wishlist progress are known product gaps. Record a gap when the user asked for findings. Do not treat the gap as a bug to fix unless the user asked for that change.
 
 ## Record a bug
 

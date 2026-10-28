@@ -6,7 +6,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "How to organize a Secret Santa exchange",
   description:
-    "Name the exchange, set a budget and dates, invite people by email, add exclusions, then preview and send private assignments.",
+    "Name the exchange, set a budget and dates, invite people by link or email, add exclusions, then preview and send private assignments.",
   alternates: {
     canonical: "https://elfmatch.com/how-it-works",
   },
@@ -30,12 +30,12 @@ const steps = [
   },
   {
     number: "02",
-    title: "Invite people by email",
-    body: "Enter the addresses of the people who should be in the draw. Each one receives an invitation link. They create a free account — a sign-in code by email, or Google if they prefer — then join, write a wishlist, and can add a delivery address.",
+    title: "Invite by link or email",
+    body: "Copy one invite link and share it with the group, or enter addresses so each person gets their own email. They create a free account — a sign-in code by email, or Google if they prefer — then join, write a wishlist, and can add a delivery address.",
     details: [
-      "Open invitations stay marked as pending",
-      "You can resend an invitation that has not been accepted",
-      "Pending people are not included when you draw names",
+      "The shared link stays open until you turn it off",
+      "An emailed invitation stays pending until that person joins",
+      "People who have not joined are not included when you draw names",
     ],
   },
   {

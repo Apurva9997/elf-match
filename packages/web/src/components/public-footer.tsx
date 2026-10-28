@@ -12,7 +12,7 @@ export function PublicFooter() {
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-soft">
             A free organizer for Secret Santa and other gift exchanges. Set a
-            budget and a date, invite people by email, collect wishlists, and
+            budget and a date, invite people by link or email, collect wishlists, and
             send each person a private assignment.
           </p>
         </div>

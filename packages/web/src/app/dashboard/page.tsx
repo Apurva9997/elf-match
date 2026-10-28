@@ -543,7 +543,7 @@ function DashboardContent() {
                   No exchanges yet
                 </h2>
                 <p className="text-ink-soft mb-6 max-w-md mx-auto">
-                  Name one, set a date, and invite people by email. Budgets are
+                  Name one, set a date, and invite people with a link or by email. Budgets are
                   in rupees.
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>

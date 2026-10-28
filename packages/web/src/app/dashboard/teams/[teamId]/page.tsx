@@ -133,6 +133,7 @@ export default function TeamPage() {
     "overview" | "wishlist" | "address" | "assignment" | "exclusions"
   >("overview");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteLinkUrl, setInviteLinkUrl] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -908,6 +909,48 @@ export default function TeamPage() {
     setIsAssignModalOpen(true);
   };
 
+  const createInviteLinkMutation = useMutation({
+    mutationFn: () => api.createInviteLink(teamId),
+    onSuccess: async (result) => {
+      setInviteLinkUrl(result.url);
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      try {
+        await navigator.clipboard.writeText(result.url);
+        toast.success("Invite link copied. Anyone with it can join until you turn it off.");
+      } catch {
+        toast.success("Invite link ready. Copy it from the box.");
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Could not create the invite link.");
+    },
+  });
+
+  const disableInviteLinkMutation = useMutation({
+    mutationFn: () => api.disableInviteLink(teamId),
+    onSuccess: () => {
+      setInviteLinkUrl(null);
+      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      toast.success("Invite link turned off. A new one will be a different address.");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Could not turn off the invite link.");
+    },
+  });
+
+  const copySharedInviteLink = async () => {
+    if (!inviteLinkUrl) {
+      createInviteLinkMutation.mutate();
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(inviteLinkUrl);
+      toast.success("Invite link copied.");
+    } catch {
+      toast.error("Could not copy the link.");
+    }
+  };
+
   const copyInviteLink = async (token: string | null) => {
     if (!token) {
       toast.error("This invitation has no link yet. Resend it to create one.");
@@ -1405,6 +1448,61 @@ export default function TeamPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {isAdmin && (
+                  <div className="mb-5 border border-rule bg-ivory p-4">
+                    <p className="font-medium text-ink">Invite link</p>
+                    <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                      Share this in a group. Anyone who opens it and signs in joins as themselves. Email invitations still work the same way.
+                    </p>
+                    {team.inviteLinkEnabled || inviteLinkUrl ? (
+                      <div className="mt-3 space-y-3">
+                        {inviteLinkUrl ? (
+                          <input
+                            readOnly
+                            value={inviteLinkUrl}
+                            aria-label="Invite link"
+                            onFocus={(event) => event.currentTarget.select()}
+                            className="w-full border border-rule bg-ivory-card px-3 py-2 text-sm text-ink"
+                          />
+                        ) : (
+                          <p className="text-sm text-ink-soft">
+                            A link is already on. Copying it again replaces that address, and the previous one stops working.
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={copySharedInviteLink}
+                            isLoading={createInviteLinkMutation.isPending}
+                          >
+                            <Link2 className="mr-2 h-4 w-4" />
+                            {inviteLinkUrl ? "Copy link" : "Copy a new link"}
+                          </Button>
+                          <button
+                            type="button"
+                            onClick={() => disableInviteLinkMutation.mutate()}
+                            disabled={disableInviteLinkMutation.isPending}
+                            className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-cranberry hover:underline disabled:opacity-50"
+                          >
+                            Turn off
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="mt-3"
+                        onClick={() => createInviteLinkMutation.mutate()}
+                        isLoading={createInviteLinkMutation.isPending}
+                      >
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Copy invite link
+                      </Button>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-3">
                   {team.members.map((member) => (
                     <div

@@ -6,7 +6,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Secret Santa features: budget, exclusions, wishlists",
   description:
-    "Budget, dates, email invitations, wishlists with links, exclusions, a previewable draw, encrypted addresses, and gift status for the giver.",
+    "Budget, dates, a shareable invite link, email invitations, wishlists with links, exclusions, a previewable draw, encrypted addresses, and gift status for the giver.",
   alternates: {
     canonical: "https://elfmatch.com/features",
   },
@@ -25,8 +25,8 @@ const settings = [
   },
   {
     label: "People",
-    title: "Email invitations, no participant cap",
-    body: "Invite as many addresses as the exchange needs. You need at least three joined people before a draw is possible. Pending invitations stay visible, and you can resend them.",
+    title: "A shared link, or email invitations",
+    body: "Copy one invite link for the group, or invite addresses one by one. You need at least three joined people before a draw is possible. The shared link stays open until you turn it off. Pending email invitations stay visible, and you can resend them.",
   },
   {
     label: "Wishlists",

@@ -11,6 +11,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type Preview = {
+  kind?: "link" | "email";
   status: string;
   exchangeName: string;
   hostName: string;
@@ -89,7 +90,7 @@ export default function InvitePage() {
                 </h1>
                 <p className="mt-3 text-ink-soft">{error}</p>
                 <p className="mt-3 text-sm text-ink-soft">
-                  Ask the organizer to resend it, or sign in with the email that received the link.
+                  Ask the organizer for a new link, or sign in with the email that received the invitation.
                 </p>
                 <Button onClick={() => router.push("/dashboard")} className="mt-6 w-full">
                   Go to your exchanges
@@ -126,11 +127,17 @@ export default function InvitePage() {
                   )}
                 </dl>
                 <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-                  You will write a wishlist. After the draw, only the person buying for you can read it. Your delivery address, if you add one, is shown only to that person.
+                  {preview.kind === "link"
+                    ? "You join as yourself. You will write a wishlist. After the draw, only the person buying for you can read it."
+                    : "You will write a wishlist. After the draw, only the person buying for you can read it. Your delivery address, if you add one, is shown only to that person."}
                 </p>
-                {preview.status !== "pending" ? (
+                {(preview.kind === "link"
+                  ? preview.status !== "open"
+                  : preview.status !== "pending") ? (
                   <p className="mt-4 text-sm text-cranberry">
-                    This invitation to {preview.exchangeName} is no longer open. Ask {preview.hostName} to resend it.
+                    {preview.kind === "link"
+                      ? `This invite link for ${preview.exchangeName} is no longer open. Ask ${preview.hostName} for a new one.`
+                      : `This invitation to ${preview.exchangeName} is no longer open. Ask ${preview.hostName} to resend it.`}
                   </p>
                 ) : authLoading ? (
                   <p className="mt-6 text-sm text-ink-soft">Checking your account.</p>

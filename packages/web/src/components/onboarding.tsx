@@ -115,7 +115,7 @@ export function Onboarding({
             id: "invite-members",
             title: "Invite Members",
             description:
-              "Invite friends, family, or coworkers to join your Secret Santa exchange. You'll need at least 3 members to start the gift exchange.",
+              "Copy an invite link for the group, or add email addresses. You'll need at least 3 people who have joined before you can draw names.",
             icon: <UserPlus className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },

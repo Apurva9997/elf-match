@@ -23,7 +23,7 @@ const faqs = [
   {
     question: "What is Elf Match?",
     answer:
-      "Elf Match is a free tool for organizing a Secret Santa or other gift exchange. You create an exchange, invite people by email, collect wishlists, optionally keep certain pairs from matching, and send each person a private assignment.",
+      "Elf Match is a free tool for organizing a Secret Santa or other gift exchange. You create an exchange, invite people with a shared link or by email, collect wishlists, optionally keep certain pairs from matching, and send each person a private assignment.",
   },
   {
     question: "Is Elf Match free?",
@@ -38,7 +38,7 @@ const faqs = [
   {
     question: "How do I invite people to my Secret Santa exchange?",
     answer:
-      "After creating your exchange, simply enter the email addresses of everyone you want to invite. They'll receive an email with a link to join your exchange. They can then create their account, add their wishlist, and wait for assignments.",
+      "After creating your exchange, copy the invite link and send it to the group. Anyone who opens it and signs in joins as themselves. You can still enter email addresses if you want each person to get their own invitation. They create a free account, add a wishlist, and wait for assignments. Turn the shared link off when you no longer want new people to join.",
   },
   {
     question: "What are exclusion rules and how do they work?",

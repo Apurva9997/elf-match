@@ -135,6 +135,19 @@ class ApiClient {
   }
 
   // Invitations
+  async createInviteLink(teamId: string) {
+    return this.request<{ url: string; enabled: boolean }>(
+      `/teams/${teamId}/invite-link`,
+      { method: "POST" }
+    );
+  }
+
+  async disableInviteLink(teamId: string) {
+    return this.request<{ enabled: boolean }>(`/teams/${teamId}/invite-link`, {
+      method: "DELETE",
+    });
+  }
+
   async inviteMembers(teamId: string, emails: string[]) {
     return this.request<{
       results: Array<{
@@ -151,6 +164,7 @@ class ApiClient {
 
   async previewInvitation(token: string) {
     return this.request<{
+      kind?: "link" | "email";
       status: string;
       exchangeName: string;
       hostName: string;
@@ -362,6 +376,7 @@ export interface Team {
   exchangeDate: string | null;
   wishlistDeadline: string | null;
   status: string;
+  inviteLinkEnabled?: boolean;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;

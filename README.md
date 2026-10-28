@@ -179,7 +179,9 @@ The app uses a "Cozy Winter Night" aesthetic:
 
 ### Invitations
 
-- `POST /teams/:id/invite` - Invite members
+- `POST /teams/:id/invite` - Invite members by email
+- `POST /teams/:id/invite-link` - Create or replace the shareable invite link
+- `DELETE /teams/:id/invite-link` - Turn the shareable invite link off
 - `POST /invitations/:token/accept` - Accept invitation
 - `POST /invitations/:token/decline` - Decline invitation
 

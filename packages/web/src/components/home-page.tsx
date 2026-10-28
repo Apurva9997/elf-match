@@ -13,8 +13,8 @@ const steps = [
   },
   {
     n: "02",
-    title: "Invite by email",
-    body: "You add addresses. Each person gets an invitation link, creates a free account with a sign-in code, and shows up as pending until they join. You can resend an invitation that is still open.",
+    title: "Invite by link or email",
+    body: "Copy one invite link and share it with the group, or add addresses one by one. Each emailed person gets their own link and stays pending until they join. Anyone who opens the shared link joins as themselves.",
   },
   {
     n: "03",
@@ -46,7 +46,7 @@ export function HomePage() {
                 Draw the names. Keep the giving secret.
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
-                Set a rupee budget and dates, invite by email, exclude pairs, and
+                Set a rupee budget and dates, invite by link or email, exclude pairs, and
                 preview every match before sending the final draw.
               </p>
               <HomeActions />
@@ -123,7 +123,7 @@ export function HomePage() {
                 How a Secret Santa exchange runs
               </Link>
               <Link href="/auth/login?intent=join" className="text-ivory/80 underline-offset-4 hover:underline">
-                Were you invited? Open the link in the email, or sign in with that address.
+                Were you invited? Open the link you were sent, or sign in with the address on the email.
               </Link>
             </div>
           </div>

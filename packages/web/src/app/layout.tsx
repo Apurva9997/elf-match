@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s | Elf Match",
   },
   description:
-    "Set a budget and date, invite people by email, collect wishlists, keep particular pairs from matching, and send private gift assignments.",
+    "Set a budget and date, invite people by link or email, collect wishlists, keep particular pairs from matching, and send private gift assignments.",
   keywords: [
     "secret santa",
     "secret santa generator",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     siteName: "Elf Match",
     title: "Elf Match — organize a Secret Santa exchange",
     description:
-      "Set a budget and date, invite people by email, collect wishlists, and send private assignments.",
+      "Set a budget and date, invite people by link or email, collect wishlists, and send private assignments.",
     images: [
       {
         url: "/opengraph-image",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Elf Match — organize a Secret Santa exchange",
     description:
-      "Set a budget and date, invite people by email, collect wishlists, and send private assignments.",
+      "Set a budget and date, invite people by link or email, collect wishlists, and send private assignments.",
     images: ["/twitter-image"],
     creator: "@elfmatch",
   },

@@ -12,6 +12,11 @@ import {
 import { getUserFromRequest } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
+import {
+  inviteLinkPreview,
+  joinByInviteLink,
+  newInviteToken,
+} from "../lib/invite-link.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
 import {
@@ -196,6 +201,11 @@ async function _previewInvitation(
     const token = params.token;
     if (!token) return error("Invitation token required", 400);
 
+    const shared = await inviteLinkPreview(token);
+    if (shared) {
+      return success(shared);
+    }
+
     const invitation = await db.query.teamMembers.findFirst({
       where: eq(teamMembers.invitationToken, hashToken(token)),
       with: {
@@ -212,6 +222,7 @@ async function _previewInvitation(
     const host = invitation.team.creator?.name?.split(" ")[0] || "The organizer";
 
     return success({
+      kind: "email",
       status: invitation.invitationStatus,
       exchangeName: invitation.team.name,
       hostName: host,
@@ -236,6 +247,19 @@ async function _acceptInvitation(
 
     const token = params.token;
     if (!token) return error("Invitation token required", 400);
+
+    const shared = await joinByInviteLink(token, user);
+    if (shared.ok) {
+      return success({
+        team: shared.team,
+        message: shared.alreadyMember
+          ? "Already a member"
+          : "Invitation accepted",
+      });
+    }
+    if (shared.status !== 404) {
+      return error(shared.message, shared.status, shared.code);
+    }
 
     const tokenHash = hashToken(token);
 
@@ -765,5 +789,97 @@ export const declineInvitationDirect = wrapHandler(_declineInvitationDirect, {
 
 export const resendInvitation = wrapHandler(_resendInvitation, {
   limiter: rateLimiters.inviteMembers,
+  useUserId: true,
+});
+
+async function organizerOf(teamId: string, userId: string) {
+  return db.query.teamMembers.findFirst({
+    where: and(
+      eq(teamMembers.teamId, teamId),
+      eq(teamMembers.userId, userId),
+      eq(teamMembers.invitationStatus, "accepted"),
+      eq(teamMembers.role, "admin")
+    ),
+  });
+}
+
+function inviteUrl(token: string): string {
+  const origin = process.env.FRONTEND_URL || "http://localhost:3000";
+  return `${origin}/invite/${token}`;
+}
+
+async function _createInviteLink(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const teamId = params.teamId;
+    if (!teamId) return error("Team ID required", 400);
+    if (!(await organizerOf(teamId, user.id))) {
+      return forbidden("Only the organizer can create an invite link");
+    }
+
+    const team = await db.query.teams.findFirst({
+      where: eq(teams.id, teamId),
+    });
+    if (!team) return notFound("Team not found");
+
+    if (team.status === "assigned") {
+      return error(
+        "Names have already been drawn, so a new invite link would not add anyone to the draw.",
+        409,
+        "DRAW_LOCKED"
+      );
+    }
+
+    const token = newInviteToken();
+    await db
+      .update(teams)
+      .set({ inviteLinkToken: hashToken(token), updatedAt: new Date() })
+      .where(eq(teams.id, teamId));
+
+    return success({ url: inviteUrl(token), enabled: true });
+  } catch (err) {
+    console.error("Error creating invite link:", err);
+    return serverError("Failed to create the invite link");
+  }
+}
+
+async function _disableInviteLink(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const teamId = params.teamId;
+    if (!teamId) return error("Team ID required", 400);
+    if (!(await organizerOf(teamId, user.id))) {
+      return forbidden("Only the organizer can turn off the invite link");
+    }
+
+    await db
+      .update(teams)
+      .set({ inviteLinkToken: null, updatedAt: new Date() })
+      .where(eq(teams.id, teamId));
+
+    return success({ enabled: false });
+  } catch (err) {
+    console.error("Error turning off invite link:", err);
+    return serverError("Failed to turn off the invite link");
+  }
+}
+
+export const createInviteLink = wrapHandler(_createInviteLink, {
+  limiter: rateLimiters.inviteMembers,
+  useUserId: true,
+});
+
+export const disableInviteLink = wrapHandler(_disableInviteLink, {
+  limiter: rateLimiters.authenticatedWrite,
   useUserId: true,
 });

@@ -19,7 +19,7 @@ Rate limiting is implemented using a **sliding window** algorithm with different
 - Applies to most team, wishlist, address, and profile endpoints
 
 ### 3. Sensitive Operations (User-based)
-- **Team Invitations** (`/teams/{id}/invite`): 50 requests per hour
+- **Team Invitations** (`/teams/{id}/invite`, `/teams/{id}/invite-link`): 50 requests per hour
 - **Assignment Operations** (`/teams/{id}/assign*`): 5 requests per hour
 - **Reminder Emails** (`/teams/{id}/reminders`): 10 requests per hour
 

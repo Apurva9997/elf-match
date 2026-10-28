@@ -58,6 +58,9 @@ export const teams = pgTable("teams", {
   budgetMax: decimal("budget_max", { precision: 10, scale: 2 }),
   exchangeDate: date("exchange_date"),
   wishlistDeadline: date("wishlist_deadline"),
+  // The shareable join link. Null means the organizer has not created one,
+  // or has turned the last one off. Hashed; the raw token is not stored.
+  inviteLinkToken: varchar("invite_link_token", { length: 255 }).unique(),
   status: varchar("status", { length: 50 })
     .default("collecting_wishes")
     .notNull(),

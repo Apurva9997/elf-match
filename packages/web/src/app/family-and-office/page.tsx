@@ -6,7 +6,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Secret Santa for a family or an office that is not in one room",
   description:
-    "One Elf Match exchange for cousins who should not draw each other, or an office that cannot pass a hat. Email invitations, exclusions, and a private draw.",
+    "One Elf Match exchange for cousins who should not draw each other, or an office that cannot pass a hat. A shareable invite link, exclusions, and a private draw.",
   alternates: { canonical: "https://elfmatch.com/family-and-office" },
   openGraph: {
     title: "Secret Santa for a family or an office",
@@ -45,8 +45,9 @@ export default function FamilyAndOfficePage() {
           <section>
             <h2 className="font-display text-2xl text-ink">An office</h2>
             <p className="mt-3 leading-relaxed text-ink-soft">
-              People join from an email link, including people in another
-              city. Pending invitations are not in the draw. After you confirm,
+              Copy one invite link into the group chat, or send email
+              invitations, including to people in another city. People who
+              have not joined are not in the draw. After you confirm,
               each person sees only their own recipient, plus that
               person&apos;s wishlist and delivery address. No one else in the
               office can read either.

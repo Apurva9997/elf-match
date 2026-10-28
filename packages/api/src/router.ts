@@ -48,6 +48,8 @@ const routes: Route[] = [
 
   // Team invitations / members
   { method: "POST", pattern: "/teams/:teamId/invite", handler: invitations.inviteMembers },
+  { method: "POST", pattern: "/teams/:teamId/invite-link", handler: invitations.createInviteLink },
+  { method: "DELETE", pattern: "/teams/:teamId/invite-link", handler: invitations.disableInviteLink },
   { method: "DELETE", pattern: "/teams/:teamId/members/:memberId", handler: invitations.removeMember },
   { method: "POST", pattern: "/teams/:teamId/members/:memberId/cancel", handler: invitations.cancelInvitation },
   { method: "POST", pattern: "/teams/:teamId/members/:memberId/resend", handler: invitations.resendInvitation },

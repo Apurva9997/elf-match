@@ -274,10 +274,14 @@ async function _getTeam(
     }
 
     const isOrganizer = membership.role === "admin";
+    const { inviteLinkToken, ...teamFields } = team;
     return success({
-      ...team,
+      ...teamFields,
       role: membership.role,
       membershipId: membership.id,
+      // The stored value is a hash. The organizer learns whether a link is
+      // open, and gets the URL only when they create or replace one.
+      inviteLinkEnabled: isOrganizer && Boolean(inviteLinkToken),
       members: team.members.map((member) => ({
         ...member,
         // A participant must not receive someone else's invitation link.

@@ -62,7 +62,7 @@ export default async function Image() {
             </div>
           </div>
           <div style={{ fontFamily: "system-ui", fontSize: 22, color: "#5C564C" }}>
-            Set a budget, invite by email, keep pairs apart, send a private draw.
+            Set a budget, invite by link or email, keep pairs apart, send a private draw.
           </div>
         </div>
       </div>
