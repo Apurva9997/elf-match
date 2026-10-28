@@ -1030,7 +1030,7 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen scroll-clear">
       {/* Navigation */}
       <nav className="sticky top-0 z-30 border-b border-rule bg-ivory/95">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

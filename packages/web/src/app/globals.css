@@ -32,6 +32,15 @@ body,
     scroll-padding-top: 5rem;
   }
 
+  /* The sticky header covers the top of the last screen, and the
+     scroll stops when the footer meets the window edge. This room
+     lets that last line move clear. It stays in the footer so the
+     page does not end on an empty band. */
+  .scroll-clear {
+    scroll-margin-bottom: 4rem;
+    padding-bottom: 4rem;
+  }
+
   body {
     @apply bg-ivory text-ink font-sans antialiased;
     background-image:

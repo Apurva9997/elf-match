@@ -357,7 +357,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen scroll-clear">
       {/* Onboarding */}
       <Onboarding
         isOpen={isOnboardingOpen}
