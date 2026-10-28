@@ -62,20 +62,21 @@ export function HomePage() {
             <h2 className="font-display text-3xl text-evergreen sm:text-4xl">
               How an exchange runs
             </h2>
-            <ol className="mt-8 border-t border-rule">
-              {steps.map((step) => (
-                <li
-                  key={step.n}
-                  className="grid gap-2 border-b border-rule py-6 sm:grid-cols-[4.5rem_14rem_1fr] sm:gap-6 sm:py-7"
-                >
-                  <span className="font-mono text-sm text-cranberry">{step.n}</span>
-                  <h3 className="font-display text-2xl text-ink">{step.title}</h3>
-                  <p className="leading-relaxed text-ink-soft">{step.body}</p>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-10 max-w-md">
-              <SampleExchange />
+            <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_28rem] lg:gap-14">
+              <ol className="border-t border-rule">
+                {steps.map((step) => (
+                  <li key={step.n} className="border-b border-rule py-5">
+                    <div className="flex items-baseline gap-4">
+                      <span className="font-mono text-sm text-cranberry">{step.n}</span>
+                      <h3 className="font-display text-2xl text-ink">{step.title}</h3>
+                    </div>
+                    <p className="mt-2 max-w-xl leading-relaxed text-ink-soft">{step.body}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="lg:sticky lg:top-24">
+                <SampleExchange />
+              </div>
             </div>
           </div>
         </section>
