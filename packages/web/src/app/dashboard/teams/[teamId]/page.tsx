@@ -1,6 +1,16 @@
 "use client";
 
 import { Onboarding } from "@/components/onboarding";
+import {
+  AssignmentReveal,
+  Celebration,
+  LetterDesk,
+  ProgressTrail,
+  StampCollection,
+  WishlistSendScene,
+  type PostalStamp,
+  type TrailStep,
+} from "@/components/postal/scenes";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -169,6 +179,15 @@ export default function TeamPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
+  const [letterPhase, setLetterPhase] = useState<"writing" | "sending" | "sent">(
+    "writing"
+  );
+  const [letterError, setLetterError] = useState<string | null>(null);
+  const [revealMode, setRevealMode] = useState<"checking" | "full" | "quiet">(
+    "checking"
+  );
+  const [replaying, setReplaying] = useState(false);
+  const [giftScene, setGiftScene] = useState<"shop" | "sleigh" | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
   const wishlistSaveChain = useRef(Promise.resolve());
@@ -206,6 +225,11 @@ export default function TeamPage() {
     queryFn: () => api.getAddress(teamId),
     enabled: !!user,
   });
+
+  // The assignment request marks the draw as viewed, and a refetch
+  // then reports firstView false. Remember the reveal in this browser
+  // instead, so that refetch cannot skip the envelope.
+  const revealKey = `elfmatch-reveal-${teamId}`;
 
   const {
     data: assignment,
@@ -398,12 +422,10 @@ export default function TeamPage() {
     onSuccess: (_, giftStatus) => {
       queryClient.invalidateQueries({ queryKey: ["assignment", teamId] });
       const statusMessages: Record<string, string> = {
-        pending: "Status reset to not started",
-        purchased: "Gift marked as bought!",
-        shipped: "Gift marked as on the way!",
-        delivered: "Gift marked as delivered!",
+        pending: "Set back to not started. Nothing was sent.",
+        delivered: "Marked delivered. Only you can see this.",
       };
-      toast.success(statusMessages[giftStatus] || "Status updated!");
+      if (statusMessages[giftStatus]) toast.success(statusMessages[giftStatus]);
     },
     onError: (error: Error) => {
       toast.error(
@@ -703,6 +725,47 @@ export default function TeamPage() {
     }
   };
 
+  const flushWishlist = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const validItems = wishItems.filter((item) => item.title.trim());
+    if (validItems.length === 0) {
+      setLetterError("Add at least one wish before you stamp the letter.");
+      return false;
+    }
+    const invalidUrl = validItems.find(
+      (item) => item.url && !z.string().url().safeParse(item.url).success
+    );
+    if (invalidUrl) {
+      setLetterError(`“${invalidUrl.title}” needs a full link, starting with https://, or a blank link.`);
+      return false;
+    }
+    setLetterError(null);
+    setSaveStatus("saving");
+    try {
+      await updateWishlistMutation.mutateAsync(validItems);
+      setSaveStatus("saved");
+      return true;
+    } catch (error) {
+      setSaveStatus("idle");
+      setLetterError(
+        error instanceof Error
+          ? error.message
+          : "Couldn't send your letter. Your wishes are still here — try again."
+      );
+      return false;
+    }
+  }, [updateWishlistMutation, wishItems]);
+
+  const stampAndSend = async () => {
+    if (letterPhase === "sending") return;
+    const saved = await flushWishlist();
+    if (!saved) return;
+    setLetterPhase("sending");
+  };
+
   const handleQuickAdd = () => {
     if (!quickAddTitle.trim()) return;
     const newItem: WishItemForm = {
@@ -903,6 +966,19 @@ export default function TeamPage() {
       setActiveTab(requested);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!assignment?.assigned) return;
+    if (revealMode === "full") return;
+    const seen = window.localStorage.getItem(revealKey) === "1";
+    setRevealMode(seen ? "quiet" : "full");
+  }, [assignment?.assigned, revealKey, revealMode]);
+
+  const finishReveal = useCallback(() => {
+    window.localStorage.setItem(revealKey, "1");
+    setRevealMode("quiet");
+    setReplaying(false);
+  }, [revealKey]);
 
   const assignmentViewed = useRef(false);
   useEffect(() => {
@@ -1202,20 +1278,20 @@ export default function TeamPage() {
         )}
 
         {/* Tabs */}
-        <div role="tablist" aria-label="Exchange" className="mb-6 flex gap-1 overflow-x-auto border border-rule bg-ivory-card p-1">
+        <div role="tablist" aria-label="Exchange" className="mb-6 flex gap-1 overflow-x-auto border border-rule bg-ivory-card p-1 [scrollbar-width:thin]">
           {(isAdmin
             ? ([
                 ["overview", "People", team.members.filter((member) => member.invitationStatus === "accepted").length],
-                ["wishlist", "List", wishItems.filter((item) => item.title.trim()).length],
+                ["wishlist", "Letter", wishItems.filter((item) => item.title.trim()).length],
                 ["address", "Address", address ? 1 : 0],
                 ["exclusions", "Pairs", exclusions?.length ?? 0],
-                ["assignment", "Draw", assignment?.assigned ? 1 : 0],
+                ["assignment", "Delivery", assignment?.assigned ? 1 : 0],
               ] as const)
             : ([
                 ["overview", "People", team.members.filter((member) => member.invitationStatus === "accepted").length],
-                ["wishlist", "List", wishItems.filter((item) => item.title.trim()).length],
+                ["wishlist", "Letter", wishItems.filter((item) => item.title.trim()).length],
                 ["address", "Address", address ? 1 : 0],
-                ["assignment", "Draw", assignment?.assigned ? 1 : 0],
+                ["assignment", "Delivery", assignment?.assigned ? 1 : 0],
               ] as const)
           ).map(([tab, label, count]) => (
             <button
@@ -1238,6 +1314,65 @@ export default function TeamPage() {
             </button>
           ))}
         </div>
+
+        <section className="mb-6 border border-rule bg-ivory-card p-4" aria-label="Journey">
+          <ProgressTrail
+            steps={((): TrailStep[] => {
+              const wishesSent = wishItems.some((item) => item.title.trim());
+              const drawn = Boolean(assignment?.assigned);
+              const status = assignment?.giftStatus || "pending";
+              const preparing = status === "purchased" || status === "shipped" || status === "delivered";
+              const shipped = status === "shipped" || status === "delivered";
+              const steps: TrailStep[] = [
+                { id: "write", label: "Write wishes", done: wishesSent },
+                { id: "send", label: "Send letter", done: wishesSent },
+                { id: "discover", label: "Discover", done: drawn },
+                { id: "prepare", label: "Prepare gift", done: preparing },
+                { id: "ship", label: "Send gift", done: shipped },
+              ];
+              const current = steps.find((step) => !step.done);
+              if (current) current.current = true;
+              return steps;
+            })()}
+          />
+          {team.wishlistDeadline && !wishItems.some((item) => item.title.trim()) && (
+            <p className="mt-3 text-sm text-ink-soft">
+              Your letter is still blank. Wishlists are due {formatDate(team.wishlistDeadline)}.
+            </p>
+          )}
+          {assignment?.assigned &&
+            team.exchangeDate &&
+            (assignment.giftStatus === "pending" || !assignment.giftStatus) && (
+              <p className="mt-3 text-sm text-ink-soft">
+                Gifts change hands {formatDate(team.exchangeDate)}. Nothing here buys a gift or tells {assignment.giftee?.name || "your recipient"}.
+              </p>
+            )}
+          <div className="mt-4">
+            <StampCollection
+              stamps={((): PostalStamp[] => {
+                const wishesSent = wishItems.some((item) => item.title.trim());
+                const status = assignment?.giftStatus || "pending";
+                return [
+                  { id: "letter", name: "Letter", earned: wishesSent, caption: "Wishes sent" },
+                  { id: "seal", name: "Seal", earned: Boolean(assignment?.assigned), caption: "Name opened" },
+                  {
+                    id: "shop",
+                    name: "Sack",
+                    earned: status === "purchased" || status === "shipped" || status === "delivered",
+                    caption: "Preparing",
+                  },
+                  {
+                    id: "sleigh",
+                    name: "Sleigh",
+                    earned: status === "shipped" || status === "delivered",
+                    caption: "On the way",
+                  },
+                  { id: "hearth", name: "Hearth", earned: status === "delivered", caption: "Marked delivered" },
+                ];
+              })()}
+            />
+          </div>
+        </section>
 
         {/* Tab Content */}
         <motion.div
@@ -1388,28 +1523,53 @@ export default function TeamPage() {
           {activeTab === "wishlist" && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <CardTitle>My Wishlist</CardTitle>
+                    <CardTitle>Your letter</CardTitle>
                     <CardDescription>
                       After names are drawn, only the person assigned to give you a gift can read this. Other participants cannot.
                     </CardDescription>
                   </div>
-                  {saveStatus === "saving" && (
-                    <div className="flex items-center gap-2 text-ink-soft text-sm">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
-                    </div>
-                  )}
-                  {saveStatus === "saved" && (
-                    <div className="flex items-center gap-2 text-gold text-sm">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>Saved</span>
-                    </div>
-                  )}
+                  <div aria-live="polite" className="shrink-0 text-sm">
+                    {saveStatus === "saving" && (
+                      <span className="flex items-center gap-2 text-ink-soft">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving
+                      </span>
+                    )}
+                    {saveStatus === "saved" && letterPhase === "writing" && (
+                      <span className="flex items-center gap-2 text-evergreen">
+                        <CheckCircle className="w-4 h-4" />
+                        Kept
+                      </span>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
+                {letterPhase === "sending" && (
+                  <WishlistSendScene onDone={() => setLetterPhase("sent")} />
+                )}
+                {letterPhase === "sent" && (
+                  <div className="mb-6 border border-evergreen/30 bg-evergreen-soft px-4 py-4" role="status">
+                    <p className="font-display text-2xl text-evergreen">
+                      Your wishes are on their way.
+                    </p>
+                    <p className="mt-1 text-sm text-ink-soft">
+                      Only your assigned giver can read them, and only after the draw. You can keep editing the letter.
+                    </p>
+                    <Button
+                      className="mt-3"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setLetterPhase("writing")}
+                    >
+                      View or edit your letter
+                    </Button>
+                  </div>
+                )}
+                {letterPhase === "writing" && (
+                <LetterDesk stamp={wishItems.some((item) => item.title.trim())}>
                 <div className="space-y-4">
                   {/* Add item input */}
                   <div className="flex gap-2">
@@ -1567,15 +1727,39 @@ export default function TeamPage() {
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-ink-soft">
-                      <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No wishlist items yet.</p>
-                      <p className="text-sm mt-2">
-                        Type above and press Enter to add items.
+                    <div className="py-8 text-center text-ink-soft">
+                      <Gift className="mx-auto mb-3 h-12 w-12 opacity-50" />
+                      <p>The page is blank.</p>
+                      <p className="mt-2 text-sm">
+                        Write a wish above, then stamp the letter when it is ready.
                       </p>
                     </div>
                   )}
+                  {letterError && letterPhase === "writing" && (
+                    <p className="text-sm text-cranberry" role="alert">
+                      {letterError}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4">
+                    <p className="text-sm text-ink-soft">
+                      {team.wishlistDeadline
+                        ? `Wishlists are due ${formatDate(team.wishlistDeadline)}.`
+                        : "No wishlist deadline is set."}
+                    </p>
+                    <Button
+                      onClick={stampAndSend}
+                      disabled={letterPhase !== "writing" || updateWishlistMutation.isPending}
+                      aria-describedby="stamp-send-help"
+                    >
+                      Stamp & send
+                    </Button>
+                  </div>
+                  <p id="stamp-send-help" className="sr-only">
+                    Checks your wishes, saves them, then shows the letter leaving. If saving fails, the letter stays open.
+                  </p>
                 </div>
+                </LetterDesk>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1983,52 +2167,117 @@ export default function TeamPage() {
                       </Button>
                     </div>
                   ) : assignment?.assigned ? (
-                    <div className="py-6 text-center">
-                      <div
-                        className="mx-auto mb-5 max-w-md border border-rule bg-ivory px-6 py-8 shadow-paper"
-                        style={
-                          assignment.firstView
-                            ? { animation: "note-unfold 400ms cubic-bezier(0.2, 0.8, 0.2, 1)" }
-                            : undefined
-                        }
-                      >
-                        <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
-                          Your note
-                        </p>
-                        <h3 className="mt-3 font-display text-4xl text-evergreen">
-                          {assignment.giftee?.name || "Name not shared"}
-                        </h3>
-                        {team.budgetMin && team.budgetMax && (
-                          <p className="mt-3 text-ink-soft">
-                            Stay inside ₹{Number(team.budgetMin)} – ₹{Number(team.budgetMax)}.
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Gift Status */}
-                      <div className="mb-6 flex flex-wrap justify-center gap-2">
-                        {(
-                          [
-                            ["pending", "Not started"],
-                            ["purchased", "Bought"],
-                            ["shipped", "On the way"],
-                            ["delivered", "Delivered"],
-                          ] as const
-                        ).map(([value, label]) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => updateGiftStatusMutation.mutate(value)}
-                            className={cn(
-                              "min-h-11 px-4 text-sm font-medium",
-                              assignment.giftStatus === value
-                                ? "bg-evergreen text-ivory"
-                                : "border border-rule bg-ivory-card text-ink-soft hover:text-ink"
+                    <div className="py-4">
+                      {revealMode === "checking" && (
+                        <p className="py-8 text-center text-ink-soft">Opening your assignment.</p>
+                      )}
+                      {(revealMode === "full" || replaying) && assignment.giftee?.name && (
+                        <AssignmentReveal
+                          name={assignment.giftee.name}
+                          budget={
+                            team.budgetMin && team.budgetMax
+                              ? `Stay inside ₹${Number(team.budgetMin)} – ₹${Number(team.budgetMax)}.`
+                              : null
+                          }
+                          replay={replaying}
+                          onDone={finishReveal}
+                        />
+                      )}
+                      {revealMode === "quiet" && !replaying && (
+                        <div className="text-center">
+                          <div className="mx-auto mb-5 max-w-md border border-rule bg-ivory px-6 py-8 shadow-paper">
+                            <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
+                              You are gifting to
+                            </p>
+                            <h3 className="mt-3 font-display text-4xl text-evergreen">
+                              {assignment.giftee?.name || "Name not shared"}
+                            </h3>
+                            {team.budgetMin && team.budgetMax && (
+                              <p className="mt-3 text-ink-soft">
+                                Stay inside ₹{Number(team.budgetMin)} – ₹{Number(team.budgetMax)}.
+                              </p>
                             )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setReplaying(true)}
+                            className="min-h-11 px-3 text-sm text-ink-soft underline-offset-2 hover:text-ink hover:underline"
                           >
-                            {label}
+                            Replay reveal
                           </button>
-                        ))}
+                        </div>
+                      )}
+
+                      {giftScene && (
+                        <Celebration
+                          kind={giftScene}
+                          title={giftScene === "shop" ? "Santa is checking the list." : "Your gift is on its way!"}
+                          detail={
+                            giftScene === "shop"
+                              ? "This only marks your own progress. Nobody is told, and nothing is purchased."
+                              : "Shipped means you sent it. It does not confirm arrival."
+                          }
+                          onDone={() => setGiftScene(null)}
+                        />
+                      )}
+
+                      <div className="mx-auto mt-6 max-w-lg text-left">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+                          Your notes only
+                        </p>
+                        <p className="mt-1 text-sm text-ink-soft">
+                          {assignment.giftStatus === "purchased"
+                            ? "Preparing your gift."
+                            : assignment.giftStatus === "shipped"
+                              ? "Marked on the way. Not confirmed delivered."
+                              : assignment.giftStatus === "delivered"
+                                ? "You marked this delivered."
+                                : "Not started. Updating this does not buy anything or notify anyone."}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Gift progress">
+                          {(
+                            [
+                              ["pending", "Not started"],
+                              ["purchased", "Start preparing gift"],
+                              ["shipped", "Mark shipped"],
+                              ["delivered", "Mark delivered"],
+                            ] as const
+                          ).map(([value, label]) => (
+                            <button
+                              key={value}
+                              type="button"
+                              disabled={updateGiftStatusMutation.isPending}
+                              onClick={() => {
+                                if (assignment.giftStatus === value || updateGiftStatusMutation.isPending) return;
+                                const previous = assignment.giftStatus;
+                                updateGiftStatusMutation.mutate(value, {
+                                  onSuccess: () => {
+                                    if (value === "purchased" && previous !== "purchased") {
+                                      setGiftScene("shop");
+                                      toast.success("Preparing your gift. Only you can see this.");
+                                    }
+                                    if (value === "shipped" && previous !== "shipped") {
+                                      setGiftScene("sleigh");
+                                      toast.success("Marked on the way. Arrival is not confirmed.");
+                                    }
+                                  },
+                                });
+                              }}
+                              className={cn(
+                                "min-h-11 px-4 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen disabled:opacity-50",
+                                assignment.giftStatus === value ||
+                                  (!assignment.giftStatus && value === "pending")
+                                  ? "bg-evergreen text-ivory"
+                                  : "border border-rule bg-ivory-card text-ink-soft hover:text-ink"
+                              )}
+                            >
+                              {assignment.giftStatus === value ? `${label} · current` : label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-sm text-ink-soft">
+                          Chose the wrong one? Pick another status. Your recipient never sees these notes.
+                        </p>
                       </div>
                     </div>
                   ) : status?.hasAssignments && !status.drawComplete ? (
@@ -2081,11 +2330,14 @@ export default function TeamPage() {
                 )}
 
               {assignment?.assigned && gifteeWishlist && (
-                <Card>
+                <Card id="recipient-wishes">
                   <CardHeader>
                     <CardTitle>
-                      {assignment.giftee?.name}&apos;s Wishlist
+                      {assignment.giftee?.name}&apos;s wishes
                     </CardTitle>
+                    <CardDescription>
+                      What they asked for. Your progress notes stay with you.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {gifteeWishlist.wishlist?.items &&
@@ -2127,14 +2379,24 @@ export default function TeamPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-ink-soft text-center py-4">
-                        {assignment.giftee?.name || "They"} have not added wishes yet.
-                        The budget
-                        {team.budgetMin && team.budgetMax
-                          ? ` is ₹${team.budgetMin}–₹${team.budgetMax}`
-                          : " has not been set"}
-                        . Ask them, or choose something in that range.
-                      </p>
+                      <div className="py-6 text-center">
+                        <p className="font-display text-xl text-ink">
+                          Their letter has not arrived.
+                        </p>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
+                          {assignment.giftee?.name || "They"} have not added wishes yet.
+                          The budget
+                          {team.budgetMin && team.budgetMax
+                            ? ` is ₹${team.budgetMin}–₹${team.budgetMax}`
+                            : " has not been set"}
+                          . You can still choose something in that range.
+                        </p>
+                        {isAdmin && (
+                          <p className="mt-3 text-sm text-ink-soft">
+                            From People, you can email everyone who joined and is missing a list or an address.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
