@@ -33,24 +33,28 @@ export function HomePage() {
     <div className="min-h-screen">
       <PublicNav />
       <main>
-        <section className="mx-auto grid max-w-page items-start gap-8 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:pt-14">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
-              Free Secret Santa for family or office
-            </p>
-            <h1 className="mt-4 max-w-[16ch] font-display text-[2.5rem] font-medium leading-[1.05] text-evergreen sm:text-6xl sm:leading-[1.02]">
-              Draw the names. Keep the giving secret.
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
-              Set a rupee budget and dates, invite by email, exclude pairs, and
-              preview every match before sending the final draw.
-            </p>
-            <HomeActions />
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
-              Free. Sign in, then name your exchange.
-            </p>
-          </div>
+        <section className="relative isolate min-h-[calc(100svh-4rem)] overflow-hidden bg-evergreen">
           <HeroFilm />
+          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-ivory via-ivory/90 to-transparent lg:hidden" />
+          <div className="absolute inset-0 hidden bg-gradient-to-r from-ivory from-10% via-ivory/80 via-[38%] to-transparent to-[64%] lg:block" />
+          <div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-page items-end px-4 py-12 sm:px-6 lg:items-center">
+            <div className="max-w-xl">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
+                Free Secret Santa for family or office
+              </p>
+              <h1 className="mt-4 max-w-[16ch] font-display text-[2.5rem] font-medium leading-[1.05] text-evergreen sm:text-6xl sm:leading-[1.02]">
+                Draw the names. Keep the giving secret.
+              </h1>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
+                Set a rupee budget and dates, invite by email, exclude pairs, and
+                preview every match before sending the final draw.
+              </p>
+              <HomeActions />
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
+                Free. Sign in, then name your exchange.
+              </p>
+            </div>
+          </div>
         </section>
 
         <section className="border-y border-rule bg-ivory-card/70">

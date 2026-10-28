@@ -16,7 +16,7 @@ export function PublicNav() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-rule bg-ivory">
+    <header className="sticky top-0 z-40 border-b border-rule bg-ivory/95">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5 rounded-sm">
           <ElfMark />
