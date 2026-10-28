@@ -28,14 +28,12 @@ body,
 
 @layer base {
   html {
-    /* Sticky headers cover the last screen of a page unless the
-       scrollport keeps that much room below the final content. */
-    scroll-padding-top: 8rem;
+    /* An in-page link lands below the sticky header. */
+    scroll-padding-top: 5rem;
   }
 
   body {
     @apply bg-ivory text-ink font-sans antialiased;
-    padding-bottom: 8rem;
     background-image:
       linear-gradient(180deg, rgba(255, 252, 246, 0.55), rgba(246, 241, 227, 0)),
       repeating-linear-gradient(
