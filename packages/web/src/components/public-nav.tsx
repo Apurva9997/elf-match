@@ -2,7 +2,9 @@
 
 import { ElfMark } from "@/components/mark";
 import { useAuth } from "@/lib/auth-context";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 const links = [
   { href: "/how-it-works", label: "How it works" },
@@ -14,6 +16,7 @@ const links = [
 
 export function PublicNav() {
   const { isAuthenticated } = useAuth();
+  const [open, setOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-ivory/95">
@@ -41,7 +44,7 @@ export function PublicNav() {
           {isAuthenticated ? (
             <Link
               href="/dashboard"
-              className="bg-evergreen px-2.5 py-2 text-sm font-semibold text-ivory hover:bg-evergreen-deep sm:px-3.5"
+              className="hidden bg-evergreen px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-evergreen-deep sm:inline-flex"
             >
               Your exchanges
             </Link>
@@ -61,18 +64,53 @@ export function PublicNav() {
               </Link>
             </>
           )}
+          <button
+            type="button"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center text-evergreen md:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-sections"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
-      <nav
-        aria-label="Sections"
-        className="flex flex-wrap gap-x-4 gap-y-1 border-t border-rule px-4 py-2 text-sm md:hidden"
-      >
-        {links.map((link) => (
-          <Link key={link.href} href={link.href} className="text-ink-soft">
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      {open && (
+        <nav
+          id="mobile-sections"
+          aria-label="Sections"
+          className="border-t border-rule px-4 py-2 md:hidden"
+        >
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center text-ink"
+            >
+              {link.label}
+            </Link>
+          ))}
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center font-semibold text-evergreen sm:hidden"
+            >
+              Your exchanges
+            </Link>
+          ) : (
+            <Link
+              href="/auth/login?intent=create"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center font-semibold text-cranberry sm:hidden"
+            >
+              Create an exchange
+            </Link>
+          )}
+        </nav>
+      )}
     </header>
   );
 }

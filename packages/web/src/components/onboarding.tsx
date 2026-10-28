@@ -35,6 +35,7 @@ interface OnboardingProps {
   persona: OnboardingPersona;
   firstTeamId?: string;
   firstTeamName?: string;
+  drawn?: boolean;
 }
 
 export function Onboarding({
@@ -45,6 +46,7 @@ export function Onboarding({
   persona,
   firstTeamId,
   firstTeamName,
+  drawn = false,
 }: OnboardingProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -103,9 +105,10 @@ export function Onboarding({
         return [
           {
             id: "welcome",
-            title: `Welcome to ${firstTeamName || "your exchange"}`,
-            description:
-              "As the exchange admin, here's what you need to do to get your gift exchange started.",
+            title: firstTeamName || "Your exchange",
+            description: drawn
+              ? "The names are already drawn. They cannot be redrawn. You can still read your own recipient, and resend an email that did not go out."
+              : "You organize this exchange. Invite people, then preview the pairings before you send them.",
             icon: <Users className="w-8 h-8 text-cranberry" />,
           },
           {
@@ -139,8 +142,9 @@ export function Onboarding({
           {
             id: "welcome",
             title: `Welcome to ${firstTeamName || "the exchange"}`,
-            description:
-              "You've been invited to join a gift exchange. Let's get you set up so you can receive your gift!",
+            description: drawn
+              ? "The names are already drawn. Open the exchange to see only the person you are buying for."
+              : "You are in this exchange. Add a wishlist, and an address if you want the gift delivered.",
             icon: <Gift className="w-8 h-8 text-cranberry" />,
           },
           {

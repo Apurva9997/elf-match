@@ -207,7 +207,12 @@ export default function TeamPage() {
     enabled: !!user,
   });
 
-  const { data: assignment } = useQuery({
+  const {
+    data: assignment,
+    isLoading: assignmentLoading,
+    isError: assignmentError,
+    refetch: refetchAssignment,
+  } = useQuery({
     queryKey: ["assignment", teamId],
     queryFn: () => api.getAssignment(teamId),
     enabled: !!user,
@@ -807,7 +812,12 @@ export default function TeamPage() {
   };
 
   const handleUpdateTeam = async (data: UpdateTeamForm) => {
-    await updateTeamMutation.mutateAsync(data);
+    const name = data.name.trim();
+    if (!name) {
+      teamEditForm.setError("name", { message: "Exchange name is required" });
+      return;
+    }
+    await updateTeamMutation.mutateAsync({ ...data, name });
   };
 
   const handleAddExclusion = () => {
@@ -920,11 +930,11 @@ export default function TeamPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="text-center p-8 max-w-md">
-          <h2 className="text-xl font-display font-semibold text-cream mb-2">
+          <h2 className="text-xl font-display font-semibold text-ink mb-2">
             {teamError ? "Couldn't load this exchange" : "Team not found"}
           </h2>
           {teamError && (
-            <p className="text-cream/60 mb-6">
+            <p className="text-ink-soft mb-6">
               {teamErrorDetail instanceof Error
                 ? teamErrorDetail.message
                 : "The server didn't respond. Please try again."}
@@ -946,12 +956,12 @@ export default function TeamPage() {
   return (
     <div className="min-h-screen pb-12">
       {/* Navigation */}
-      <nav className="sticky top-0 z-30 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
+      <nav className="sticky top-0 z-30 border-b border-rule bg-ivory/95">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link
               href="/dashboard"
-              className="flex items-center text-cream/60 hover:text-cream transition-colors"
+              className="flex items-center text-ink-soft hover:text-ink transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
@@ -961,7 +971,7 @@ export default function TeamPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOnboardingOpen(true)}
-                className="text-cream/70 hover:text-cream"
+                className="text-ink-soft hover:text-ink"
               >
                 <HelpCircle className="w-4 h-4 mr-2" />
                 How to
@@ -971,7 +981,7 @@ export default function TeamPage() {
                   variant="ghost"
                   size="sm"
                   aria-label="Your profile"
-                  className="text-cream/70 hover:text-cream"
+                  className="text-ink-soft hover:text-ink"
                 >
                   <Avatar
                     name={user?.name || user?.email || "U"}
@@ -990,7 +1000,7 @@ export default function TeamPage() {
                     <UserPlus className="w-4 h-4 mr-2" />
                     Invite
                   </Button>
-                  {status?.canAssign && (
+                  {status?.canAssign && !status.hasAssignments && (
                     <Button size="sm" variant="secondary" onClick={handleOpenAssignModal}>
                       Preview the draw
                     </Button>
@@ -1012,41 +1022,42 @@ export default function TeamPage() {
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-start gap-3 mb-2">
-                <h1 className="text-3xl font-display font-bold text-cream">
-                  {team.name}
-                </h1>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartEditTeam}
-                    aria-label="Edit exchange"
-                    className="mt-1"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              {team.description && (
-                <p className="mb-4 text-ink-soft">{team.description}</p>
-              )}
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge
-                  variant={
-                    team.status === "assigned"
-                      ? "success"
-                      : team.status === "completed"
-                        ? "gold"
-                        : "warning"
-                  }
+              <h1 className="font-display text-3xl font-bold text-ink">
+                {team.name}
+              </h1>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartEditTeam}
+                  aria-label="Edit exchange"
+                  className="mt-1 min-h-11 px-3"
                 >
-                  {team.status === "collecting_wishes"
-                    ? "Building Wishlists"
-                    : team.status === "assigned"
-                      ? "Assigned"
-                      : "Completed"}
-                </Badge>
+                  <Edit className="mr-1 h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+              {team.description && (
+                <p className="mt-3 text-ink-soft">{team.description}</p>
+              )}
+              <p className="text-ink">
+                {status?.drawComplete
+                  ? status.assignmentEmailsPending > 0
+                    ? `Names are drawn. ${status.assignmentEmailsPending} ${status.assignmentEmailsPending === 1 ? "email has" : "emails have"} not been sent.`
+                    : assignment?.assigned && assignment.giftee?.name
+                      ? `You are buying for ${assignment.giftee.name}.`
+                      : "Names are drawn."
+                  : status?.hasAssignments
+                    ? `The draw is incomplete. ${status.assignmentCount} of ${status.totalMembers} have a recipient.`
+                  : status
+                    ? status.totalMembers >= 3
+                      ? status.pendingInvitations > 0
+                        ? `${status.pendingInvitations} still invited. They will not be in the draw.`
+                        : "Ready to preview the draw."
+                      : `${status.totalMembers} joined. A draw needs three.`
+                    : "Collecting the list."}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 {team.exchangeDate && (
                   <span className="text-sm text-ink-soft">
                     Exchange: {formatDate(team.exchangeDate)}
@@ -1067,7 +1078,7 @@ export default function TeamPage() {
           </div>
         </motion.div>
 
-        {status && isAdmin && status.hasAssignments && status.assignmentEmailsPending > 0 && (
+        {status && isAdmin && status.drawComplete && status.assignmentEmailsPending > 0 && (
           <div className="mb-8 border border-cranberry/40 bg-ivory-card px-4 py-4">
             <p className="font-medium text-ink">
               The draw is saved. {status.assignmentEmailsPending}{" "}
@@ -1086,6 +1097,17 @@ export default function TeamPage() {
               <Mail className="w-4 h-4 mr-2" />
               Send the missing emails
             </Button>
+          </div>
+        )}
+
+        {status && isAdmin && status.hasAssignments && !status.drawComplete && (
+          <div className="mb-8 border border-cranberry/40 bg-ivory-card px-4 py-4">
+            <p className="font-medium text-ink">
+              The draw is incomplete. {status.assignmentCount} of {status.totalMembers} people have a recipient.
+            </p>
+            <p className="mt-1 text-sm text-ink-soft">
+              A new draw cannot be sent while any pair is saved. People without a recipient see that, not a name.
+            </p>
           </div>
         )}
 
@@ -1180,17 +1202,22 @@ export default function TeamPage() {
         )}
 
         {/* Tabs */}
-        <div role="tablist" aria-label="Exchange" className="mb-6 flex flex-wrap gap-1 border border-rule bg-ivory-card p-1 w-fit">
+        <div role="tablist" aria-label="Exchange" className="mb-6 flex gap-1 overflow-x-auto border border-rule bg-ivory-card p-1">
           {(isAdmin
             ? ([
-                "overview",
-                "wishlist",
-                "address",
-                "exclusions",
-                "assignment",
+                ["overview", "People", team.members.filter((member) => member.invitationStatus === "accepted").length],
+                ["wishlist", "List", wishItems.filter((item) => item.title.trim()).length],
+                ["address", "Address", address ? 1 : 0],
+                ["exclusions", "Pairs", exclusions?.length ?? 0],
+                ["assignment", "Draw", assignment?.assigned ? 1 : 0],
               ] as const)
-            : (["overview", "wishlist", "address", "assignment"] as const)
-          ).map((tab) => (
+            : ([
+                ["overview", "People", team.members.filter((member) => member.invitationStatus === "accepted").length],
+                ["wishlist", "List", wishItems.filter((item) => item.title.trim()).length],
+                ["address", "Address", address ? 1 : 0],
+                ["assignment", "Draw", assignment?.assigned ? 1 : 0],
+              ] as const)
+          ).map(([tab, label, count]) => (
             <button
               key={tab}
               type="button"
@@ -1198,22 +1225,16 @@ export default function TeamPage() {
               aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors duration-180",
+                "inline-flex min-h-11 shrink-0 items-center gap-1.5 px-2.5 text-sm font-medium transition-colors duration-180 sm:px-3",
                 activeTab === tab
                   ? "bg-evergreen text-ivory"
                   : "text-ink-soft hover:text-ink"
               )}
             >
-              {tab === "overview" && <Users className="w-4 h-4 inline mr-2" />}
-              {tab === "wishlist" && <Gift className="w-4 h-4 inline mr-2" />}
-              {tab === "address" && <MapPin className="w-4 h-4 inline mr-2" />}
-              {tab === "exclusions" && (
-                <Shield className="w-4 h-4 inline mr-2" />
-              )}
-              {tab === "assignment" && (
-                <Sparkles className="w-4 h-4 inline mr-2" />
-              )}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {label}
+              <span className={activeTab === tab ? "text-ivory/80" : "text-ink-faint"}>
+                {count}
+              </span>
             </button>
           ))}
         </div>
@@ -1375,7 +1396,7 @@ export default function TeamPage() {
                     </CardDescription>
                   </div>
                   {saveStatus === "saving" && (
-                    <div className="flex items-center gap-2 text-cream/60 text-sm">
+                    <div className="flex items-center gap-2 text-ink-soft text-sm">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Saving...</span>
                     </div>
@@ -1424,23 +1445,24 @@ export default function TeamPage() {
                         return (
                           <div
                             key={index}
-                            className="p-4 rounded-lg bg-midnight-50"
+                            className="p-4 rounded-lg bg-ivory"
                           >
                             {!isExpanded ? (
-                              // Collapsed view - click anywhere to expand
-                              <div
-                                className="flex items-center justify-between cursor-pointer group"
-                                onClick={() => toggleItemExpand(index)}
-                              >
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-cream">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="font-medium text-ink">
                                     {item.title || "Untitled item"}
                                   </h4>
                                   {hasDetails && (
-                                    <div className="flex items-center gap-3 mt-1 text-sm">
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                                       {item.priceEstimate && (
-                                        <span className="text-gold font-medium">
-                                          ~₹{item.priceEstimate}
+                                        <span className="font-medium text-ink">
+                                          ₹{item.priceEstimate}
+                                        </span>
+                                      )}
+                                      {item.description && (
+                                        <span className="text-ink-soft">
+                                          {item.description}
                                         </span>
                                       )}
                                       {item.url && (
@@ -1448,22 +1470,23 @@ export default function TeamPage() {
                                           href={item.url}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="text-gold hover:text-gold-light flex items-center gap-1"
-                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex min-h-11 items-center gap-1 text-evergreen hover:underline"
                                         >
-                                          <ExternalLink className="w-3 h-3" />
-                                          Link
+                                          <ExternalLink className="h-4 w-4" />
+                                          Shop link
                                         </a>
-                                      )}
-                                      {item.description && (
-                                        <span className="text-cream/50 truncate max-w-[200px]">
-                                          {item.description}
-                                        </span>
                                       )}
                                     </div>
                                   )}
                                 </div>
-                                <Edit className="w-4 h-4 text-cream/40 group-hover:text-cream/70 transition-colors" />
+                                <button
+                                  type="button"
+                                  onClick={() => toggleItemExpand(index)}
+                                  aria-label={`Edit ${item.title || "wishlist item"}`}
+                                  className="inline-flex min-h-11 min-w-11 items-center justify-center text-ink-soft hover:text-ink"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
                               </div>
                             ) : (
                               // Expanded view - edit mode
@@ -1486,9 +1509,9 @@ export default function TeamPage() {
                                     type="button"
                                     onClick={() => handleRemoveWishItem(index)}
                                     aria-label={`Remove ${item.title || "wishlist item"}`}
-                                    className="p-2 text-error/60 hover:text-error transition-colors"
+                                    className="inline-flex min-h-11 min-w-11 items-center justify-center text-cranberry"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="h-4 w-4" />
                                   </button>
                                 </div>
                                 <Textarea
@@ -1544,7 +1567,7 @@ export default function TeamPage() {
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-cream/60">
+                    <div className="text-center py-8 text-ink-soft">
                       <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>No wishlist items yet.</p>
                       <p className="text-sm mt-2">
@@ -1639,7 +1662,7 @@ export default function TeamPage() {
                           disabled={isFetchingPincode}
                         />
                         {isFetchingPincode && (
-                          <p className="text-xs text-cream/50 mt-1 flex items-center gap-1">
+                          <p className="text-xs text-ink-soft mt-1 flex items-center gap-1">
                             <Loader2 className="w-3 h-3 animate-spin" />
                             Looking up postal code...
                           </p>
@@ -1676,22 +1699,22 @@ export default function TeamPage() {
                     </div>
                   </form>
                 ) : address ? (
-                  <div className="p-4 rounded-lg bg-midnight-50">
-                    <div className="space-y-1 text-cream">
+                  <div className="p-4 rounded-lg bg-ivory">
+                    <div className="space-y-1 text-ink">
                       <p className="font-medium">{address.streetLine1}</p>
                       {address.streetLine2 && (
-                        <p className="text-cream/70">{address.streetLine2}</p>
+                        <p className="text-ink-soft">{address.streetLine2}</p>
                       )}
-                      <p className="text-cream/70">
+                      <p className="text-ink-soft">
                         {address.city}
                         {address.state && `, ${address.state}`}{" "}
                         {address.postalCode}
                       </p>
-                      <p className="text-cream/70">{address.country}</p>
+                      <p className="text-ink-soft">{address.country}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-cream/60">
+                  <div className="text-center py-8 text-ink-soft">
                     <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="mb-4">No address saved yet.</p>
                     <Button
@@ -1751,7 +1774,7 @@ export default function TeamPage() {
                     {exclusions.map((exclusion) => (
                       <div
                         key={exclusion.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-midnight-50"
+                        className="flex items-center justify-between p-4 rounded-lg bg-ivory"
                       >
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
@@ -1764,12 +1787,12 @@ export default function TeamPage() {
                               src={exclusion.member1.user?.avatarUrl}
                               size="sm"
                             />
-                            <span className="text-cream font-medium">
+                            <span className="text-ink font-medium">
                               {exclusion.member1.user?.name ||
                                 exclusion.member1.invitedEmail}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-cream/50">
+                          <div className="flex items-center gap-2 text-ink-soft">
                             <Heart className="w-4 h-4 text-rose-400" />
                             <ArrowRight className="w-4 h-4" />
                             <ArrowLeft className="w-4 h-4" />
@@ -1784,7 +1807,7 @@ export default function TeamPage() {
                               src={exclusion.member2.user?.avatarUrl}
                               size="sm"
                             />
-                            <span className="text-cream font-medium">
+                            <span className="text-ink font-medium">
                               {exclusion.member2.user?.name ||
                                 exclusion.member2.invitedEmail}
                             </span>
@@ -1792,7 +1815,7 @@ export default function TeamPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           {exclusion.reason && (
-                            <span className="text-cream/50 text-sm">
+                            <span className="text-ink-soft text-sm">
                               {exclusion.reason}
                             </span>
                           )}
@@ -1826,7 +1849,7 @@ export default function TeamPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-cream/60">
+                  <div className="text-center py-8 text-ink-soft">
                     <Shield className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="mb-2">No exclusions set</p>
                     <p className="text-sm">
@@ -1839,20 +1862,20 @@ export default function TeamPage() {
 
                 {/* Add Exclusion Form */}
                 {isAddExclusionOpen && !status?.hasAssignments && (
-                  <div className="mt-6 p-4 rounded-lg border border-cream/20 bg-midnight-50">
-                    <h4 className="text-cream font-medium mb-4">
+                  <div className="mt-6 p-4 rounded-lg border border-cream/20 bg-ivory">
+                    <h4 className="text-ink font-medium mb-4">
                       Add New Exclusion
                     </h4>
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-cream/70 text-sm mb-2">
+                          <label className="block text-ink-soft text-sm mb-2">
                             Person 1
                           </label>
                           <select
                             value={selectedMember1}
                             onChange={(e) => setSelectedMember1(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg bg-midnight border border-cream/20 text-cream focus:border-gold focus:outline-none"
+                            className="input-field"
                           >
                             <option value="">Select a member...</option>
                             {acceptedMembers.map((member) => (
@@ -1863,13 +1886,13 @@ export default function TeamPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-cream/70 text-sm mb-2">
+                          <label className="block text-ink-soft text-sm mb-2">
                             Person 2
                           </label>
                           <select
                             value={selectedMember2}
                             onChange={(e) => setSelectedMember2(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg bg-midnight border border-cream/20 text-cream focus:border-gold focus:outline-none"
+                            className="input-field"
                           >
                             <option value="">Select a member...</option>
                             {acceptedMembers
@@ -1883,7 +1906,7 @@ export default function TeamPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-cream/70 text-sm mb-2">
+                        <label className="block text-ink-soft text-sm mb-2">
                           Reason (optional)
                         </label>
                         <Input
@@ -1933,84 +1956,96 @@ export default function TeamPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {assignment?.assigned ? (
-                    <div className="text-center py-6">
-                      <Avatar
-                        name={assignment.giftee?.name || "Unknown"}
-                        src={assignment.giftee?.avatarUrl}
-                        size="xl"
-                        className="mx-auto mb-4"
-                      />
-                      <h3
-                        className="mb-6 font-display text-3xl text-evergreen"
+                  {assignmentLoading ? (
+                    <p className="py-8 text-center text-ink-soft">Opening your assignment.</p>
+                  ) : assignmentError ? (
+                    <div className="py-8 text-center">
+                      <h3 className="font-display text-xl text-ink">
+                        Your assignment did not open
+                      </h3>
+                      <p className="mt-2 text-ink-soft">
+                        The draw may already be saved. Try again before assuming there is none.
+                      </p>
+                      <Button className="mt-4" variant="secondary" onClick={() => refetchAssignment()}>
+                        Try again
+                      </Button>
+                    </div>
+                  ) : status?.drawComplete && !assignment?.assigned ? (
+                    <div className="py-8 text-center">
+                      <h3 className="font-display text-xl text-ink">
+                        The draw is saved. Your name did not load.
+                      </h3>
+                      <p className="mt-2 text-ink-soft">
+                        Assignments cannot be redrawn. Try again.
+                      </p>
+                      <Button className="mt-4" variant="secondary" onClick={() => refetchAssignment()}>
+                        Try again
+                      </Button>
+                    </div>
+                  ) : assignment?.assigned ? (
+                    <div className="py-6 text-center">
+                      <div
+                        className="mx-auto mb-5 max-w-md border border-rule bg-ivory px-6 py-8 shadow-paper"
                         style={
                           assignment.firstView
-                            ? { animation: "assignment-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1)" }
+                            ? { animation: "note-unfold 400ms cubic-bezier(0.2, 0.8, 0.2, 1)" }
                             : undefined
                         }
                       >
-                        {assignment.giftee?.name || "Name not shared"}
-                      </h3>
+                        <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
+                          Your note
+                        </p>
+                        <h3 className="mt-3 font-display text-4xl text-evergreen">
+                          {assignment.giftee?.name || "Name not shared"}
+                        </h3>
+                        {team.budgetMin && team.budgetMax && (
+                          <p className="mt-3 text-ink-soft">
+                            Stay inside ₹{Number(team.budgetMin)} – ₹{Number(team.budgetMax)}.
+                          </p>
+                        )}
+                      </div>
 
                       {/* Gift Status */}
-                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                      <div className="mb-6 flex flex-wrap justify-center gap-2">
                         {(
                           [
-                            "pending",
-                            "purchased",
-                            "shipped",
-                            "delivered",
+                            ["pending", "Not started"],
+                            ["purchased", "Bought"],
+                            ["shipped", "On the way"],
+                            ["delivered", "Delivered"],
                           ] as const
-                        ).map((status) => (
+                        ).map(([value, label]) => (
                           <button
-                            key={status}
-                            onClick={() =>
-                              updateGiftStatusMutation.mutate(status)
-                            }
+                            key={value}
+                            type="button"
+                            onClick={() => updateGiftStatusMutation.mutate(value)}
                             className={cn(
-                              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                              assignment.giftStatus === status
-                                ? "bg-gradient-gold text-midnight"
-                                : "bg-midnight-50 text-cream/60 hover:text-cream"
+                              "min-h-11 px-4 text-sm font-medium",
+                              assignment.giftStatus === value
+                                ? "bg-evergreen text-ivory"
+                                : "border border-rule bg-ivory-card text-ink-soft hover:text-ink"
                             )}
                           >
-                            {status === "pending" && (
-                              <>
-                                <Clock className="w-4 h-4 inline mr-1" />
-                                Not Started
-                              </>
-                            )}
-                            {status === "purchased" && (
-                              <>
-                                <Package className="w-4 h-4 inline mr-1" />
-                                Bought
-                              </>
-                            )}
-                            {status === "shipped" && (
-                              <>
-                                <Truck className="w-4 h-4 inline mr-1" />
-                                On the Way
-                              </>
-                            )}
-                            {status === "delivered" && (
-                              <>
-                                <CheckCircle className="w-4 h-4 inline mr-1" />
-                                Delivered
-                              </>
-                            )}
+                            {label}
                           </button>
                         ))}
                       </div>
                     </div>
+                  ) : status?.hasAssignments && !status.drawComplete ? (
+                    <div className="py-8 text-center">
+                      <h3 className="font-display text-xl text-ink">
+                        The draw is incomplete
+                      </h3>
+                      <p className="mx-auto mt-2 max-w-md text-ink-soft">
+                        {status.assignmentCount} of {status.totalMembers} people have a recipient. You do not have one yet. A new draw cannot be sent while any pair is saved.
+                      </p>
+                    </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-4">
-                        <Sparkles className="w-8 h-8 text-gold" />
-                      </div>
-                      <h3 className="text-xl font-display font-semibold text-cream mb-2">
+                    <div className="py-8 text-center">
+                      <h3 className="mb-2 font-display text-xl text-ink">
                         No assignment yet
                       </h3>
-                      <p className="text-cream/60 mb-4">
+                      <p className="mb-4 text-ink-soft">
                         {isAdmin
                           ? status?.canAssign
                             ? status.pendingInvitations > 0
@@ -2059,15 +2094,15 @@ export default function TeamPage() {
                         {gifteeWishlist.wishlist.items.map((item) => (
                           <div
                             key={item.id}
-                            className="p-4 rounded-lg bg-midnight-50"
+                            className="p-4 rounded-lg bg-ivory"
                           >
                             <div className="flex items-start justify-between">
                               <div>
-                                <h4 className="font-medium text-cream">
+                                <h4 className="font-medium text-ink">
                                   {item.title}
                                 </h4>
                                 {item.description && (
-                                  <p className="text-cream/60 text-sm mt-1">
+                                  <p className="text-ink-soft text-sm mt-1">
                                     {item.description}
                                   </p>
                                 )}
@@ -2092,7 +2127,7 @@ export default function TeamPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-cream/60 text-center py-4">
+                      <p className="text-ink-soft text-center py-4">
                         {assignment.giftee?.name || "They"} have not added wishes yet.
                         The budget
                         {team.budgetMin && team.budgetMax
@@ -2113,29 +2148,29 @@ export default function TeamPage() {
                   </CardHeader>
                   <CardContent>
                     {gifteeAddress.address ? (
-                      <div className="p-4 rounded-lg bg-midnight-50">
-                        <p className="text-cream">
+                      <div className="p-4 rounded-lg bg-ivory">
+                        <p className="text-ink">
                           {gifteeAddress.giftee.name}
                         </p>
-                        <p className="text-cream/70">
+                        <p className="text-ink-soft">
                           {gifteeAddress.address.streetLine1}
                         </p>
                         {gifteeAddress.address.streetLine2 && (
-                          <p className="text-cream/70">
+                          <p className="text-ink-soft">
                             {gifteeAddress.address.streetLine2}
                           </p>
                         )}
-                        <p className="text-cream/70">
+                        <p className="text-ink-soft">
                           {gifteeAddress.address.city},{" "}
                           {gifteeAddress.address.state}{" "}
                           {gifteeAddress.address.postalCode}
                         </p>
-                        <p className="text-cream/70">
+                        <p className="text-ink-soft">
                           {gifteeAddress.address.country}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-cream/60 text-center py-4">
+                      <p className="text-ink-soft text-center py-4">
                         {gifteeAddress.message || "Address not provided yet."}
                       </p>
                     )}
@@ -2187,7 +2222,7 @@ export default function TeamPage() {
         <Modal
           isOpen={isEditTeamModalOpen}
           onClose={() => setIsEditTeamModalOpen(false)}
-          title="Edit Exchange Details"
+          title="Edit the exchange"
           size="lg"
         >
           <form
@@ -2196,7 +2231,7 @@ export default function TeamPage() {
           >
             <Input
               {...teamEditForm.register("name")}
-              label="Exchange Name"
+              label="Exchange name"
               placeholder="e.g., Office Secret Santa 2024"
               error={teamEditForm.formState.errors.name?.message}
               autoFocus
@@ -2228,13 +2263,13 @@ export default function TeamPage() {
               <Input
                 {...teamEditForm.register("wishlistDeadline")}
                 type="date"
-                label="Wishlist Deadline"
+                label="Wishlist deadline"
                 error={teamEditForm.formState.errors.wishlistDeadline?.message}
               />
               <Input
                 {...teamEditForm.register("exchangeDate")}
                 type="date"
-                label="Exchange Date"
+                label="Exchange date"
               />
             </div>
 
@@ -2247,7 +2282,7 @@ export default function TeamPage() {
                 Cancel
               </Button>
               <Button type="submit" isLoading={updateTeamMutation.isPending}>
-                Save Changes
+                Save changes
               </Button>
             </div>
           </form>
@@ -2373,7 +2408,7 @@ export default function TeamPage() {
         {/* Step 2: Preview */}
         {assignmentStep === "preview" && previewData && !sentDraw && (
           <div className="space-y-4">
-            <p className="text-cream/70 text-sm">
+            <p className="text-ink-soft text-sm">
               Here&apos;s how everyone will be matched. Review the assignments
               below.
             </p>
@@ -2392,7 +2427,7 @@ export default function TeamPage() {
               {previewData.preview.map((pair, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 rounded-lg bg-midnight-50"
+                  className="flex items-center justify-between p-3 rounded-lg bg-ivory"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar
@@ -2401,7 +2436,7 @@ export default function TeamPage() {
                       size="sm"
                     />
                     <div>
-                      <p className="text-cream font-medium text-sm">
+                      <p className="text-ink font-medium text-sm">
                         {pair.giver.name}
                       </p>
                     </div>
@@ -2412,7 +2447,7 @@ export default function TeamPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-cream font-medium text-sm">
+                      <p className="text-ink font-medium text-sm">
                         {pair.receiver.name}
                       </p>
                     </div>
@@ -2453,7 +2488,7 @@ export default function TeamPage() {
                   </Button>
                 </div>
               </div>
-              <p className="text-cream/50 text-xs text-center">
+              <p className="text-ink-soft text-xs text-center">
                 Not happy with these assignments? Click &quot;Re-assign&quot; to
                 generate a new set.
               </p>
@@ -2526,6 +2561,7 @@ export default function TeamPage() {
           router.push(`/dashboard/teams/${id}`);
         }}
         persona={isAdmin ? "admin" : "member"}
+        drawn={Boolean(status?.drawComplete)}
         firstTeamId={teamId}
         firstTeamName={team?.name}
       />

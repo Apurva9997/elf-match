@@ -74,36 +74,28 @@ const createTeamSchema = z
 
 type CreateTeamForm = z.infer<typeof createTeamSchema>;
 
+function exchangeSentence(status: TeamWithRole["status"]) {
+  if (status === "assigned" || status === "completed") return "Names are drawn.";
+  if (status === "partial") return "The draw is incomplete.";
+  return "Still collecting the list.";
+}
+
 function TeamCard({ team }: { team: TeamWithRole }) {
-  const statusVariant = {
-    collecting_wishes: "warning",
-    assigned: "success",
-    completed: "gold",
-  }[team.status] as "warning" | "success" | "gold";
-
-  const statusLabel = {
-    collecting_wishes: "Building Wishlists",
-    assigned: "Assigned",
-    completed: "Completed",
-  }[team.status];
-
   return (
     <Link href={`/dashboard/teams/${team.id}`}>
       <Card variant="interactive" className="h-full">
         <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <CardTitle className="text-lg">{team.name}</CardTitle>
-            <Badge variant={statusVariant}>{statusLabel}</Badge>
-          </div>
+          <CardTitle className="text-lg">{team.name}</CardTitle>
+          <p className="mt-1 text-sm text-ink">{exchangeSentence(team.status)}</p>
         </CardHeader>
         <CardContent>
           {team.description && (
-            <p className="text-sm text-ink-soft mb-4 line-clamp-2">
+            <p className="mb-4 text-sm text-ink-soft">
               {team.description}
             </p>
           )}
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center text-cream/50">
+            <div className="flex items-center text-ink-soft">
               {team.role === "admin" && (
                 <Badge variant="gold" className="mr-2 text-xs">
                   Admin
@@ -116,7 +108,7 @@ function TeamCard({ team }: { team: TeamWithRole }) {
                 </span>
               )}
             </div>
-            <ChevronRight className="w-5 h-5 text-cream/30" />
+            <ChevronRight className="w-5 h-5 text-ink-faint" />
           </div>
         </CardContent>
       </Card>
@@ -378,7 +370,7 @@ function DashboardContent() {
       />
 
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-midnight/80 backdrop-blur-md border-b border-gold/10">
+      <nav className="sticky top-0 z-50 border-b border-rule bg-ivory/95">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="font-display text-xl text-evergreen">
@@ -391,7 +383,7 @@ function DashboardContent() {
                 className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
               >
                 <Avatar name={user?.name || user?.email || "U"} size="sm" />
-                <span className="text-cream/70 text-sm hidden sm:block">
+                <span className="text-ink-soft text-sm hidden sm:block">
                   {user?.name || user?.email}
                 </span>
               </Link>
@@ -440,17 +432,17 @@ function DashboardContent() {
                     <CardContent className="py-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-cream">
+                          <h3 className="text-lg font-semibold text-ink">
                             {invitation.teamName}
                           </h3>
                           {invitation.teamDescription && (
-                            <p className="text-cream/60 text-sm mt-1 line-clamp-1">
+                            <p className="text-ink-soft text-sm mt-1 line-clamp-1">
                               {invitation.teamDescription}
                             </p>
                           )}
-                          <p className="text-cream/50 text-xs mt-2">
+                          <p className="text-ink-soft text-xs mt-2">
                             Invited by{" "}
-                            <span className="text-cream/70">
+                            <span className="text-ink-soft">
                               {invitation.invitedBy?.name || "Unknown"}
                             </span>
                           </p>
@@ -519,10 +511,10 @@ function DashboardContent() {
         {teamsError ? (
           <Card className="text-center py-12">
             <CardContent>
-              <h2 className="text-xl font-display font-semibold text-cream mb-2">
+              <h2 className="text-xl font-display font-semibold text-ink mb-2">
                 Couldn&apos;t load your exchanges
               </h2>
-              <p className="text-cream/60 mb-6 max-w-md mx-auto">
+              <p className="text-ink-soft mb-6 max-w-md mx-auto">
                 {teamsErrorDetail instanceof Error
                   ? teamsErrorDetail.message
                   : "The server didn't respond. Please try again."}
@@ -556,7 +548,7 @@ function DashboardContent() {
                 </p>
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Exchange
+                  Create an exchange
                 </Button>
               </CardContent>
             </Card>
@@ -568,7 +560,7 @@ function DashboardContent() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Create a New Exchange"
+        title="Create an exchange"
         size="lg"
       >
         <form onSubmit={handleSubmit(onCreateTeam)} className="space-y-4">
@@ -608,13 +600,13 @@ function DashboardContent() {
             <Input
               {...register("wishlistDeadline")}
               type="date"
-              label="Wishlist Deadline"
+              label="Wishlist deadline"
               error={errors.wishlistDeadline?.message}
             />
             <Input
               {...register("exchangeDate")}
               type="date"
-              label="Exchange Date"
+              label="Exchange date"
             />
           </div>
 

@@ -40,7 +40,7 @@ export function HeroFilm() {
   };
 
   return (
-    <div className="absolute inset-0">
+    <figure className="relative aspect-video overflow-hidden border border-rule bg-evergreen">
       <video
         ref={videoRef}
         className="h-full w-full object-cover"
@@ -57,10 +57,13 @@ export function HeroFilm() {
         onClick={toggle}
         aria-pressed={playing}
         aria-label={playing ? "Pause the film" : "Play the film"}
-        className="absolute bottom-4 right-4 z-10 bg-ivory/95 px-3 py-2 font-mono text-xs uppercase tracking-wider text-evergreen"
+        className="absolute bottom-3 right-3 z-10 min-h-11 bg-ivory px-3 font-mono text-xs uppercase tracking-wider text-evergreen"
       >
         {playing ? "Pause" : "Play"}
       </button>
-    </div>
+      <figcaption className="sr-only">
+        Someone gets to be your Santa. A short film about Elf Match.
+      </figcaption>
+    </figure>
   );
 }

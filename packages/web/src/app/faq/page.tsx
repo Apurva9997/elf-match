@@ -63,7 +63,7 @@ const faqs = [
   {
     question: "What if I want to redo the assignments?",
     answer:
-      "Before confirming assignments, you can regenerate new random matches as many times as you want. However, once assignments are confirmed and emails are sent, they cannot be changed - so review carefully before confirming!",
+      "Before you confirm, you can generate another set as many times as you want. After the emails go out, the names cannot be changed.",
   },
   {
     question: "Do participants need to create an account?",

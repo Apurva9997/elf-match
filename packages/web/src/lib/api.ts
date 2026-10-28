@@ -404,6 +404,8 @@ export interface TeamStatus {
   membersWithAddress: number;
   pendingInvitations: number;
   hasAssignments: boolean;
+  assignmentCount: number;
+  drawComplete: boolean;
   canAssign: boolean;
   assignmentEmailsPending: number;
   completionPercentage: number;

@@ -1,4 +1,4 @@
-import { and, count, eq, or } from "drizzle-orm";
+import { and, count, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { assignments, db, exclusions, teamMembers, teams } from "../db/index.js";
 import { getUserFromRequest } from "../lib/auth.js";
@@ -175,12 +175,47 @@ async function _listTeams(
       },
     });
 
-    const teamsWithRole = memberships.map((m) => ({
-      ...m.team,
-      role: m.role,
-      invitationStatus: m.invitationStatus,
-      membershipId: m.id,
-    }));
+    const teamIds = memberships.map((membership) => membership.team.id);
+    const assignmentCounts = teamIds.length
+      ? await db
+          .select({ teamId: assignments.teamId, n: count() })
+          .from(assignments)
+          .where(inArray(assignments.teamId, teamIds))
+          .groupBy(assignments.teamId)
+      : [];
+    const memberCounts = teamIds.length
+      ? await db
+          .select({ teamId: teamMembers.teamId, n: count() })
+          .from(teamMembers)
+          .where(
+            and(
+              inArray(teamMembers.teamId, teamIds),
+              eq(teamMembers.invitationStatus, "accepted")
+            )
+          )
+          .groupBy(teamMembers.teamId)
+      : [];
+    const assignedByTeam = new Map(assignmentCounts.map((row) => [row.teamId, row.n]));
+    const membersByTeam = new Map(memberCounts.map((row) => [row.teamId, row.n]));
+
+    const teamsWithRole = memberships.map((m) => {
+      const assigned = assignedByTeam.get(m.team.id) ?? 0;
+      const joined = membersByTeam.get(m.team.id) ?? 0;
+      // The status column can lag a saved draw, and a partial draw is not "assigned".
+      const status =
+        assigned > 0 && assigned >= joined
+          ? "assigned"
+          : assigned > 0
+            ? "partial"
+            : m.team.status;
+      return {
+        ...m.team,
+        status,
+        role: m.role,
+        invitationStatus: m.invitationStatus,
+        membershipId: m.id,
+      };
+    });
 
     return success(teamsWithRole);
   } catch (err) {
@@ -448,7 +483,10 @@ async function _getTeamStatus(
       .from(assignments)
       .where(eq(assignments.teamId, teamId));
 
-    const hasAssignments = (assignmentCount?.count ?? 0) > 0;
+    const assignmentTotal = assignmentCount?.count ?? 0;
+    const hasAssignments = assignmentTotal > 0;
+    const drawComplete =
+      hasAssignments && assignmentTotal === acceptedMembersCount;
 
     const [pendingCount] = await db
       .select({ count: count() })
@@ -467,6 +505,8 @@ async function _getTeamStatus(
       membersWithAddress,
       pendingInvitations: pendingCount?.count ?? 0,
       hasAssignments,
+      assignmentCount: assignmentTotal,
+      drawComplete,
       canAssign: acceptedMembersCount >= 3 && !hasAssignments,
       assignmentEmailsPending: hasAssignments
         ? (

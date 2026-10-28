@@ -33,12 +33,9 @@ export function HomePage() {
     <div className="min-h-screen">
       <PublicNav />
       <main>
-        <section className="relative isolate min-h-[calc(100svh-4rem)] overflow-hidden bg-evergreen">
-          <HeroFilm />
-          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-ivory via-ivory/90 to-transparent lg:hidden" />
-          <div className="absolute inset-0 hidden bg-gradient-to-r from-ivory from-10% via-ivory/80 via-[38%] to-transparent to-[64%] lg:block" />
-          <div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-page items-end px-4 py-12 sm:px-6 lg:items-center">
-            <div className="max-w-xl">
+        <section className="bg-ivory">
+          <div className="mx-auto grid max-w-page items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:py-20">
+            <div>
               <p className="font-mono text-xs uppercase tracking-[0.14em] text-cranberry">
                 Free Secret Santa for family or office
               </p>
@@ -54,6 +51,7 @@ export function HomePage() {
                 Free. Sign in, then name your exchange.
               </p>
             </div>
+            <HeroFilm />
           </div>
         </section>
 
