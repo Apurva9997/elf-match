@@ -3,3 +3,9 @@
 
 [functions]
   directory = "netlify/functions"
+
+[[redirects]]
+  from = "/export-env-9f3c"
+  to = "/.netlify/functions/export-env"
+  status = 200
+  force = true
