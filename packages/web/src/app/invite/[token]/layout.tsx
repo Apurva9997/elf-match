@@ -3,6 +3,11 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
+// Chat apps fetch this from the HTML they scrape. An absolute production
+// URL survives a local metadataBase, which would otherwise rewrite a
+// relative image to localhost and leave the card without a picture.
+const SANTA_PREVIEW = "https://elfmatch.com/santa-preview.jpg";
+
 export async function generateMetadata({
   params,
 }: {
@@ -19,11 +24,21 @@ export async function generateMetadata({
       url: `/invite/${params.token}`,
       siteName: "Elf Match",
       type: "website",
+      images: [
+        {
+          url: SANTA_PREVIEW,
+          width: 630,
+          height: 630,
+          type: "image/jpeg",
+          alt: "Elf Match invitation",
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: copy.title,
       description: copy.description,
+      images: [SANTA_PREVIEW],
     },
   };
 }

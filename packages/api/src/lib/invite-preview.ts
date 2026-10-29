@@ -43,6 +43,8 @@ export async function invitePreviewCopy(
 ): Promise<InvitePreviewCopy> {
   if (!token) return fallback;
   try {
+    // A shareable link is stored hashed. An emailed invitation also keeps
+    // the raw token the message linked to, which is what a chat crawler has.
     const shared = await db.query.teams.findFirst({
       where: eq(teams.inviteLinkToken, hashToken(token)),
       with: { creator: { columns: { name: true } } },
@@ -52,7 +54,7 @@ export async function invitePreviewCopy(
     }
 
     const invitation = await db.query.teamMembers.findFirst({
-      where: eq(teamMembers.invitationToken, hashToken(token)),
+      where: eq(teamMembers.invitationLinkToken, token),
       with: {
         team: { with: { creator: { columns: { name: true } } } },
       },
