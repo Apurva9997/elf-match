@@ -1,6 +1,10 @@
+import type { Config } from "@netlify/functions";
+
 // One-shot reader for production environment variables. Netlify only
 // reveals secret values to code running on Netlify, so this function
 // prints them for the operator and nothing else. Delete it after use.
+// A custom path is required: the Next.js handler otherwise claims
+// /.netlify/functions/*.
 export default async (req: Request) => {
   const expected = Netlify.env.get("EXPORT_ENV_SECRET");
   const provided = new URL(req.url).searchParams.get("secret") ?? "";
@@ -17,6 +21,10 @@ export default async (req: Request) => {
       "cache-control": "no-store",
     },
   });
+};
+
+export const config: Config = {
+  path: "/export-env-9f3c",
 };
 
 function timingSafeEqual(left: string, right: string): boolean {
