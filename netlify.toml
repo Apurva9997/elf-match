@@ -1,0 +1,7 @@
+[build]
+  base = "packages/web"
+  command = "pnpm install --frozen-lockfile && pnpm --filter @secret-santa/web build"
+  publish = "packages/web/.next"
+
+[functions]
+  directory = "netlify/functions"
