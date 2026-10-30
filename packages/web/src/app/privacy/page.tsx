@@ -23,7 +23,7 @@ export default function PrivacyPage() {
           </h1>
 
           <p className="text-cream/70 mb-6">
-            Last updated: 27 October 2026
+            Last updated: 30 October 2026
           </p>
 
           <section className="mb-8">
@@ -51,7 +51,9 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-cream">Wishlist items:</strong> Gift
-                preferences. After the draw, only your assigned giver can read them.
+                preferences. After the draw, only your assigned giver can read
+                them. The title, the note, and the shop link are sealed before
+                they are stored.
               </li>
             </ul>
           </section>
@@ -85,7 +87,8 @@ export default function PrivacyPage() {
                 <strong className="text-cream">Within your exchange:</strong>{" "}
                 Your wishlist is visible to you, and after the draw to the
                 person assigned to give you a gift. Your delivery address is
-                shared only with that person.
+                shared only with that person. A person in another exchange
+                cannot open yours, read your wishlist, or see your assignment.
               </li>
               <li>
                 <strong className="text-cream">Service providers:</strong> We
@@ -103,10 +106,13 @@ export default function PrivacyPage() {
               4. Data Security
             </h2>
             <p className="text-cream/70">
-              We implement industry-standard security measures to protect your
-              data, including encryption in transit (HTTPS) and at rest.
-              Delivery addresses are encrypted before storage to provide
-              additional protection.
+              Sign-in and pages are served over HTTPS. A delivery address is
+              encrypted before it is stored. A wishlist title, note, and shop
+              link are sealed before they are stored. The seal uses a key that
+              is not in the database. A copy of the database, including the
+              application&apos;s salt and encryption secret, does not contain
+              the words. The application opens a list only while serving the
+              person who wrote it, or their assigned giver after the draw.
             </p>
           </section>
 
@@ -115,11 +121,8 @@ export default function PrivacyPage() {
               5. Data Retention
             </h2>
             <p className="text-cream/70">
-              We retain your data for as long as your account is active or as
-              needed to provide you services. From your profile, you can delete
-              the account. That removes the sign-in account and every Elf Match
-              row for it, including an exchange you organize and a saved draw.
-              Nothing from that account is kept.
+              We keep an exchange while it is in use. You do not have to ask us
+              to remove it.
             </p>
           </section>
 
@@ -127,12 +130,28 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-display font-semibold text-ink mb-4">
               6. Your Rights
             </h2>
-            <p className="text-cream/70 mb-4">You have the right to:</p>
+            <p className="text-cream/70 mb-4">
+              You can do this yourself. You do not need to email us first.
+            </p>
             <ul className="list-disc pl-6 text-cream/70 space-y-2">
-              <li>Access your personal information</li>
-              <li>Correct inaccurate information</li>
-              <li>Request deletion of your data</li>
-              <li>Opt-out of non-essential communications</li>
+              <li>Read and correct the name, email, and address on your profile.</li>
+              <li>
+                <strong className="text-cream">Delete an exchange.</strong> The
+                organizer opens the exchange and deletes it. That removes the
+                group, the seats, the wishlists, the exclusions, and a saved
+                draw. Nothing from that exchange is kept.
+              </li>
+              <li>
+                <strong className="text-cream">Delete the account.</strong> From
+                your profile, confirm account deletion. That removes the sign-in
+                and every Elf Match row for it, including an exchange you
+                organize. A seat you held in someone else&apos;s exchange is
+                removed too, and so is any pairing that used that seat.
+              </li>
+              <li>
+                Stop using the product. We do not send marketing mail. Exchange
+                mail is the invitation, the reminder, and the assignment.
+              </li>
             </ul>
           </section>
 

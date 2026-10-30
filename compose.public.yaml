@@ -1,0 +1,44 @@
+# Public entry for elfmatch.com. Hearth's Caddy stays on loopback.
+services:
+  elfmatch:
+    image: secret-santa-elfmatch:latest
+    restart: unless-stopped
+    env_file:
+      - /etc/elfmatch.env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    expose:
+      - "3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1536m
+
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on:
+      - elfmatch
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /config
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+volumes:
+  caddydata:

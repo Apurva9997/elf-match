@@ -1,6 +1,7 @@
 import {
   createCipheriv,
   createDecipheriv,
+  hkdfSync,
   randomBytes,
   scryptSync,
 } from "crypto";
@@ -181,6 +182,90 @@ export function decryptMobile(
 ): string | null {
   if (!encryptedMobile) return null;
   return decrypt(encryptedMobile);
+}
+
+/**
+ * A wishlist is sealed to the membership that wrote it, and to a blind
+ * kept outside the database.
+ * ENCRYPTION_SECRET and ENCRYPTION_SALT derive the blind. They are not the
+ * opening key. The opening key also takes the membership id, which a
+ * database copy contains, and WISHLIST_SEAL_KEY, which it does not.
+ * A person who has the database, the salt, and the encryption secret still
+ * cannot read the list. The application opens it only while serving the
+ * writer, or the assigned giver after the draw.
+ */
+function wishlistKey(teamMemberId: string): Buffer {
+  const secret = process.env.ENCRYPTION_SECRET;
+  const salt = process.env.ENCRYPTION_SALT;
+  const seal = process.env.WISHLIST_SEAL_KEY;
+  if (!secret || !salt || !seal) {
+    throw new Error(
+      "ENCRYPTION_SECRET, ENCRYPTION_SALT, and WISHLIST_SEAL_KEY are required"
+    );
+  }
+  const blind = Buffer.from(
+    hkdfSync(
+      "sha256",
+      Buffer.from(secret, "utf8"),
+      Buffer.from(salt, "utf8"),
+      Buffer.from("elfmatch-wishlist-blind-v1", "utf8"),
+      32
+    )
+  );
+  return Buffer.from(
+    hkdfSync(
+      "sha256",
+      Buffer.from(seal, "utf8"),
+      blind,
+      Buffer.from(`elfmatch-wishlist-v1:${teamMemberId}`, "utf8"),
+      32
+    )
+  );
+}
+
+function sealWithKey(plaintext: string, key: Buffer): string {
+  const iv = randomBytes(IV_LENGTH);
+  const cipher = createCipheriv(ALGORITHM, key, iv);
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
+  const authTag = cipher.getAuthTag();
+  return `v1.${iv.toString("base64url")}.${authTag.toString("base64url")}.${encrypted.toString("base64url")}`;
+}
+
+function openWithKey(sealed: string, key: Buffer): string {
+  const parts = sealed.split(".");
+  if (parts.length !== 4 || parts[0] !== "v1") {
+    throw new Error("Wishlist text is not sealed");
+  }
+  const iv = Buffer.from(parts[1], "base64url");
+  const authTag = Buffer.from(parts[2], "base64url");
+  const encrypted = Buffer.from(parts[3], "base64url");
+  const decipher = createDecipheriv(ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
+    "utf8"
+  );
+}
+
+export function sealWishlistText(
+  value: string | null | undefined,
+  teamMemberId: string
+): string | null {
+  if (!value) return null;
+  return sealWithKey(value, wishlistKey(teamMemberId));
+}
+
+export function openWishlistText(
+  value: string | null | undefined,
+  teamMemberId: string
+): string | null {
+  if (!value) return null;
+  // Rows written before sealing have no v1 prefix. They are still readable
+  // until the writer saves again, which replaces them with sealed text.
+  if (!value.startsWith("v1.")) return value;
+  return openWithKey(value, wishlistKey(teamMemberId));
 }
 
 /**

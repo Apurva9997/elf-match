@@ -1,0 +1,123 @@
+name: Deploy to AWS
+
+# A push to main publishes elfmatch.com. The site is the Docker Compose
+# project on the hearth instance. Netlify files stay in the repo for the
+# return after Christmas. This workflow does not call Netlify.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: elfmatch-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-south-1
+  DEPLOY_BUCKET: your-deploy-bucket
+  INSTANCE_ID: i-00000000000000000
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::ACCOUNT:role/your-deploy-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Pack the source
+        run: |
+          tar -czf /tmp/elfmatch-src.tgz \
+            --exclude .git \
+            --exclude node_modules \
+            --exclude '*/.next' \
+            --exclude videos \
+            --exclude .grok \
+            --exclude '*.env' \
+            --exclude '*.env.*' \
+            .
+          # The archive is source. It must not contain an env file.
+          if tar -tzf /tmp/elfmatch-src.tgz | grep -E '(^|/)\.env($|\.)'; then
+            echo "refusing to upload an env file" >&2
+            exit 1
+          fi
+
+      - name: Hand the archive to the instance
+        run: |
+          aws s3 cp /tmp/elfmatch-src.tgz \
+            "s3://${DEPLOY_BUCKET}/src/${GITHUB_SHA}.tgz"
+
+      - name: Build and recreate the site
+        run: |
+          params=$(jq -n --arg sha "$GITHUB_SHA" --arg bucket "$DEPLOY_BUCKET" '{
+            commands: [
+              "set -eu",
+              "/usr/local/sbin/elfmatch-fetch src/\($sha).tgz /tmp/elfmatch-src.tgz",
+              "rm -rf /tmp/elfmatch-new",
+              "mkdir -p /tmp/elfmatch-new",
+              "tar -xzf /tmp/elfmatch-src.tgz -C /tmp/elfmatch-new",
+              "rm -f /tmp/elfmatch-src.tgz",
+              "test -f /tmp/elfmatch-new/Dockerfile",
+              "test -f /tmp/elfmatch-new/compose.public.yaml",
+              "rm -rf /opt/elfmatch/src/secret-santa.bak",
+              "if [ -d /opt/elfmatch/src/secret-santa ]; then mv /opt/elfmatch/src/secret-santa /opt/elfmatch/src/secret-santa.bak; fi",
+              "mv /tmp/elfmatch-new /opt/elfmatch/src/secret-santa",
+              "cd /opt/elfmatch/src/secret-santa",
+              "KEY=$(grep ^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY= /etc/elfmatch.env | cut -d= -f2-)",
+              "test -n \"$KEY\"",
+              "export NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=\"$KEY\"",
+              "docker compose -f compose.public.yaml build elfmatch",
+              "docker compose -f compose.public.yaml up -d --force-recreate --no-deps elfmatch",
+              "rm -rf /opt/elfmatch/src/secret-santa.bak",
+              "sleep 3",
+              "docker ps --filter name=secret-santa-elfmatch-1 --format {{.Status}}"
+            ]
+          }')
+          command_id=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --timeout-seconds 900 \
+            --parameters "$params" \
+            --query Command.CommandId \
+            --output text)
+          echo "ssm command $command_id"
+          for _ in $(seq 1 90); do
+            status=$(aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" \
+              --query Status \
+              --output text || echo Pending)
+            echo "$status"
+            case "$status" in
+              Success)
+                aws ssm get-command-invocation \
+                  --command-id "$command_id" \
+                  --instance-id "$INSTANCE_ID" \
+                  --query StandardOutputContent \
+                  --output text | tail -n 40
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut)
+                aws ssm get-command-invocation \
+                  --command-id "$command_id" \
+                  --instance-id "$INSTANCE_ID" \
+                  --query '[StandardOutputContent,StandardErrorContent]' \
+                  --output text | tail -n 80
+                exit 1
+                ;;
+            esac
+            sleep 10
+          done
+          echo "deploy did not finish" >&2
+          exit 1
+
+      - name: Remove the archive
+        if: always()
+        run: aws s3 rm "s3://${DEPLOY_BUCKET}/src/${GITHUB_SHA}.tgz"

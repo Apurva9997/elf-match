@@ -94,8 +94,10 @@ export function HomePage() {
           </p>
           <dl className="mt-8 max-w-3xl divide-y divide-rule border-y border-rule">
             {[
-              ["Wishlist items", "You write a title, a note, a price estimate, and a shop link. After the draw, only your assigned giver can read them."],
+              ["Wishlist items", "You write a title, a note, a price estimate, and a shop link. After the draw, only your assigned giver can read them. The words are sealed with a key that is not in the database, so a copy of the database does not contain the list."],
+              ["Another exchange", "Joining one exchange does not open any other. You see the people in your own group, and no one else's wishlist or assignment."],
               ["Delivery address", "Encrypted in storage. Shown only to the person assigned to give that gift."],
+              ["Leaving", "An organizer can delete the exchange. That removes the draw, the wishlists, and the seats. From your profile, you can delete the account. That removes the sign-in and every Elf Match row for it."],
               ["The draw", "You, as organizer, can preview every pairing before you send it. After that, each person sees only their own recipient."],
               ["Gift progress", "The giver can mark a gift bought, shipped, or delivered for their own notes. The recipient does not see those updates."],
             ].map(([term, detail]) => (

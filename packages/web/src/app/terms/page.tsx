@@ -112,8 +112,10 @@ export default function TermsPage() {
               <Link href="/privacy" className="text-gold hover:text-gold-light">
                 Privacy Policy
               </Link>
-              , which describes how we collect, use, and protect your
-              information.
+              . An organizer can delete an exchange, and any person can delete
+              their account from their profile. Either deletion removes the
+              Elf Match rows it covers. A person in one exchange cannot open
+              another.
             </p>
           </section>
 

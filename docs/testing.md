@@ -7,7 +7,7 @@ Production and development are separate. A test is finished only when the app it
 ## Production, do not write
 
 - Site: https://elfmatch.com
-- Deploys from `main` to the Netlify site `transcendent-raindrop-058d5a`.
+- Served from the AWS EC2 instance `hearth` (`i-00000000000000000`, `0.0.0.0`) by the Docker Compose project `secret-santa` in `/opt/elfmatch/src/secret-santa`. A push to `main` deploys it through `.github/workflows/deploy-aws.yml`: GitHub Actions assumes `elfmatch-github-deploy`, puts the source in `s3://your-deploy-bucket`, and Systems Manager rebuilds `secret-santa-elfmatch` and recreates that container. It does not deploy to Netlify. Netlify files stay in the repo for the return after Christmas. The old Netlify site id `00000000-0000-0000-0000-000000000000` is linked in `packages/web/.netlify/state.json` and is not what `elfmatch.com` resolves to.
 - Clerk application `elfmatch` (`app_your_clerk_application`), production instance `ins_your_production_instance`. Sign-in is Google.
 - Database host: `your-project-pooler.region.aws.neon.tech`, database `giftwhisper`.
 

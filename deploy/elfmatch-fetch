@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Download one object from the Elf Match deploy bucket.
+
+Uses the instance role through IMDSv2. The host role can read only
+s3://your-deploy-bucket/src/*. Nothing else is fetched.
+Installed on the host at /usr/local/sbin/elfmatch-fetch. The deploy
+workflow calls that path. This copy is what a new host should install.
+"""
+import hashlib
+import hmac
+import json
+import sys
+import urllib.request
+from datetime import datetime, timezone
+
+BUCKET = "your-deploy-bucket"
+REGION = "ap-south-1"
+PREFIX = "src/"
+
+
+def imds(path, token):
+    req = urllib.request.Request(
+        "http://169.254.169.254/latest/meta-data/" + path,
+        headers={"X-aws-ec2-metadata-token": token},
+    )
+    with urllib.request.urlopen(req, timeout=2) as res:
+        return res.read().decode()
+
+
+def sign(key, message):
+    return hmac.new(key, message.encode(), hashlib.sha256).digest()
+
+
+def main():
+    if len(sys.argv) != 3:
+        sys.exit("usage: elfmatch-fetch s3-key dest")
+    key, dest = sys.argv[1], sys.argv[2]
+    if not key.startswith(PREFIX) or ".." in key:
+        sys.exit("refusing a key outside src/")
+
+    token_req = urllib.request.Request(
+        "http://169.254.169.254/latest/api/token",
+        method="PUT",
+        headers={"X-aws-ec2-metadata-token-ttl-seconds": "60"},
+    )
+    with urllib.request.urlopen(token_req, timeout=2) as res:
+        token = res.read().decode()
+    role = imds("iam/security-credentials/", token).strip().splitlines()[0]
+    creds = json.loads(imds("iam/security-credentials/" + role, token))
+
+    now = datetime.now(timezone.utc)
+    amzdate = now.strftime("%Y%m%dT%H%M%SZ")
+    datestamp = now.strftime("%Y%m%d")
+    host = f"{BUCKET}.s3.{REGION}.amazonaws.com"
+    canonical_uri = "/" + urllib.request.quote(key)
+    payload_hash = hashlib.sha256(b"").hexdigest()
+    canonical_headers = (
+        f"host:{host}\n"
+        f"x-amz-content-sha256:{payload_hash}\n"
+        f"x-amz-date:{amzdate}\n"
+        f"x-amz-security-token:{creds['Token']}\n"
+    )
+    signed_headers = "host;x-amz-content-sha256;x-amz-date;x-amz-security-token"
+    canonical = "\n".join(
+        ["GET", canonical_uri, "", canonical_headers, signed_headers, payload_hash]
+    )
+    scope = f"{datestamp}/{REGION}/s3/aws4_request"
+    string_to_sign = "\n".join(
+        [
+            "AWS4-HMAC-SHA256",
+            amzdate,
+            scope,
+            hashlib.sha256(canonical.encode()).hexdigest(),
+        ]
+    )
+    k = sign(("AWS4" + creds["SecretAccessKey"]).encode(), datestamp)
+    k = sign(k, REGION)
+    k = sign(k, "s3")
+    k = sign(k, "aws4_request")
+    signature = hmac.new(k, string_to_sign.encode(), hashlib.sha256).hexdigest()
+    authorization = (
+        f"AWS4-HMAC-SHA256 Credential={creds['AccessKeyId']}/{scope}, "
+        f"SignedHeaders={signed_headers}, Signature={signature}"
+    )
+    req = urllib.request.Request(
+        f"https://{host}{canonical_uri}",
+        headers={
+            "Authorization": authorization,
+            "x-amz-content-sha256": payload_hash,
+            "x-amz-date": amzdate,
+            "x-amz-security-token": creds["Token"],
+        },
+    )
+    with urllib.request.urlopen(req, timeout=60) as res, open(dest, "wb") as out:
+        while True:
+            chunk = res.read(1024 * 1024)
+            if not chunk:
+                break
+            out.write(chunk)
+
+
+if __name__ == "__main__":
+    main()

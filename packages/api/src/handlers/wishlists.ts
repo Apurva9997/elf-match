@@ -18,6 +18,7 @@ import {
   success,
   unauthorized,
 } from "../lib/response.js";
+import { openWishlistText, sealWishlistText } from "../lib/encryption.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
 
 const wishItemSchema = z.object({
@@ -54,6 +55,37 @@ async function getMembershipForTeam(userId: string, teamId: string) {
   });
 }
 
+type StoredWishItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  url: string | null;
+  priceEstimate: string | null;
+  priority: number | null;
+};
+
+/**
+ * Opens a wishlist for the membership that wrote it.
+ * Callers must already have checked that this request may see that membership:
+ * the writer, or the giver assigned to them. A database reader who is not
+ * this process cannot run this step.
+ */
+function presentWishlist<T extends { items?: StoredWishItem[] } | null | undefined>(
+  wishlist: T,
+  teamMemberId: string
+): T {
+  if (!wishlist?.items) return wishlist;
+  return {
+    ...wishlist,
+    items: wishlist.items.map((item) => ({
+      ...item,
+      title: openWishlistText(item.title, teamMemberId) ?? "",
+      description: openWishlistText(item.description, teamMemberId),
+      url: openWishlistText(item.url, teamMemberId),
+    })),
+  };
+}
+
 async function _getWishlist(
   req: Request,
   params: RouteParams
@@ -88,7 +120,7 @@ async function _getWishlist(
       wishlist = { ...newWishlist, items: [] };
     }
 
-    return success(wishlist);
+    return success(presentWishlist(wishlist, membership.id));
   } catch (err) {
     console.error("Error getting wishlist:", err);
     return serverError("Failed to get wishlist");
@@ -138,9 +170,9 @@ async function _updateWishlist(
       await db.insert(wishItems).values(
         items.map((item, index) => ({
           wishlistId: wishlist!.id,
-          title: item.title,
-          description: item.description,
-          url: item.url || null,
+          title: sealWishlistText(item.title, membership.id)!,
+          description: sealWishlistText(item.description, membership.id),
+          url: sealWishlistText(item.url, membership.id),
           priceEstimate: item.priceEstimate?.toString() ?? null,
           priority: item.priority ?? index,
         }))
@@ -161,7 +193,7 @@ async function _updateWishlist(
       },
     });
 
-    return success(updatedWishlist);
+    return success(presentWishlist(updatedWishlist, membership.id));
   } catch (err) {
     console.error("Error updating wishlist:", err);
     return serverError("Failed to update wishlist");
@@ -222,7 +254,10 @@ async function _getGifteeWishlist(
         name: assignment.receiver.user?.name || "Unknown",
         avatarUrl: assignment.receiver.user?.avatarUrl,
       },
-      wishlist: assignment.receiver.wishlist,
+      wishlist: presentWishlist(
+        assignment.receiver.wishlist,
+        assignment.receiverId
+      ),
       giftStatus: assignment.giftStatus,
     });
   } catch (err) {

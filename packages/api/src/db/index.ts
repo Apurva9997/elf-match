@@ -10,8 +10,11 @@ const pool = new Pool({
   max: 2,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 2000,
+  // Neon presents a public certificate. Checking it is what stops a
+  // network observer between this process and the database from reading
+  // the session, including the connection string's password.
   ssl: {
-    rejectUnauthorized: false,
+    rejectUnauthorized: true,
   },
 });
 
