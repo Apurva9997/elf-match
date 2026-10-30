@@ -1,6 +1,10 @@
 # Public entry for elfmatch.com. Hearth's Caddy stays on loopback.
 services:
   elfmatch:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     image: secret-santa-elfmatch:latest
     restart: unless-stopped
     env_file:
