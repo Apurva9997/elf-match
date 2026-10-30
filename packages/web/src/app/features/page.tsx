@@ -26,7 +26,7 @@ const settings = [
   {
     label: "People",
     title: "A shared link, or email invitations",
-    body: "Copy one invite link for the group, or invite addresses one by one. You need at least three joined people before a draw is possible. The shared link stays open until you turn it off. Pending email invitations stay visible, and you can resend them.",
+    body: "Generate one invite link for the group, or invite addresses one by one. You need at least three joined people before a draw is possible. The shared address stays the same until you expire it. Turning signing off stops new people joining without retiring that address. Pending email invitations stay visible, and you can resend them.",
   },
   {
     label: "Wishlists",

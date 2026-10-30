@@ -13,9 +13,13 @@ import { getUserFromRequest } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
 import { hashToken } from "../lib/encryption.js";
 import {
-  inviteLinkPreview,
-  joinByInviteLink,
-  newInviteToken,
+  expireShareLink,
+  generateShareLink,
+  joinByShareLink,
+  listShareLinks,
+  resolveShareLink,
+  setShareSigning,
+  ShareableInviteError,
 } from "../lib/invite-link.js";
 import { type RouteParams, wrapHandler } from "../lib/middleware.js";
 import { rateLimiters } from "../lib/rate-limit.js";
@@ -204,9 +208,18 @@ async function _previewInvitation(
     const token = params.token;
     if (!token) return error("Invitation token required", 400);
 
-    const shared = await inviteLinkPreview(token);
-    if (shared) {
-      return success(shared);
+    const shared = await resolveShareLink(token);
+    if (shared.outcome !== "unknown") {
+      return success({
+        kind: "link",
+        status: shared.outcome === "joinable" ? "open" : shared.outcome,
+        exchangeName: shared.exchangeName,
+        hostName: shared.hostName,
+        exchangeDate: shared.exchangeDate,
+        wishlistDeadline: shared.wishlistDeadline,
+        budgetMin: shared.budgetMin,
+        budgetMax: shared.budgetMax,
+      });
     }
 
     const invitation = await db.query.teamMembers.findFirst({
@@ -251,7 +264,7 @@ async function _acceptInvitation(
     const token = params.token;
     if (!token) return error("Invitation token required", 400);
 
-    const shared = await joinByInviteLink(token, user);
+    const shared = await joinByShareLink(token, user);
     if (shared.ok) {
       return success({
         team: shared.team,
@@ -260,8 +273,22 @@ async function _acceptInvitation(
           : "Invitation accepted",
       });
     }
-    if (shared.status !== 404) {
-      return error(shared.message, shared.status, shared.code);
+    if (shared.outcome === "draw_locked") {
+      return error(
+        "Names have already been drawn for this exchange. Ask the organizer before joining — a late join is not added to the draw.",
+        409,
+        "DRAW_LOCKED"
+      );
+    }
+    if (shared.outcome === "signing_off") {
+      return error(
+        "The organizer has turned off joining by link. Ask them to turn it back on, or for a personal invitation.",
+        409,
+        "SIGNING_OFF"
+      );
+    }
+    if (shared.outcome === "archived") {
+      return error("This exchange is archived. New people cannot join.", 409);
     }
 
     const tokenHash = hashToken(token);
@@ -811,6 +838,20 @@ function inviteUrl(token: string): string {
   return `${origin}/invite/${token}`;
 }
 
+function shareableInviteError(err: unknown): Response | null {
+  if (!(err instanceof ShareableInviteError)) return null;
+  if (err.code === "LIVE_LINK") {
+    return error(err.message, 409, "LIVE_LINK");
+  }
+  if (err.code === "DRAW_LOCKED") {
+    return error(err.message, 409, "DRAW_LOCKED");
+  }
+  if (err.code === "NO_LIVE_LINK" || err.code === "UNKNOWN_LINK" || err.code === "ALREADY_EXPIRED") {
+    return error(err.message, 409, err.code);
+  }
+  return null;
+}
+
 async function _createInviteLink(
   req: Request,
   params: RouteParams
@@ -829,29 +870,25 @@ async function _createInviteLink(
       where: eq(teams.id, teamId),
     });
     if (!team) return notFound("Team not found");
-
-    if (team.status === "assigned") {
-      return error(
-        "Names have already been drawn, so a new invite link would not add anyone to the draw.",
-        409,
-        "DRAW_LOCKED"
-      );
+    if (team.archivedAt) {
+      return error("This exchange is archived. New invitations are closed.", 409);
     }
 
-    const token = newInviteToken();
-    await db
-      .update(teams)
-      .set({ inviteLinkToken: hashToken(token), updatedAt: new Date() })
-      .where(eq(teams.id, teamId));
-
-    return success({ url: inviteUrl(token), enabled: true });
+    const issued = await generateShareLink(teamId);
+    return success({
+      id: issued.id,
+      url: inviteUrl(issued.token),
+      signingOn: true,
+    });
   } catch (err) {
+    const mapped = shareableInviteError(err);
+    if (mapped) return mapped;
     console.error("Error creating invite link:", err);
     return serverError("Failed to create the invite link");
   }
 }
 
-async function _disableInviteLink(
+async function _listInviteLinks(
   req: Request,
   params: RouteParams
 ): Promise<Response> {
@@ -862,18 +899,72 @@ async function _disableInviteLink(
     const teamId = params.teamId;
     if (!teamId) return error("Team ID required", 400);
     if (!(await organizerOf(teamId, user.id))) {
-      return forbidden("Only the organizer can turn off the invite link");
+      return forbidden("Only the organizer can see invite links");
     }
 
-    await db
-      .update(teams)
-      .set({ inviteLinkToken: null, updatedAt: new Date() })
-      .where(eq(teams.id, teamId));
-
-    return success({ enabled: false });
+    const links = await listShareLinks(teamId);
+    const live = links.find((link) => !link.expiredAt) ?? null;
+    return success({
+      canGenerate: !live,
+      signingOn: Boolean(live?.signingOn),
+      links,
+    });
   } catch (err) {
-    console.error("Error turning off invite link:", err);
-    return serverError("Failed to turn off the invite link");
+    console.error("Error listing invite links:", err);
+    return serverError("Failed to list invite links");
+  }
+}
+
+async function _setInviteLinkSigning(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const teamId = params.teamId;
+    if (!teamId) return error("Team ID required", 400);
+    if (!(await organizerOf(teamId, user.id))) {
+      return forbidden("Only the organizer can turn link signing on or off");
+    }
+
+    const body = JSON.parse((await req.text()) || "{}");
+    if (typeof body.on !== "boolean") {
+      return error("Say whether signing should be on.", 400, "VALIDATION_ERROR");
+    }
+
+    const link = await setShareSigning(teamId, body.on);
+    return success({ id: link.id, signingOn: link.signingOn });
+  } catch (err) {
+    const mapped = shareableInviteError(err);
+    if (mapped) return mapped;
+    console.error("Error changing invite link signing:", err);
+    return serverError("Failed to change invite link signing");
+  }
+}
+
+async function _expireInviteLink(
+  req: Request,
+  params: RouteParams
+): Promise<Response> {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return unauthorized();
+
+    const { teamId, linkId } = params;
+    if (!teamId || !linkId) return error("Team ID and link ID required", 400);
+    if (!(await organizerOf(teamId, user.id))) {
+      return forbidden("Only the organizer can expire an invite link");
+    }
+
+    const expired = await expireShareLink(teamId, linkId);
+    return success({ id: expired.id, expiredAt: expired.expiredAt });
+  } catch (err) {
+    const mapped = shareableInviteError(err);
+    if (mapped) return mapped;
+    console.error("Error expiring invite link:", err);
+    return serverError("Failed to expire the invite link");
   }
 }
 
@@ -882,7 +973,17 @@ export const createInviteLink = wrapHandler(_createInviteLink, {
   useUserId: true,
 });
 
-export const disableInviteLink = wrapHandler(_disableInviteLink, {
+export const listInviteLinks = wrapHandler(_listInviteLinks, {
+  limiter: rateLimiters.authenticatedRead,
+  useUserId: true,
+});
+
+export const setInviteLinkSigning = wrapHandler(_setInviteLinkSigning, {
+  limiter: rateLimiters.authenticatedWrite,
+  useUserId: true,
+});
+
+export const expireInviteLink = wrapHandler(_expireInviteLink, {
   limiter: rateLimiters.authenticatedWrite,
   useUserId: true,
 });

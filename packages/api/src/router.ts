@@ -50,8 +50,10 @@ const routes: Route[] = [
 
   // Team invitations / members
   { method: "POST", pattern: "/teams/:teamId/invite", handler: invitations.inviteMembers },
+  { method: "GET", pattern: "/teams/:teamId/invite-links", handler: invitations.listInviteLinks },
   { method: "POST", pattern: "/teams/:teamId/invite-link", handler: invitations.createInviteLink },
-  { method: "DELETE", pattern: "/teams/:teamId/invite-link", handler: invitations.disableInviteLink },
+  { method: "PATCH", pattern: "/teams/:teamId/invite-link", handler: invitations.setInviteLinkSigning },
+  { method: "POST", pattern: "/teams/:teamId/invite-links/:linkId/expire", handler: invitations.expireInviteLink },
   { method: "DELETE", pattern: "/teams/:teamId/members/:memberId", handler: invitations.removeMember },
   { method: "POST", pattern: "/teams/:teamId/members/:memberId/cancel", handler: invitations.cancelInvitation },
   { method: "POST", pattern: "/teams/:teamId/members/:memberId/resend", handler: invitations.resendInvitation },
@@ -80,7 +82,6 @@ const routes: Route[] = [
 
   // Admin
   { method: "POST", pattern: "/teams/:teamId/reminders", handler: admin.sendReminders },
-  { method: "PATCH", pattern: "/teams/:teamId/users/:userId/email", handler: admin.changeUserEmail },
 ];
 
 function matchPattern(pattern: string, pathname: string): RouteParams | null {

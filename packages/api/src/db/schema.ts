@@ -58,9 +58,6 @@ export const teams = pgTable("teams", {
   budgetMax: decimal("budget_max", { precision: 10, scale: 2 }),
   exchangeDate: date("exchange_date"),
   wishlistDeadline: date("wishlist_deadline"),
-  // The shareable join link. Null means the organizer has not created one,
-  // or has turned the last one off. Hashed; the raw token is not stored.
-  inviteLinkToken: varchar("invite_link_token", { length: 255 }).unique(),
   status: varchar("status", { length: 50 })
     .default("collecting_wishes")
     .notNull(),
@@ -70,6 +67,20 @@ export const teams = pgTable("teams", {
   createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Shareable invite links. One unexpired row per exchange. The raw token is
+// returned once at generation and is not stored. Signing off keeps the
+// address; expire retires it.
+export const shareableInviteLinks = pgTable("shareable_invite_links", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teamId: uuid("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  tokenHash: varchar("token_hash", { length: 255 }).notNull().unique(),
+  signingOn: boolean("signing_on").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiredAt: timestamp("expired_at"),
 });
 
 // Team memberships with roles
@@ -208,7 +219,18 @@ export const teamsRelations = relations(teams, ({ one, many }) => ({
   assignments: many(assignments),
   exclusions: many(exclusions),
   activityLogs: many(activityLog),
+  shareableInviteLinks: many(shareableInviteLinks),
 }));
+
+export const shareableInviteLinksRelations = relations(
+  shareableInviteLinks,
+  ({ one }) => ({
+    team: one(teams, {
+      fields: [shareableInviteLinks.teamId],
+      references: [teams.id],
+    }),
+  })
+);
 
 export const teamMembersRelations = relations(teamMembers, ({ one, many }) => ({
   team: one(teams, {
@@ -290,3 +312,4 @@ export type Assignment = typeof assignments.$inferSelect;
 export type NewAssignment = typeof assignments.$inferInsert;
 export type Exclusion = typeof exclusions.$inferSelect;
 export type NewExclusion = typeof exclusions.$inferInsert;
+export type ShareableInviteLink = typeof shareableInviteLinks.$inferSelect;

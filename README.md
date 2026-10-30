@@ -135,7 +135,7 @@ Sensitive data is encrypted at rest using AES-256-GCM encryption:
 | Shipping addresses | ✅        | Street, city, state, postal code  |
 | Country            | ❌        | Needed for shipping logistics     |
 | Email addresses    | ❌        | Needed for authentication lookups |
-| Wishlist items     | ❌        | Not considered PII                |
+| Wishlist items     | ✅        | Title, note, and shop link are sealed with `WISHLIST_SEAL_KEY`, which is not in the database. The database, the salt, and `ENCRYPTION_SECRET` together cannot open them. |
 | User names         | ❌        | Display purposes                  |
 
 ### Authentication
@@ -182,8 +182,10 @@ The app uses a "Cozy Winter Night" aesthetic:
 ### Invitations
 
 - `POST /teams/:id/invite` - Invite members by email
-- `POST /teams/:id/invite-link` - Create or replace the shareable invite link
-- `DELETE /teams/:id/invite-link` - Turn the shareable invite link off
+- `GET /teams/:id/invite-links` - List shareable invite links for the organizer
+- `POST /teams/:id/invite-link` - Generate a shareable invite link. Refused while one is still live
+- `PATCH /teams/:id/invite-link` - Turn joining by that link on or off without changing the address
+- `POST /teams/:id/invite-links/:linkId/expire` - Retire a shareable invite link so a new one can be generated
 - `POST /invitations/:token/accept` - Accept invitation
 - `POST /invitations/:token/decline` - Decline invitation
 

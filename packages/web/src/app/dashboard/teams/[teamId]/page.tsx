@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { track } from "@/lib/analytics";
 import { ApiError, api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { cn, dateInputValue, formatDate } from "@/lib/utils";
+import { cn, dateInputValue, formatDate, formatShortDate } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -138,6 +138,7 @@ export default function TeamPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteName, setDeleteName] = useState("");
   const [inviteLinkUrl, setInviteLinkUrl] = useState<string | null>(null);
+  const [inviteLinkId, setInviteLinkId] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -210,6 +211,12 @@ export default function TeamPage() {
     enabled: !!user,
     retry: 1,
     staleTime: 30_000,
+  });
+
+  const { data: inviteLinks } = useQuery({
+    queryKey: ["invite-links", teamId],
+    queryFn: () => api.listInviteLinks(teamId),
+    enabled: !!user && team?.role === "admin",
   });
 
   const { data: status } = useQuery({
@@ -916,12 +923,13 @@ export default function TeamPage() {
     mutationFn: () => api.createInviteLink(teamId),
     onSuccess: async (result) => {
       setInviteLinkUrl(result.url);
-      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+      setInviteLinkId(result.id);
+      queryClient.invalidateQueries({ queryKey: ["invite-links", teamId] });
       try {
         await navigator.clipboard.writeText(result.url);
-        toast.success("Invite link copied. Anyone with it can join until you turn it off.");
+        toast.success("Invite link copied. Anyone with it can join until you turn signing off or expire it.");
       } catch {
-        toast.success("Invite link ready. Copy it from the box.");
+        toast.success("Invite link ready. Copy it from the box. It will not be shown again.");
       }
     },
     onError: (err: Error) => {
@@ -953,26 +961,41 @@ export default function TeamPage() {
     },
   });
 
-  const disableInviteLinkMutation = useMutation({
-    mutationFn: () => api.disableInviteLink(teamId),
-    onSuccess: () => {
-      setInviteLinkUrl(null);
-      queryClient.invalidateQueries({ queryKey: ["team", teamId] });
-      toast.success("Invite link turned off. A new one will be a different address.");
+  const setSigningMutation = useMutation({
+    mutationFn: (on: boolean) => api.setInviteLinkSigning(teamId, on),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["invite-links", teamId] });
+      toast.success(
+        result.signingOn
+          ? "Joining by link is on. The same address works again."
+          : "Joining by link is off. The address is unchanged, and you can turn it back on."
+      );
     },
     onError: (err: Error) => {
-      toast.error(err.message || "Could not turn off the invite link.");
+      toast.error(err.message || "Could not change link signing.");
+    },
+  });
+
+  const expireInviteLinkMutation = useMutation({
+    mutationFn: (linkId: string) => api.expireInviteLink(teamId, linkId),
+    onSuccess: (_result, linkId) => {
+      if (inviteLinkId === linkId) {
+        setInviteLinkUrl(null);
+        setInviteLinkId(null);
+      }
+      queryClient.invalidateQueries({ queryKey: ["invite-links", teamId] });
+      toast.success("Link expired. That address will not work again. You can generate a new one.");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Could not expire the link.");
     },
   });
 
   const copySharedInviteLink = async () => {
-    if (!inviteLinkUrl) {
-      createInviteLinkMutation.mutate();
-      return;
-    }
+    if (!inviteLinkUrl) return;
     try {
       await navigator.clipboard.writeText(inviteLinkUrl);
-      toast.success("Invite link copied.");
+      toast.success("Invite link copied. The address is unchanged.");
     } catch {
       toast.error("Could not copy the link.");
     }
@@ -1470,44 +1493,9 @@ export default function TeamPage() {
                   <div className="mb-5 border border-rule bg-ivory p-4">
                     <p className="font-medium text-ink">Invite link</p>
                     <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                      Share this in a group. Anyone who opens it and signs in joins as themselves. Email invitations still work the same way.
+                      Share one link with the whole group. Anyone who opens it and signs in joins as themselves. Copying it again does not change the address. Expire it when you want a new one. Turning signing off keeps the address and stops new people from joining.
                     </p>
-                    {team.inviteLinkEnabled || inviteLinkUrl ? (
-                      <div className="mt-3 space-y-3">
-                        {inviteLinkUrl ? (
-                          <input
-                            readOnly
-                            value={inviteLinkUrl}
-                            aria-label="Invite link"
-                            onFocus={(event) => event.currentTarget.select()}
-                            className="w-full border border-rule bg-ivory-card px-3 py-2 text-sm text-ink"
-                          />
-                        ) : (
-                          <p className="text-sm text-ink-soft">
-                            A link is already on. Copying it again replaces that address, and the previous one stops working.
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-3">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={copySharedInviteLink}
-                            isLoading={createInviteLinkMutation.isPending}
-                          >
-                            <Link2 className="mr-2 h-4 w-4" />
-                            {inviteLinkUrl ? "Copy link" : "Copy a new link"}
-                          </Button>
-                          <button
-                            type="button"
-                            onClick={() => disableInviteLinkMutation.mutate()}
-                            disabled={disableInviteLinkMutation.isPending}
-                            className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-cranberry hover:underline disabled:opacity-50"
-                          >
-                            Turn off
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
+                    {inviteLinks?.canGenerate ? (
                       <Button
                         type="button"
                         variant="secondary"
@@ -1516,8 +1504,102 @@ export default function TeamPage() {
                         isLoading={createInviteLinkMutation.isPending}
                       >
                         <Link2 className="mr-2 h-4 w-4" />
-                        Copy invite link
+                        Generate invite link
                       </Button>
+                    ) : (
+                      <p className="mt-3 text-sm text-ink-soft">
+                        A link is live. Expire it before generating another.
+                      </p>
+                    )}
+                    {inviteLinkUrl && (
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <input
+                          readOnly
+                          value={inviteLinkUrl}
+                          aria-label="Invite link"
+                          onFocus={(event) => event.currentTarget.select()}
+                          className="w-full border border-rule bg-ivory-card px-3 py-2 text-sm text-ink"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={copySharedInviteLink}
+                        >
+                          Copy link
+                        </Button>
+                      </div>
+                    )}
+                    {inviteLinks && inviteLinks.links.length > 0 && (
+                      <div className="mt-4 overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <caption className="sr-only">Invite links</caption>
+                          <thead className="text-ink-soft">
+                            <tr className="border-b border-rule">
+                              <th className="py-2 pr-3 font-medium">Created</th>
+                              <th className="py-2 pr-3 font-medium">Status</th>
+                              <th className="py-2 font-medium">
+                                <span className="sr-only">Actions</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {inviteLinks.links.map((link) => {
+                              const live = !link.expiredAt;
+                              return (
+                                <tr key={link.id} className="border-b border-rule last:border-0">
+                                  <td className="py-2 pr-3 text-ink">
+                                    {formatShortDate(link.createdAt)}
+                                  </td>
+                                  <td className="py-2 pr-3 text-ink-soft">
+                                    {link.expiredAt
+                                      ? `Expired ${formatShortDate(link.expiredAt)}`
+                                      : link.signingOn
+                                        ? "Live, signing on"
+                                        : "Live, signing off"}
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    {live && (
+                                      <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setSigningMutation.mutate(!link.signingOn)
+                                          }
+                                          disabled={setSigningMutation.isPending}
+                                          className="inline-flex min-h-11 items-center text-sm font-medium text-evergreen hover:underline disabled:opacity-50"
+                                        >
+                                          {link.signingOn ? "Turn signing off" : "Turn signing on"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (
+                                              window.confirm(
+                                                "Expire this link? The address stops working and cannot be turned back on. You can generate a new one after that."
+                                              )
+                                            ) {
+                                              expireInviteLinkMutation.mutate(link.id);
+                                            }
+                                          }}
+                                          disabled={expireInviteLinkMutation.isPending}
+                                          className="inline-flex min-h-11 items-center text-sm font-medium text-cranberry hover:underline disabled:opacity-50"
+                                        >
+                                          Expire
+                                        </button>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {!inviteLinkUrl && !inviteLinks.canGenerate && (
+                          <p className="mt-2 text-sm text-ink-soft">
+                            The address was shown when you generated it. This page cannot reprint it. Copy it from where you saved it, or expire this link and generate another.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -2996,7 +3078,7 @@ export default function TeamPage() {
       >
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-ink-soft">
-            {team?.name} leaves the active list. The draw, wishlists, and addresses stay, so someone who already has a recipient can still open them. The invite link stops working. This is not a delete.
+            {team?.name} leaves the active list. The draw, wishlists, and addresses stay, so someone who already has a recipient can still open them. A shared invite link no longer admits anyone. This is not a delete.
           </p>
           <Input
             label={`Type “${team?.name ?? "the exchange name"}” to archive`}

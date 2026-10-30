@@ -160,9 +160,13 @@ export default function InvitePage() {
                   ? preview.status !== "open"
                   : preview.status !== "pending") ? (
                   <p className="mt-4 text-sm text-cranberry">
-                    {preview.kind === "link"
-                      ? `This invite link for ${preview.exchangeName} is no longer open. Ask ${preview.hostName} for a new one.`
-                      : `This invitation to ${preview.exchangeName} is no longer open. Ask ${preview.hostName} to resend it.`}
+                    {preview.kind === "link" && preview.status === "signing_off"
+                      ? `${preview.hostName} has turned off joining by link for ${preview.exchangeName}. The address is unchanged. Ask them to turn it back on.`
+                      : preview.kind === "link" && preview.status === "draw_locked"
+                        ? `Names have already been drawn for ${preview.exchangeName}. A late join is not added to the draw.`
+                        : preview.kind === "link"
+                          ? `This invite link for ${preview.exchangeName} is no longer open. Ask ${preview.hostName} for a new one.`
+                          : `This invitation to ${preview.exchangeName} is no longer open. Ask ${preview.hostName} to resend it.`}
                   </p>
                 ) : authLoading ? (
                   <p className="mt-6 text-sm text-ink-soft">Checking your account.</p>

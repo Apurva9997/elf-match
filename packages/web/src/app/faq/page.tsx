@@ -38,7 +38,7 @@ const faqs = [
   {
     question: "How do I invite people to my Secret Santa exchange?",
     answer:
-      "After creating your exchange, copy the invite link and send it to the group. Anyone who opens it and signs in joins as themselves. You can still enter email addresses if you want each person to get their own invitation. They create a free account, add a wishlist, and wait for assignments. Turn the shared link off when you no longer want new people to join.",
+      "After creating your exchange, generate one invite link and send it to the group. Anyone who opens it and signs in joins as themselves, and the address does not change when someone else uses it. You can still enter email addresses if you want each person to get their own invitation. Turn signing off when the group is set and you want that same address to stop admitting people. Expire the link only when you want a new address. Until you expire it, a new one cannot be generated.",
   },
   {
     question: "What are exclusion rules and how do they work?",

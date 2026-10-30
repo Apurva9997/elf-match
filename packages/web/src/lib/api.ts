@@ -148,17 +148,29 @@ class ApiClient {
   }
 
   // Invitations
+  async listInviteLinks(teamId: string) {
+    return this.request<InviteLinkTable>(`/teams/${teamId}/invite-links`);
+  }
+
   async createInviteLink(teamId: string) {
-    return this.request<{ url: string; enabled: boolean }>(
+    return this.request<{ id: string; url: string; signingOn: boolean }>(
       `/teams/${teamId}/invite-link`,
       { method: "POST" }
     );
   }
 
-  async disableInviteLink(teamId: string) {
-    return this.request<{ enabled: boolean }>(`/teams/${teamId}/invite-link`, {
-      method: "DELETE",
-    });
+  async setInviteLinkSigning(teamId: string, on: boolean) {
+    return this.request<{ id: string; signingOn: boolean }>(
+      `/teams/${teamId}/invite-link`,
+      { method: "PATCH", body: JSON.stringify({ on }) }
+    );
+  }
+
+  async expireInviteLink(teamId: string, linkId: string) {
+    return this.request<{ id: string; expiredAt: string }>(
+      `/teams/${teamId}/invite-links/${linkId}/expire`,
+      { method: "POST" }
+    );
   }
 
   async inviteMembers(teamId: string, emails: string[]) {
@@ -350,15 +362,6 @@ class ApiClient {
     }>(`/teams/${teamId}/reminders`, { method: "POST" });
   }
 
-  async changeUserEmail(teamId: string, userId: string, newEmail: string) {
-    return this.request<{
-      message: string;
-      user: { id: string; email: string; name: string | null };
-    }>(`/teams/${teamId}/users/${userId}/email`, {
-      method: "PATCH",
-      body: JSON.stringify({ newEmail }),
-    });
-  }
 }
 
 export const api = new ApiClient();
@@ -389,7 +392,6 @@ export interface Team {
   exchangeDate: string | null;
   wishlistDeadline: string | null;
   status: string;
-  inviteLinkEnabled?: boolean;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -403,6 +405,19 @@ export interface TeamWithRole extends Team {
     id: string;
     name: string | null;
   };
+}
+
+export interface InviteLinkRow {
+  id: string;
+  createdAt: string;
+  expiredAt: string | null;
+  signingOn: boolean;
+}
+
+export interface InviteLinkTable {
+  canGenerate: boolean;
+  signingOn: boolean;
+  links: InviteLinkRow[];
 }
 
 export interface TeamMember {
