@@ -96,7 +96,7 @@ export function Onboarding({
             id: "add-wishlist",
             title: "Build Your Wishlist",
             description:
-              "Add items to your wishlist so your Secret Santa knows what you'd like. You can add multiple items with links and price estimates.",
+              "Write what you would like, one wish at a time. You can skip the letter and just add an address.",
             icon: <Gift className="w-8 h-8 text-cranberry" />,
           },
         ];
@@ -131,7 +131,7 @@ export function Onboarding({
             id: "add-wishlist",
             title: "Build Your Wishlist",
             description:
-              "Add items to your wishlist. After the draw, only the person buying for you can read them.",
+              "Write a wish, or skip the letter. After the draw, only the person buying for you can read what you wrote.",
             icon: <Gift className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },
@@ -144,7 +144,7 @@ export function Onboarding({
             title: `Welcome to ${firstTeamName || "the exchange"}`,
             description: drawn
               ? "The names are already drawn. Open the exchange to see only the person you are buying for."
-              : "You are in this exchange. Add a wishlist, and an address if you want the gift delivered.",
+              : "You are in this exchange. Write a wish or skip the letter, and add an address if you want the gift delivered.",
             icon: <Gift className="w-8 h-8 text-cranberry" />,
           },
           {
@@ -159,7 +159,7 @@ export function Onboarding({
             id: "add-wishlist",
             title: "Build Your Wishlist",
             description:
-              "Add items to your wishlist so your Secret Santa knows what you'd like. You can add multiple items with links and price estimates in ₹.",
+              "Write what you would like in one box. A shop link and a price are optional, and you can skip the letter.",
             icon: <Gift className="w-8 h-8 text-cranberry" />,
             action: goToTeamAction,
           },

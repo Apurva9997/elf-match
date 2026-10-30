@@ -43,6 +43,8 @@ const wishItemSchema = z.object({
 
 const updateWishlistSchema = z.object({
   items: z.array(wishItemSchema),
+  // Absent means this save does not change the decline. A wish clears it.
+  skipped: z.boolean().optional(),
 });
 
 async function getMembershipForTeam(userId: string, teamId: string) {
@@ -151,6 +153,8 @@ async function _updateWishlist(
     }
 
     const { items } = parsed.data;
+    // Writing a wish is the opposite of declining the letter.
+    const skipped = items.length > 0 ? false : parsed.data.skipped;
 
     let wishlist = await db.query.wishlists.findFirst({
       where: eq(wishlists.teamMemberId, membership.id),
@@ -159,7 +163,10 @@ async function _updateWishlist(
     if (!wishlist) {
       const [newWishlist] = await db
         .insert(wishlists)
-        .values({ teamMemberId: membership.id })
+        .values({
+          teamMemberId: membership.id,
+          skipped: skipped ?? false,
+        })
         .returning();
       wishlist = newWishlist;
     }
@@ -181,7 +188,10 @@ async function _updateWishlist(
 
     await db
       .update(wishlists)
-      .set({ updatedAt: new Date() })
+      .set({
+        updatedAt: new Date(),
+        ...(skipped === undefined ? {} : { skipped }),
+      })
       .where(eq(wishlists.id, wishlist.id));
 
     const updatedWishlist = await db.query.wishlists.findFirst({

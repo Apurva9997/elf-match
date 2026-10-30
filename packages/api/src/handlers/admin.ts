@@ -77,8 +77,11 @@ async function _sendReminders(
 
       const missingItems: string[] = [];
 
-      if (!member.wishlist || member.wishlist.items.length === 0) {
-        missingItems.push("Add items to your wishlist");
+      if (
+        !member.wishlist ||
+        (member.wishlist.items.length === 0 && !member.wishlist.skipped)
+      ) {
+        missingItems.push("Add a wish, or say you are skipping the letter");
       }
 
       if (!member.user.address) {

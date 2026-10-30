@@ -472,7 +472,8 @@ async function _getTeamStatus(
 
     const acceptedMembersCount = acceptedMembers.length;
     const membersWithWishlist = acceptedMembers.filter(
-      (m) => m.wishlist && m.wishlist.items.length > 0
+      (m) =>
+        m.wishlist && (m.wishlist.items.length > 0 || m.wishlist.skipped)
     ).length;
     const membersWithAddress = acceptedMembers.filter(
       (m) => m.user?.address

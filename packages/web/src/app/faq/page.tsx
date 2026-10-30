@@ -73,12 +73,12 @@ const faqs = [
   {
     question: "Who can read my wishlist?",
     answer:
-      "You can. After the draw, only the person assigned to give you a gift can read the titles, notes, price estimates, and shop links. The rest of the exchange cannot.",
+      "You can. After the draw, only the person assigned to give you a gift can read what you wrote. The rest of the exchange cannot. You can also skip the letter and leave only an address.",
   },
   {
     question: "Can I add items to my wishlist with links?",
     answer:
-      "Yes. Each item can have a title, a note, a price estimate in rupees, and a link to a shop. After the draw, your assigned giver uses that list to choose a gift.",
+      "Yes. Write the wish in one box. Open More details on that wish if you want a note, a shop link, or a price in rupees. The exchange budget is a guide for the giver. A wish outside it still saves.",
   },
   {
     question: "Is my delivery address shared with everyone?",

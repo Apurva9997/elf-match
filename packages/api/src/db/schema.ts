@@ -120,6 +120,8 @@ export const wishlists = pgTable("wishlists", {
     .references(() => teamMembers.id, { onDelete: "cascade" })
     .notNull()
     .unique(),
+  // The member chose not to leave wishes. Items, if any, stay until a later save.
+  skipped: boolean("skipped").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

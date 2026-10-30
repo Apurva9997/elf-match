@@ -182,6 +182,7 @@ export default function TeamPage() {
   });
   const [quickAddTitle, setQuickAddTitle] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [letterSkipped, setLetterSkipped] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
@@ -318,7 +319,13 @@ export default function TeamPage() {
   });
 
   const updateWishlistMutation = useMutation({
-    mutationFn: (items: WishItemForm[]) => {
+    mutationFn: ({
+      items,
+      skipped,
+    }: {
+      items: WishItemForm[];
+      skipped?: boolean;
+    }) => {
       const save = wishlistSaveChain.current.then(() =>
         api.updateWishlist(
           teamId,
@@ -329,7 +336,8 @@ export default function TeamPage() {
             priceEstimate: item.priceEstimate
               ? parseFloat(item.priceEstimate)
               : undefined,
-          }))
+          })),
+          skipped
         )
       );
       if (
@@ -352,7 +360,6 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist", teamId] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
-      toast.success("Wishlist updated!");
     },
     onError: (error: Error) => {
       toast.error(
@@ -587,6 +594,7 @@ export default function TeamPage() {
           priceEstimate: item.priceEstimate || "",
         }))
       );
+      setLetterSkipped(wishlist.skipped && wishlist.items.length === 0);
     }
   }, [wishlist]);
 
@@ -633,7 +641,7 @@ export default function TeamPage() {
       saveTimeoutRef.current = setTimeout(async () => {
         const validItems = items.filter((item) => item.title.trim());
         try {
-          await updateWishlistMutation.mutateAsync(validItems);
+          await updateWishlistMutation.mutateAsync({ items: validItems });
           setSaveStatus("saved");
           setTimeout(() => setSaveStatus("idle"), 2000);
         } catch (error) {
@@ -756,7 +764,7 @@ export default function TeamPage() {
     setLetterError(null);
     setSaveStatus("saving");
     try {
-      await updateWishlistMutation.mutateAsync(validItems);
+      await updateWishlistMutation.mutateAsync({ items: validItems, skipped: false });
       setSaveStatus("saved");
       return true;
     } catch (error) {
@@ -787,8 +795,39 @@ export default function TeamPage() {
     };
     const updated = [...wishItems, newItem];
     setWishItems(updated);
+    setLetterSkipped(false);
     setQuickAddTitle("");
     debouncedSave(updated);
+  };
+
+  const handleSkipLetter = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    setLetterError(null);
+    setLetterSkipped(true);
+    setSaveStatus("saving");
+    try {
+      await updateWishlistMutation.mutateAsync({ items: [], skipped: true });
+      setWishItems([]);
+      setExpandedItems(new Set());
+      setSaveStatus("saved");
+    } catch (error) {
+      setLetterSkipped(false);
+      setSaveStatus("idle");
+      setLetterError(
+        error instanceof Error
+          ? error.message
+          : "Couldn't skip the letter. Try again."
+      );
+    }
+  };
+
+  const handleWriteInstead = () => {
+    setLetterSkipped(false);
+    setLetterError(null);
+    setLetterPhase("writing");
   };
 
   const handleRemoveWishItem = async (index: number) => {
@@ -809,7 +848,7 @@ export default function TeamPage() {
     setExpandedItems(adjustedExpanded);
     // Save immediately to persist the deletion
     const validItems = updatedItems.filter((item) => item.title.trim());
-    await updateWishlistMutation.mutateAsync(validItems);
+    await updateWishlistMutation.mutateAsync({ items: validItems });
   };
 
   const handleWishItemChange = (
@@ -1334,7 +1373,7 @@ export default function TeamPage() {
               ))}
             </ul>
             <p className="mt-3 text-sm text-ink-soft">
-              {status.membersWithWishlist} of {status.totalMembers} have a wishlist.
+              {status.membersWithWishlist} of {status.totalMembers} have a letter or skipped it.
               {team.wishlistDeadline
                 ? ` Due ${formatDate(team.wishlistDeadline)}.`
                 : " No wishlist deadline set."}
@@ -1343,7 +1382,7 @@ export default function TeamPage() {
               {confirmRemind ? (
                 <div className="flex flex-wrap items-center gap-3">
                   <p className="text-sm text-ink">
-                    Email people who joined and are missing a wishlist or address?
+                    Email people who joined and have neither a letter nor an address?
                   </p>
                   <Button size="sm" onClick={() => remindMutation.mutate()} isLoading={remindMutation.isPending}>
                     Send reminders
@@ -1354,7 +1393,7 @@ export default function TeamPage() {
                 </div>
               ) : (
                 <Button size="sm" variant="secondary" onClick={() => setConfirmRemind(true)}>
-                  Remind people missing a list or address
+                  Remind people missing a letter or address
                 </Button>
               )}
             </div>
@@ -1366,14 +1405,14 @@ export default function TeamPage() {
           {(isAdmin
             ? ([
                 ["overview", "People", team.members.filter((member) => member.invitationStatus === "accepted").length],
-                ["wishlist", "Letter", wishItems.filter((item) => item.title.trim()).length],
+                ["wishlist", "Letter", letterSkipped ? 0 : wishItems.filter((item) => item.title.trim()).length],
                 ["address", "Address", address ? 1 : 0],
                 ["exclusions", "Pairs", exclusions?.length ?? 0],
                 ["assignment", "Delivery", assignment?.assigned ? 1 : 0],
               ] as const)
             : ([
                 ["overview", "People", team.members.filter((member) => member.invitationStatus === "accepted").length],
-                ["wishlist", "Letter", wishItems.filter((item) => item.title.trim()).length],
+                ["wishlist", "Letter", letterSkipped ? 0 : wishItems.filter((item) => item.title.trim()).length],
                 ["address", "Address", address ? 1 : 0],
                 ["assignment", "Delivery", assignment?.assigned ? 1 : 0],
               ] as const)
@@ -1402,7 +1441,8 @@ export default function TeamPage() {
         <section className="mb-6 border border-rule bg-ivory-card p-4" aria-label="Journey">
           <ProgressTrail
             steps={((): TrailStep[] => {
-              const wishesSent = wishItems.some((item) => item.title.trim());
+              const wishesSent =
+                letterSkipped || wishItems.some((item) => item.title.trim());
               const drawn = Boolean(assignment?.assigned);
               const status = assignment?.giftStatus || "pending";
               const preparing = status === "purchased" || status === "shipped" || status === "delivered";
@@ -1419,7 +1459,9 @@ export default function TeamPage() {
               return steps;
             })()}
           />
-          {team.wishlistDeadline && !wishItems.some((item) => item.title.trim()) && (
+          {team.wishlistDeadline &&
+            !letterSkipped &&
+            !wishItems.some((item) => item.title.trim()) && (
             <p className="mt-3 text-sm text-ink-soft">
               Your letter is still blank. Wishlists are due {formatDate(team.wishlistDeadline)}.
             </p>
@@ -1434,7 +1476,8 @@ export default function TeamPage() {
           <div className="mt-4">
             <StampCollection
               stamps={((): PostalStamp[] => {
-                const wishesSent = wishItems.some((item) => item.title.trim());
+                const wishesSent =
+                  letterSkipped || wishItems.some((item) => item.title.trim());
                 const status = assignment?.giftStatus || "pending";
                 return [
                   { id: "letter", name: "Letter", earned: wishesSent, caption: "Wishes sent" },
@@ -1766,10 +1809,27 @@ export default function TeamPage() {
                     </Button>
                   </div>
                 )}
-                {letterPhase === "writing" && (
+                {letterPhase !== "sending" && letterSkipped && (
+                  <div className="border border-rule bg-ivory px-4 py-5" role="status">
+                    <p className="font-display text-2xl text-ink">
+                      You are not leaving wishes.
+                    </p>
+                    <p className="mt-2 text-sm text-ink-soft">
+                      Your giver will see that, and the budget if this exchange has one. Add an address if you want the gift delivered.
+                    </p>
+                    <Button
+                      className="mt-4"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleWriteInstead}
+                    >
+                      Write a wish instead
+                    </Button>
+                  </div>
+                )}
+                {letterPhase === "writing" && !letterSkipped && (
                 <LetterDesk stamp={wishItems.some((item) => item.title.trim())}>
                 <div className="space-y-4">
-                  {/* Add item input */}
                   <div className="flex gap-2">
                     <Input
                       value={quickAddTitle}
@@ -1780,19 +1840,20 @@ export default function TeamPage() {
                           handleQuickAdd();
                         }
                       }}
-                      placeholder="Add item: Gift card, book, headphones..."
+                      placeholder="What would you like?"
+                      aria-label="Wish"
                       className="flex-1"
                     />
                     <Button
                       onClick={handleQuickAdd}
                       disabled={!quickAddTitle.trim()}
                       size="sm"
+                      aria-label="Add wish"
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
 
-                  {/* Wishlist items */}
                   {wishItems.length > 0 ? (
                     <div className="space-y-3">
                       {wishItems.map((item, index) => {
@@ -1803,75 +1864,56 @@ export default function TeamPage() {
                         return (
                           <div
                             key={index}
-                            className="p-4 rounded-lg bg-ivory"
+                            className="rounded-lg bg-ivory p-4"
                           >
-                            {!isExpanded ? (
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="font-medium text-ink">
-                                    {item.title || "Untitled item"}
-                                  </h4>
-                                  {hasDetails && (
-                                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                                      {item.priceEstimate && (
-                                        <span className="font-medium text-ink">
-                                          ₹{item.priceEstimate}
-                                        </span>
-                                      )}
-                                      {item.description && (
-                                        <span className="text-ink-soft">
-                                          {item.description}
-                                        </span>
-                                      )}
-                                      {item.url && (
-                                        <a
-                                          href={item.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex min-h-11 items-center gap-1 text-evergreen hover:underline"
-                                        >
-                                          <ExternalLink className="h-4 w-4" />
-                                          Shop link
-                                        </a>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => toggleItemExpand(index)}
-                                  aria-label={`Edit ${item.title || "wishlist item"}`}
-                                  className="inline-flex min-h-11 min-w-11 items-center justify-center text-ink-soft hover:text-ink"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              // Expanded view - edit mode
-                              <div className="space-y-3">
-                                <div className="flex items-center justify-between gap-2">
-                                  <Input
-                                    value={item.title}
-                                    onChange={(e) =>
-                                      handleWishItemChange(
-                                        index,
-                                        "title",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Item name"
-                                    className="flex-1"
-                                    autoFocus
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveWishItem(index)}
-                                    aria-label={`Remove ${item.title || "wishlist item"}`}
-                                    className="inline-flex min-h-11 min-w-11 items-center justify-center text-cranberry"
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="min-w-0 flex-1 font-medium text-ink">
+                                {item.title || "Untitled wish"}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveWishItem(index)}
+                                aria-label={`Remove ${item.title || "wish"}`}
+                                className="inline-flex min-h-11 min-w-11 items-center justify-center text-ink-faint hover:text-cranberry"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                            {hasDetails && !isExpanded && (
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                {item.priceEstimate && (
+                                  <span className="text-ink-soft">
+                                    About ₹{item.priceEstimate}
+                                  </span>
+                                )}
+                                {item.description && (
+                                  <span className="text-ink-soft">
+                                    {item.description}
+                                  </span>
+                                )}
+                                {item.url && (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex min-h-11 items-center gap-1 text-evergreen hover:underline"
                                   >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
+                                    <ExternalLink className="h-4 w-4" />
+                                    Shop link
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => toggleItemExpand(index)}
+                              className="mt-2 text-sm text-ink-soft underline-offset-2 hover:underline"
+                              aria-expanded={isExpanded}
+                            >
+                              {isExpanded ? "Hide details" : "More details"}
+                            </button>
+                            {isExpanded && (
+                              <div className="mt-3 space-y-3">
                                 <Textarea
                                   value={item.description}
                                   onChange={(e) =>
@@ -1881,43 +1923,38 @@ export default function TeamPage() {
                                       e.target.value
                                     )
                                   }
-                                  placeholder="Notes (size, color, brand preference...)"
+                                  placeholder="A note, if you want one"
+                                  aria-label={`Note for ${item.title || "wish"}`}
                                   className="min-h-[60px]"
                                 />
-                                <div className="grid grid-cols-2 gap-3">
-                                  <Input
-                                    value={item.url}
-                                    onChange={(e) =>
-                                      handleWishItemChange(
-                                        index,
-                                        "url",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Link (optional)"
-                                  />
-                                  <Input
-                                    value={item.priceEstimate}
-                                    onChange={(e) =>
-                                      handleWishItemChange(
-                                        index,
-                                        "priceEstimate",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Price in rupees"
-                                    type="number"
-                                  />
-                                </div>
-                                <div className="flex justify-end">
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => toggleItemExpand(index)}
-                                  >
-                                    Done
-                                  </Button>
-                                </div>
+                                <Input
+                                  value={item.url}
+                                  onChange={(e) =>
+                                    handleWishItemChange(
+                                      index,
+                                      "url",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Shop link, if you have one"
+                                  aria-label={`Shop link for ${item.title || "wish"}`}
+                                />
+                                <Input
+                                  value={item.priceEstimate}
+                                  onChange={(e) =>
+                                    handleWishItemChange(
+                                      index,
+                                      "priceEstimate",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="About this much, in rupees"
+                                  aria-label={`Price for ${item.title || "wish"}`}
+                                  type="number"
+                                />
+                                <p className="text-sm text-ink-soft">
+                                  A price here is a hint. It is not checked against the exchange budget.
+                                </p>
                               </div>
                             )}
                           </div>
@@ -1929,7 +1966,7 @@ export default function TeamPage() {
                       <Gift className="mx-auto mb-3 h-12 w-12 opacity-50" />
                       <p>The page is blank.</p>
                       <p className="mt-2 text-sm">
-                        Write a wish above, then stamp the letter when it is ready.
+                        Write one wish above. A shop link and a price stay hidden until you ask for them.
                       </p>
                     </div>
                   )}
@@ -1944,16 +1981,25 @@ export default function TeamPage() {
                         ? `Wishlists are due ${formatDate(team.wishlistDeadline)}.`
                         : "No wishlist deadline is set."}
                     </p>
-                    <Button
-                      onClick={stampAndSend}
-                      disabled={letterPhase !== "writing" || updateWishlistMutation.isPending}
-                      aria-describedby="stamp-send-help"
-                    >
-                      Stamp & send
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={handleSkipLetter}
+                        disabled={updateWishlistMutation.isPending}
+                      >
+                        Skip the letter
+                      </Button>
+                      <Button
+                        onClick={stampAndSend}
+                        disabled={letterPhase !== "writing" || updateWishlistMutation.isPending}
+                        aria-describedby="stamp-send-help"
+                      >
+                        Stamp & send
+                      </Button>
+                    </div>
                   </div>
                   <p id="stamp-send-help" className="sr-only">
-                    Checks your wishes, saves them, then shows the letter leaving. If saving fails, the letter stays open.
+                    Checks your wishes, saves them, then shows the letter leaving. If saving fails, the letter stays open. Skip the letter if you only want to leave an address.
                   </p>
                 </div>
                 </LetterDesk>
@@ -2538,7 +2584,21 @@ export default function TeamPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {gifteeWishlist.wishlist?.items &&
+                    {gifteeWishlist.wishlist?.skipped &&
+                    gifteeWishlist.wishlist.items.length === 0 ? (
+                      <div className="py-6 text-center">
+                        <p className="font-display text-xl text-ink">
+                          {assignment.giftee?.name || "They"} asked not to leave wishes.
+                        </p>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
+                          Choose something yourself. The budget
+                          {team.budgetMin && team.budgetMax
+                            ? ` is ₹${team.budgetMin}–₹${team.budgetMax}`
+                            : " has not been set"}
+                          . A wish outside that range is still allowed when someone writes one. It is not a requirement.
+                        </p>
+                      </div>
+                    ) : gifteeWishlist.wishlist?.items &&
                     gifteeWishlist.wishlist.items.length > 0 ? (
                       <div className="space-y-3">
                         {gifteeWishlist.wishlist.items.map((item) => (
@@ -2591,7 +2651,7 @@ export default function TeamPage() {
                         </p>
                         {isAdmin && (
                           <p className="mt-3 text-sm text-ink-soft">
-                            From People, you can email everyone who joined and is missing a list or an address.
+                            From People, you can email everyone who joined and has neither a letter nor an address.
                           </p>
                         )}
                       </div>

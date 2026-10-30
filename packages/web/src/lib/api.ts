@@ -257,10 +257,16 @@ class ApiClient {
     return this.request<Wishlist>(`/teams/${teamId}/wishlist`);
   }
 
-  async updateWishlist(teamId: string, items: WishItemInput[]) {
+  async updateWishlist(
+    teamId: string,
+    items: WishItemInput[],
+    skipped?: boolean
+  ) {
     return this.request<Wishlist>(`/teams/${teamId}/wishlist`, {
       method: "PUT",
-      body: JSON.stringify({ items }),
+      body: JSON.stringify(
+        skipped === undefined ? { items } : { items, skipped }
+      ),
     });
   }
 
@@ -484,6 +490,7 @@ export interface Wishlist {
   id: string;
   teamMemberId: string;
   items: WishItem[];
+  skipped: boolean;
   createdAt: string;
   updatedAt: string;
 }
