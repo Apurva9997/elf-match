@@ -1,3 +1,5 @@
+import { films } from "@/lib/media";
+
 export type StageSceneId =
   | "write"
   | "gather"
@@ -18,37 +20,37 @@ const scenes: Record<StageSceneId, StageScene> = {
   write: {
     id: "write",
     still: "/film/stages/write.jpg",
-    film: "/film/stages/write.mp4",
+    film: films.write,
     caption: "A blank card is waiting.",
   },
   gather: {
     id: "gather",
     still: "/film/stages/gather.jpg",
-    film: "/film/stages/gather.mp4",
+    film: films.gather,
     caption: "The group is still gathering.",
   },
   wait: {
     id: "wait",
     still: "/film/stages/wait.jpg",
-    film: "/film/stages/wait.mp4",
+    film: films.wait,
     caption: "The letter is sealed. The names are not drawn yet.",
   },
   preview: {
     id: "preview",
     still: "/film/stages/preview.jpg",
-    film: "/film/stages/preview.mp4",
+    film: films.preview,
     caption: "Enough people have joined to preview the pairings.",
   },
   prepare: {
     id: "prepare",
     still: "/film/stages/prepare.jpg",
-    film: "/film/stages/prepare.mp4",
+    film: films.prepare,
     caption: "The gift is being prepared.",
   },
   send: {
     id: "send",
     still: "/film/stages/send.jpg",
-    film: "/film/stages/send.mp4",
+    film: films.send,
     caption: "The gift is on its way.",
   },
   done: {

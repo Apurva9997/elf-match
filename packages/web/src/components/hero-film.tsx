@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const FILM = "/film/someone-gets-to-be-your-santa.mp4";
+import { films } from "@/lib/media";
+
+const FILM = films.hero;
 const POSTER = "/film/someone-gets-to-be-your-santa.jpg";
 
 export function HeroFilm() {
