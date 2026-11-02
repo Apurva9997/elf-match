@@ -76,6 +76,7 @@ function LoginPageContent() {
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
+  const [emailCodeEnabled, setEmailCodeEnabled] = useState(false);
 
   const requestedRedirect = searchParams.get("redirect") || "";
   const intent = searchParams.get("intent");
@@ -83,6 +84,36 @@ function LoginPageContent() {
   useEffect(() => {
     setStoredInvite(rememberedInvite());
   }, []);
+
+  useEffect(() => {
+    if (!signInLoaded) return;
+    let cancelled = false;
+    // The email box is shown only when this instance can send a code.
+    // Production sign-in is Google, and a shown box there rejects every address.
+    clerk.client.signIn
+      .create({ identifier: "sign-in-methods@elfmatch.com" })
+      .then((result) => {
+        if (cancelled) return;
+        setEmailCodeEnabled(
+          Boolean(
+            result.supportedFirstFactors?.some(
+              (factor) => factor.strategy === "email_code"
+            )
+          )
+        );
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const code =
+          error && typeof error === "object" && "errors" in error
+            ? (error as { errors?: Array<{ code?: string }> }).errors?.[0]?.code
+            : "";
+        setEmailCodeEnabled(code === "form_identifier_not_found");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [clerk, signInLoaded]);
   const inviteRedirect = inviteTokenFromPath(requestedRedirect)
     ? requestedRedirect
     : storedInvite
@@ -289,12 +320,18 @@ function LoginPageContent() {
                 {step === "code"
                   ? `We sent a 6-digit code to ${submittedEmail}.`
                   : creating
-                    ? "Use an email you will still check in December. We will send a 6-digit code. No password."
+                    ? emailCodeEnabled
+                      ? "Use an email you will still check in December. We will send a 6-digit code. No password."
+                      : "Continue with Google. A new Google account is created the first time. You will name the exchange after that."
                     : joining
                       ? inviteRedirect
-                        ? "Sign in or create your account. You will come back to the invitation and can join from there."
+                        ? emailCodeEnabled
+                          ? "Sign in or create your account. You will come back to the invitation and can join from there."
+                          : "Continue with Google. A new account is created the first time, and you come back here to join."
                         : "Use the email that received the invitation. A different email will not see the seat."
-                      : "Sign in with the email on the exchange. We will send a 6-digit code. No password."}
+                      : emailCodeEnabled
+                        ? "Sign in with the email on the exchange. We will send a 6-digit code. No password."
+                        : "Continue with Google. The same Google account signs in next time."}
               </p>
             </div>
 
@@ -334,19 +371,22 @@ function LoginPageContent() {
                       )}
                     </div>
 
-                    <div className="relative my-6">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-rule" />
+                    {emailCodeEnabled && (
+                      <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-rule" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="bg-ivory-card px-4 text-ink-faint">
+                            or continue with email
+                          </span>
+                        </div>
                       </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="bg-ivory-card px-4 text-ink-faint">
-                          or continue with email
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </>
                 )}
 
+                {emailCodeEnabled && (
                 <form
                   onSubmit={emailForm.handleSubmit(handleEmailSubmit)}
                   className="space-y-6"
@@ -377,10 +417,13 @@ function LoginPageContent() {
                     Email me a sign-in code
                   </Button>
                 </form>
+                )}
 
+                {emailCodeEnabled && (
                 <p className="mt-6 text-sm text-ink-faint">
                   The code arrives by email. There is no password to set.
                 </p>
+                )}
               </>
             )}
 
