@@ -20,11 +20,11 @@ The Google accounts `redacted@example.com` and `redacted@example.com` are the sa
 - App: http://localhost:3000
 - Clerk development instance: `ins_your_development_instance`
 - Publishable key starts with `pk_test_`. Account host: `your-instance.accounts.dev`
-- Database host: `ep-quiet-shadow-a199c4vm-pooler.ap-southeast-1.aws.neon.tech`, database `neondb`
+- Database host: `your-dev-project-pooler.region.aws.neon.tech`, database `neondb`
 
 The development database URL is in `packages/api/.env.development`, which is gitignored. If that file is missing, ask the user for it. Do not copy the URL from `packages/api/.env`.
 
-Before any write, the connection string host is `ep-quiet-shadow-a199c4vm`.
+Before any write, the connection string host is `your-dev-host`.
 
 Email-code sign-in is enabled on the development instance only. Its paths are `/auth/login` and `/dashboard`, and `http://localhost:3000` is an allowed origin. Do not change the production Clerk instance.
 
@@ -98,6 +98,7 @@ The temporary file needs:
 - `FRONTEND_URL=http://localhost:3000`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` from `clerk env pull --instance dev`
 - `ENCRYPTION_SECRET` and `ENCRYPTION_SALT` copied from `packages/api/.env`, so an address saved by the app can be read back
+- `WISHLIST_SEAL_KEY` from the server environment, not from a committed file. A wishlist save fails closed without it. Ask the user if the file that holds it is not on this machine.
 - `NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=false`
 
 `drizzle-kit` reads `packages/api/.env` and does not override a `DATABASE_URL` already in the shell. Export the development URL before a schema push. A push without that export writes to production.

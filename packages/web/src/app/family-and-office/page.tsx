@@ -1,5 +1,6 @@
 import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
+import { shareImage } from "@/lib/share";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
     description:
       "Keep couples apart, invite people who are not in the room, and send each person only their own match.",
     url: "https://elfmatch.com/family-and-office",
+    images: [shareImage],
   },
 };
 

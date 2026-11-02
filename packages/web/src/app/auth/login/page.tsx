@@ -10,7 +10,7 @@ import {
   inviteTokenFromPath,
   rememberedInvite,
 } from "@/lib/pending-invite";
-import { useClerk, useSignIn } from "@clerk/nextjs";
+import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Mail } from "lucide-react";
@@ -69,8 +69,10 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
   const { signIn, setActive, isLoaded: signInLoaded } = useSignIn();
+  const { signUp, isLoaded: signUpLoaded } = useSignUp();
   const clerk = useClerk();
   const [step, setStep] = useState<"email" | "code">("email");
+  const [verifyingSignUp, setVerifyingSignUp] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
@@ -110,15 +112,26 @@ function LoginPageContent() {
     resolver: zodResolver(codeSchema),
   });
 
+  const clerkErrorCode = (error: unknown): string => {
+    if (!error || typeof error !== "object" || !("errors" in error)) return "";
+    const errors = (error as { errors?: Array<{ code?: string }> }).errors;
+    return errors?.[0]?.code || "";
+  };
+
+  const clerkErrorMessage = (error: unknown, fallback: string): string => {
+    if (!error || typeof error !== "object" || !("errors" in error)) {
+      return error instanceof Error ? error.message : fallback;
+    }
+    const errors = (error as { errors?: Array<{ longMessage?: string; message?: string }> }).errors;
+    return errors?.[0]?.longMessage || errors?.[0]?.message || fallback;
+  };
+
   const handleEmailSubmit = async (data: EmailForm) => {
-    if (!signIn) return;
+    if (!signIn || !signUp) return;
     try {
       // Clear any stale session so Clerk doesn't return session_exists
       try { await clerk.signOut(); } catch {}
-      const result = await signIn.create({
-        identifier: data.email,
-        strategy: "email_code",
-      });
+      const result = await signIn.create({ identifier: data.email });
 
       // Find the email code factor to get emailAddressId
       const emailFactor = result.supportedFirstFactors?.find(
@@ -137,19 +150,51 @@ function LoginPageContent() {
         emailAddressId,
       });
 
+      setVerifyingSignUp(false);
       setSubmittedEmail(data.email);
       setStep("code");
     } catch (error) {
+      // A shared invite link is how a new person arrives. An email that
+      // has no account yet is a sign-up, not a failure.
+      if (clerkErrorCode(error) === "form_identifier_not_found") {
+        try {
+          await signUp.create({ emailAddress: data.email });
+          await signUp.prepareEmailAddressVerification({
+            strategy: "email_code",
+          });
+          setVerifyingSignUp(true);
+          setSubmittedEmail(data.email);
+          setStep("code");
+          return;
+        } catch (signUpError) {
+          console.error("Failed to start sign-up:", signUpError);
+          toast.error(
+            clerkErrorMessage(signUpError, "Failed to send sign-in code")
+          );
+          return;
+        }
+      }
       console.error("Failed to send code:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send sign-in code"
-      );
+      toast.error(clerkErrorMessage(error, "Failed to send sign-in code"));
     }
   };
 
   const handleCodeSubmit = async (data: CodeForm) => {
-    if (!signIn || !setActive) return;
+    if (!signIn || !signUp || !setActive) return;
     try {
+      if (verifyingSignUp) {
+        const result = await signUp.attemptEmailAddressVerification({
+          code: data.code,
+        });
+        if (result.status === "complete") {
+          await setActive({ session: result.createdSessionId });
+          router.push(redirectTo);
+        } else {
+          toast.error("The account was not finished. Ask for help at hello@elfmatch.com.");
+        }
+        return;
+      }
+
       const result = await signIn.attemptFirstFactor({
         strategy: "email_code",
         code: data.code,
@@ -161,11 +206,7 @@ function LoginPageContent() {
       }
     } catch (error) {
       console.error("Failed to verify code:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Invalid code. Please try again."
-      );
+      toast.error(clerkErrorMessage(error, "Invalid code. Please try again."));
     }
   };
 
@@ -205,7 +246,7 @@ function LoginPageContent() {
     }
   };
 
-  if (isLoading || isAuthenticated || !signInLoaded) {
+  if (isLoading || isAuthenticated || !signInLoaded || !signUpLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-evergreen border-t-transparent" />
@@ -310,6 +351,8 @@ function LoginPageContent() {
                   onSubmit={emailForm.handleSubmit(handleEmailSubmit)}
                   className="space-y-6"
                 >
+                  {/* Clerk renders the bot check here when a new account is created. */}
+                  <div id="clerk-captcha" />
                   <Input
                     {...emailForm.register("email")}
                     type="email"
@@ -365,7 +408,10 @@ function LoginPageContent() {
 
                 <button
                   type="button"
-                  onClick={() => setStep("email")}
+                  onClick={() => {
+                    setVerifyingSignUp(false);
+                    setStep("email");
+                  }}
                   className="w-full text-sm text-ink-faint hover:text-ink"
                 >
                   Use a different email

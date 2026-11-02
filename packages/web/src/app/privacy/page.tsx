@@ -1,5 +1,6 @@
 import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
+import { shareImage } from "@/lib/share";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,6 +9,13 @@ export const metadata: Metadata = {
     "How Elf Match collects, uses, and protects personal information for a gift exchange.",
   alternates: {
     canonical: "https://elfmatch.com/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy",
+    description:
+      "How Elf Match collects, uses, and protects personal information for a gift exchange.",
+    url: "https://elfmatch.com/privacy",
+    images: [shareImage],
   },
 };
 

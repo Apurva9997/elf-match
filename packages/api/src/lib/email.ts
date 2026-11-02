@@ -224,6 +224,51 @@ export async function sendAssignmentEmail(
   });
 }
 
+export async function sendMemberJoinedEmail(
+  organizerEmail: string,
+  organizerName: string,
+  joinerName: string,
+  joinerEmail: string,
+  teamName: string,
+  teamId: string,
+  joinedCount: number,
+  via: "link" | "invitation"
+): Promise<void> {
+  const exchangeLink = `${FRONTEND_URL()}/dashboard/teams/${teamId}`;
+  const host = organizerName.split(" ")[0] || "there";
+  const who = joinerName.trim() || joinerEmail;
+  const how =
+    via === "link"
+      ? "They opened the shared invite link."
+      : "They accepted the invitation sent to their email.";
+  const ready =
+    joinedCount >= 3
+      ? `${joinedCount} people have joined, which is enough to draw.`
+      : `${joinedCount} ${joinedCount === 1 ? "person has" : "people have"} joined. A draw needs three.`;
+
+  const { html, text } = paperEmail(
+    `${who} joined ${teamName}.`,
+    `<p style="margin:0 0 16px 0;">${escapeHtml(host)}, ${escapeHtml(who)} (${escapeHtml(joinerEmail)}) is now in the exchange. ${how}</p>
+     <p style="margin:0 0 20px 0;">${escapeHtml(ready)}</p>
+     ${paperButton(exchangeLink, "Open the exchange")}`,
+    [
+      `${who} joined ${teamName}.`,
+      "",
+      `${host}, ${who} (${joinerEmail}) is now in the exchange. ${how}`,
+      ready,
+      "",
+      `Open the exchange: ${exchangeLink}`,
+    ].join("\n")
+  );
+
+  await sendEmail({
+    to: organizerEmail,
+    subject: `${who} joined ${teamName}`,
+    html,
+    text,
+  });
+}
+
 export async function sendReminderEmail(
   email: string,
   teamName: string,

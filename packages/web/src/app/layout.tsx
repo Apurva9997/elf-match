@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Toaster } from "sonner";
+import { shareImage } from "@/lib/share";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -49,21 +50,14 @@ export const metadata: Metadata = {
     title: "Elf Match — organize a Secret Santa exchange",
     description:
       "Set a budget and date, invite people by link or email, collect wishlists, and send private assignments.",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Elf Match — an example gift exchange invitation",
-      },
-    ],
+    images: [shareImage],
   },
   twitter: {
     card: "summary_large_image",
     title: "Elf Match — organize a Secret Santa exchange",
     description:
       "Set a budget and date, invite people by link or email, collect wishlists, and send private assignments.",
-    images: ["/twitter-image"],
+    images: [shareImage],
     creator: "@elfmatch",
   },
   robots: {

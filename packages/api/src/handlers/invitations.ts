@@ -11,6 +11,7 @@ import {
 } from "../db/index.js";
 import { getUserFromRequest } from "../lib/auth.js";
 import { sendInvitationEmail } from "../lib/email.js";
+import { notifyOrganizerOfJoin } from "../lib/join-notice.js";
 import { hashToken } from "../lib/encryption.js";
 import {
   expireShareLink,
@@ -34,6 +35,18 @@ import {
 import { sanitizeTransform } from "../lib/sanitize.js";
 
 const emailItem = z.string().email();
+
+async function tellOrganizer(
+  teamId: string,
+  joiner: { id: string; name: string | null; email: string },
+  via: "link" | "invitation"
+): Promise<void> {
+  try {
+    await notifyOrganizerOfJoin(teamId, joiner, via);
+  } catch (err) {
+    console.error("Could not tell the organizer about the join:", err);
+  }
+}
 
 const inviteMembersSchema = z.object({
   emails: z.array(z.string()).min(1).max(50),
@@ -266,6 +279,9 @@ async function _acceptInvitation(
 
     const shared = await joinByShareLink(token, user);
     if (shared.ok) {
+      if (!shared.alreadyMember) {
+        await tellOrganizer(shared.team.id, user, "link");
+      }
       return success({
         team: shared.team,
         message: shared.alreadyMember
@@ -346,6 +362,7 @@ async function _acceptInvitation(
       })
       .where(eq(teamMembers.id, invitation.id));
 
+    await tellOrganizer(invitation.teamId, user, "invitation");
     return success({ team: invitation.team, message: "Invitation accepted" });
   } catch (err) {
     console.error("Error accepting invitation:", err);
@@ -623,6 +640,7 @@ async function _acceptInvitationDirect(
       })
       .where(eq(teamMembers.id, invitation.id));
 
+    await tellOrganizer(invitation.teamId, user, "invitation");
     return success({ team: invitation.team, message: "Invitation accepted" });
   } catch (err) {
     console.error("Error accepting invitation directly:", err);

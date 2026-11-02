@@ -20,6 +20,7 @@ const isPublicRoute = createRouteMatcher([
   "/robots.txt",
   "/opengraph-image(.*)",
   "/twitter-image(.*)",
+  "/share.jpg",
 ]);
 
 const isAuthRoute = createRouteMatcher([

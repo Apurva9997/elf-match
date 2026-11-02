@@ -1,5 +1,6 @@
 import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
+import { shareImage } from "@/lib/share";
 import { Metadata } from "next";
 import Link from "next/link";
 
@@ -9,6 +10,13 @@ export const metadata: Metadata = {
     "Terms for using Elf Match, a free organizer for Secret Santa and other gift exchanges.",
   alternates: {
     canonical: "https://elfmatch.com/terms",
+  },
+  openGraph: {
+    title: "Terms of Service",
+    description:
+      "Terms for using Elf Match, a free organizer for Secret Santa and other gift exchanges.",
+    url: "https://elfmatch.com/terms",
+    images: [shareImage],
   },
 };
 

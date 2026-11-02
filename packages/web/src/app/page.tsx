@@ -1,4 +1,5 @@
 import { HomePage } from "@/components/home-page";
+import { shareImage } from "@/lib/share";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
     description:
       "Set a budget and date, invite by link or email, collect wishlists, and draw names privately.",
     url: "https://elfmatch.com",
+    images: [shareImage],
   },
 };
 

@@ -1,11 +1,17 @@
 import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
+import { shareImage } from "@/lib/share";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Page not found",
   robots: { index: false, follow: false },
+  openGraph: {
+    title: "Page not found",
+    description: "That page is not on Elf Match.",
+    images: [shareImage],
+  },
 };
 
 export default function NotFound() {

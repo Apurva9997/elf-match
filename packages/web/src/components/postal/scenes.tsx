@@ -98,7 +98,6 @@ export function StampSeal({ pressed }: { pressed: boolean }) {
 export function LetterDesk({
   children,
   stamp,
-  sealed,
 }: {
   children: React.ReactNode;
   stamp?: boolean;
@@ -109,10 +108,6 @@ export function LetterDesk({
       <div className="pointer-events-none absolute -left-2 -right-2 -top-3 bottom-8 hidden sm:block" aria-hidden="true">
         <div className="absolute inset-x-0 bottom-0 h-40 rounded-sm border border-[#c9b89a] bg-[#f3e6cf] shadow-paper" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-[#eddcbd] [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
-        <div
-          className="postal-flap absolute inset-x-0 top-0 h-28 origin-top bg-[#e4c99a]/90 [clip-path:polygon(0_0,100%_0,50%_100%)]"
-          data-state={sealed ? "shut" : "open"}
-        />
       </div>
       <div className="relative rounded-sm border border-rule bg-[#fffdf8] px-4 py-5 shadow-paper sm:mx-6 sm:mt-8 sm:px-6">
         <div className="mb-4 flex items-center justify-between gap-3">

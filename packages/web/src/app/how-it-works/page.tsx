@@ -1,5 +1,6 @@
 import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
+import { shareImage } from "@/lib/share";
 import { Metadata } from "next";
 import Link from "next/link";
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
     title: "How an Elf Match exchange runs",
     description:
       "From the invitation to the private draw: what the organizer does, and what each person sees.",
+    images: [shareImage],
   },
 };
 

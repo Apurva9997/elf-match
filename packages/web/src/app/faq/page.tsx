@@ -1,5 +1,6 @@
 import { PublicFooter } from "@/components/public-footer";
 import { PublicNav } from "@/components/public-nav";
+import { shareImage } from "@/lib/share";
 import { Metadata } from "next";
 import Link from "next/link";
 import { FAQAccordion } from "./faq-accordion";
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
     title: "Secret Santa FAQ - Common Questions Answered",
     description:
       "Budgets, invitations, exclusions, and who can see an assignment.",
+    images: [shareImage],
   },
 };
 
