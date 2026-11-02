@@ -66,36 +66,33 @@ function budgetLine(facts: ExchangeFacts): string | null {
 function paperEmail(heading: string, bodyHtml: string, text: string) {
   const year = new Date().getFullYear();
   const safeHeading = escapeHtml(heading);
-  const html = `<!DOCTYPE html>
-<html>
+  const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${safeHeading}</title>
 </head>
-<body style="margin:0;padding:0;background:#F6F1E7;color:#1C1915;font-family:Georgia,'Iowan Old Style',Palatino,serif;">
-  <table role="presentation" style="width:100%;border-collapse:collapse;">
+<body style="margin:0;padding:0;background:#F6F1E7;">
+  <div style="display:none;max-height:0;overflow:hidden;">${safeHeading}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F1E7;border-collapse:collapse;">
     <tr>
       <td align="center" style="padding:32px 16px;">
-        <table role="presentation" style="max-width:480px;width:100%;border-collapse:collapse;background:#FFFCF6;border:1px solid #DDD4C4;">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#FFFCF6;border:1px solid #DDD4C4;border-collapse:collapse;">
           <tr>
-            <td style="padding:28px 28px 8px 28px;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#8E3A42;">
-              Elf Match
-            </td>
+            <td style="padding:28px 32px 0 32px;font-family:Georgia,'Iowan Old Style',Palatino,serif;font-size:12px;letter-spacing:2px;color:#8E3A42;">ELF MATCH</td>
           </tr>
           <tr>
-            <td style="padding:0 28px 8px 28px;font-size:28px;line-height:1.2;color:#1E3A32;">
-              ${safeHeading}
-            </td>
+            <td style="padding:12px 32px 0 32px;font-family:Georgia,'Iowan Old Style',Palatino,serif;font-size:32px;line-height:1.2;color:#1E3A32;">${safeHeading}</td>
           </tr>
           <tr>
-            <td style="padding:8px 28px 28px 28px;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:16px;line-height:1.55;color:#5C564C;">
+            <td style="padding:16px 32px 28px 32px;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:16px;line-height:1.55;color:#5C564C;">
               ${bodyHtml}
             </td>
           </tr>
           <tr>
-            <td style="padding:16px 28px;border-top:1px solid #DDD4C4;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:12px;color:#6F675C;">
-              © ${year} Elf Match. Assignments stay with the person who is giving.
+            <td style="padding:0 32px 28px 32px;border-top:1px solid #DDD4C4;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:12px;line-height:1.5;color:#6F675C;">
+              <div style="padding-top:16px;">&copy; ${year} Elf Match. Assignments stay with the person who is giving.</div>
             </td>
           </tr>
         </table>
@@ -127,7 +124,9 @@ function factRows(facts: ExchangeFacts): { html: string; text: string } {
 }
 
 function paperButton(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;background:#8E3A42;color:#F6F1E7;text-decoration:none;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:16px;font-weight:600;padding:12px 20px;">${escapeHtml(label)}</a>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:4px 0 0 0;"><tr><td style="background:#8E3A42;">
+    <a href="${href}" style="display:inline-block;background:#8E3A42;color:#F6F1E7;text-decoration:none;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;font-size:16px;font-weight:600;padding:12px 20px;">${escapeHtml(label)}</a>
+  </td></tr></table>`;
 }
 
 export async function sendEmail({
