@@ -1,6 +1,7 @@
 "use client";
 
 import { Onboarding } from "@/components/onboarding";
+import { StageFilm } from "@/components/stage-film";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,6 @@ import {
   Calendar,
   Check,
   ChevronRight,
-  Gift,
   Loader2,
   LogOut,
   Mail,
@@ -87,10 +87,13 @@ function exchangeSentence(status: TeamWithRole["status"]) {
 
 function TeamCard({ team }: { team: TeamWithRole }) {
   const description = team.description?.trim();
+  const drawn = team.status === "assigned" || team.status === "completed";
+  const stage = team.role === "admin" && !drawn ? "gather" : drawn ? "wait" : "write";
 
   return (
     <Link href={`/dashboard/teams/${team.id}`} className="flex h-full">
-      <Card variant="interactive" className="flex h-full w-full flex-col">
+      <Card variant="interactive" className="flex h-full w-full flex-col overflow-hidden">
+        <StageFilm stage={stage} still caption={false} className="border-0" />
         <CardHeader className="mb-3 pb-0">
           <CardTitle className="text-lg">{team.name}</CardTitle>
           <p className="mt-1 text-sm text-ink">{exchangeSentence(team.status)}</p>
@@ -575,11 +578,9 @@ function DashboardContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <Card className="text-center py-12">
-              <CardContent>
-                <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6">
-                  <Gift className="w-8 h-8 text-gold" />
-                </div>
+            <Card className="overflow-hidden text-center">
+              <StageFilm stage="write" />
+              <CardContent className="py-8">
                 <h2 className="text-xl font-display text-evergreen mb-2">
                   No exchanges yet
                 </h2>

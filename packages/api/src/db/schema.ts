@@ -70,14 +70,16 @@ export const teams = pgTable("teams", {
 });
 
 // Shareable invite links. One unexpired row per exchange. The raw token is
-// returned once at generation and is not stored. Signing off keeps the
-// address; expire retires it.
+// kept so the organizer can copy the address again. Acceptance checks the
+// hash. Expire clears the raw token and retires the address. Signing off
+// keeps both.
 export const shareableInviteLinks = pgTable("shareable_invite_links", {
   id: uuid("id").primaryKey().defaultRandom(),
   teamId: uuid("team_id")
     .references(() => teams.id, { onDelete: "cascade" })
     .notNull(),
   tokenHash: varchar("token_hash", { length: 255 }).notNull().unique(),
+  token: varchar("token", { length: 255 }),
   signingOn: boolean("signing_on").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiredAt: timestamp("expired_at"),

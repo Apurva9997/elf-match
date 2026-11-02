@@ -1,31 +1,87 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Gift,
-  MapPin,
-  UserPlus,
-  Users,
-  X,
-} from "lucide-react";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { useEffect, useId, useRef } from "react";
 
 type OnboardingPersona = "new_user" | "admin" | "member";
 
-interface OnboardingStep {
+type TourStep = {
   id: string;
   title: string;
-  description: string;
-  icon: React.ReactNode;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
+  sentence: string;
+  image: string;
+  imageAlt: string;
+};
+
+const organizerSteps: TourStep[] = [
+  {
+    id: "name",
+    title: "Name the exchange",
+    sentence:
+      "Give it a name people will recognize, and add a budget and dates if you want them.",
+    image: "/film/stages/write.jpg",
+    imageAlt: "A blank card and a pen on a lit desk.",
+  },
+  {
+    id: "invite",
+    title: "Send one invite link",
+    sentence:
+      "Copy the link, and the message beside it, into the group chat. You can also invite people by email.",
+    image: "/film/stages/gather.jpg",
+    imageAlt: "A stack of blank cards tied with a green ribbon.",
+  },
+  {
+    id: "join",
+    title: "People join and write wishes",
+    sentence:
+      "Anyone who opens the link and signs in joins as themselves. A draw needs at least three people who have joined. Pending invitations are left out.",
+    image: "/film/stages/wait.jpg",
+    imageAlt: "One sealed envelope on the desk.",
+  },
+  {
+    id: "draw",
+    title: "Preview, then send",
+    sentence:
+      "You see every pairing. Confirming emails each person their recipient’s name. After those emails go out, the names cannot be redrawn.",
+    image: "/film/stages/preview.jpg",
+    imageAlt: "A row of blank folded cards and a wax seal.",
+  },
+];
+
+const memberSteps: TourStep[] = [
+  {
+    id: "joined",
+    title: "You are in",
+    sentence: "Open the exchange from your list. You see this group, and no one else’s.",
+    image: "/film/stages/gather.jpg",
+    imageAlt: "A stack of blank cards tied with a green ribbon.",
+  },
+  {
+    id: "wish",
+    title: "Write a wish, or skip the letter",
+    sentence:
+      "A title is enough. A shop link and a price are optional. Skipping the letter is not the same as sending one.",
+    image: "/film/stages/write.jpg",
+    imageAlt: "A blank card and a pen on a lit desk.",
+  },
+  {
+    id: "address",
+    title: "Add an address only if you want delivery",
+    sentence:
+      "An address is optional. If you add one, only the person buying for you can read it.",
+    image: "/film/stages/wait.jpg",
+    imageAlt: "One sealed envelope on the desk.",
+  },
+  {
+    id: "name",
+    title: "After the draw, open only your recipient",
+    sentence:
+      "You see one name, and that person’s wishlist. You do not see the rest of the draw.",
+    image: "/film/stages/prepare.jpg",
+    imageAlt: "A wrapped gift beside a blank card.",
+  },
+];
 
 interface OnboardingProps {
   isOpen: boolean;
@@ -48,261 +104,140 @@ export function Onboarding({
   firstTeamName,
   drawn = false,
 }: OnboardingProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const titleId = useId();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const steps = persona === "member" ? memberSteps : organizerSteps;
+  const heading =
+    persona === "member"
+      ? firstTeamName || "This exchange"
+      : persona === "admin"
+        ? firstTeamName || "Your exchange"
+        : "How an exchange works";
 
-  const getStepsForPersona = (): OnboardingStep[] => {
-    const goToTeamAction = firstTeamId
-      ? {
-          label: `Go to ${firstTeamName || "Exchange"}`,
-          onClick: () => {
-            onGoToTeam(firstTeamId);
-            onClose();
-          },
-        }
-      : undefined;
-
-    switch (persona) {
-      case "new_user":
-        return [
-          {
-            id: "welcome",
-            title: "Welcome to Elf Match",
-            description:
-              "We'll help you set up your first gift exchange in 3 simple steps.",
-            icon: <Gift className="w-8 h-8 text-cranberry" />,
-          },
-          {
-            id: "create-team",
-            title: "Create Your First Exchange",
-            description:
-              "Start by creating an exchange for your Secret Santa. You can invite friends, family, or coworkers to join.",
-            icon: <Users className="w-8 h-8 text-cranberry" />,
-            action: {
-              label: "Create Exchange",
-              onClick: () => {
-                onCreateTeam();
-                onClose();
-              },
-            },
-          },
-          {
-            id: "add-address",
-            title: "Add Your Delivery Address",
-            description:
-              "Once you've created an exchange, add your delivery address so your Secret Santa knows where to send your gift. You can do this in the exchange page.",
-            icon: <MapPin className="w-8 h-8 text-cranberry" />,
-          },
-          {
-            id: "add-wishlist",
-            title: "Build Your Wishlist",
-            description:
-              "Write what you would like, one wish at a time. You can skip the letter and just add an address.",
-            icon: <Gift className="w-8 h-8 text-cranberry" />,
-          },
-        ];
-
-      case "admin":
-        return [
-          {
-            id: "welcome",
-            title: firstTeamName || "Your exchange",
-            description: drawn
-              ? "The names are already drawn. They cannot be redrawn. You can still read your own recipient, and resend an email that did not go out."
-              : "You organize this exchange. Invite people, then preview the pairings before you send them.",
-            icon: <Users className="w-8 h-8 text-cranberry" />,
-          },
-          {
-            id: "invite-members",
-            title: "Invite Members",
-            description:
-              "Copy an invite link for the group, or add email addresses. You'll need at least 3 people who have joined before you can draw names.",
-            icon: <UserPlus className="w-8 h-8 text-cranberry" />,
-            action: goToTeamAction,
-          },
-          {
-            id: "add-address",
-            title: "Add Your Delivery Address",
-            description:
-              "Add your delivery address so your Secret Santa knows where to send your gift. All members should add their addresses too.",
-            icon: <MapPin className="w-8 h-8 text-cranberry" />,
-            action: goToTeamAction,
-          },
-          {
-            id: "add-wishlist",
-            title: "Build Your Wishlist",
-            description:
-              "Write a wish, or skip the letter. After the draw, only the person buying for you can read what you wrote.",
-            icon: <Gift className="w-8 h-8 text-cranberry" />,
-            action: goToTeamAction,
-          },
-        ];
-
-      case "member":
-        return [
-          {
-            id: "welcome",
-            title: `Welcome to ${firstTeamName || "the exchange"}`,
-            description: drawn
-              ? "The names are already drawn. Open the exchange to see only the person you are buying for."
-              : "You are in this exchange. Write a wish or skip the letter, and add an address if you want the gift delivered.",
-            icon: <Gift className="w-8 h-8 text-cranberry" />,
-          },
-          {
-            id: "add-address",
-            title: "Add Your Delivery Address",
-            description:
-              "First, add your delivery address so your Secret Santa knows where to send your gift. This is required to participate.",
-            icon: <MapPin className="w-8 h-8 text-cranberry" />,
-            action: goToTeamAction,
-          },
-          {
-            id: "add-wishlist",
-            title: "Build Your Wishlist",
-            description:
-              "Write what you would like in one box. A shop link and a price are optional, and you can skip the letter.",
-            icon: <Gift className="w-8 h-8 text-cranberry" />,
-            action: goToTeamAction,
-          },
-        ];
-
-      default:
-        return [];
-    }
-  };
-
-  const steps = getStepsForPersona();
-
-  const handleNext = () => {
-    const currentStepData = steps[currentStep];
-
-    // If current step has an action, trigger it
-    if (currentStepData.action) {
-      currentStepData.action.onClick();
-      return;
-    }
-
-    // Otherwise, go to next step or close
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onClose();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    onClose();
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const step = steps[currentStep];
-  const isLastStep = currentStep === steps.length - 1;
-  const isFirstStep = currentStep === 0;
-
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-evergreen-deep/50"
-            onClick={handleSkip}
-          />
-
-          {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Card className="relative">
-                <CardContent className="pt-8 pb-6">
-                  {/* Close button */}
-                  <button
-                    type="button"
-                    onClick={handleSkip}
-                    aria-label="Close"
-                    className="absolute top-4 right-4 text-ink-soft hover:text-ink"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-
-                  {/* Step indicator */}
-                  <div className="flex items-center justify-center gap-2 mb-6">
-                    {steps.map((_, index) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          "h-1.5 rounded-full transition-all",
-                          index <= currentStep
-                            ? "bg-cranberry w-8"
-                            : "bg-rule w-2"
-                        )}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Icon */}
-                  <div className="flex justify-center mb-6">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-cranberry-soft">
-                      {step.icon}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="text-center mb-8">
-                    <h2 className="font-display text-2xl text-ink mb-3">
-                      {step.title}
-                    </h2>
-                    <p className="text-lg leading-relaxed text-ink-soft">
-                      {step.description}
+    <>
+      <div
+        className="fixed inset-0 z-50 bg-evergreen-deep/50"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className="flex max-h-[92svh] w-full max-w-xl flex-col border border-rule bg-ivory-card shadow-paper"
+          onClick={(event) => event.stopPropagation()}
+        >
+              <div className="flex items-start justify-between gap-4 border-b border-rule px-5 py-4">
+                <div>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
+                    How it works
+                  </p>
+                  <h2 id={titleId} className="mt-1 font-display text-2xl text-evergreen">
+                    {heading}
+                  </h2>
+                  {persona === "admin" && drawn && (
+                    <p className="mt-1 text-sm text-ink-soft">
+                      The names are already drawn. They cannot be redrawn.
                     </p>
-                  </div>
+                  )}
+                </div>
+                <button
+                  ref={closeRef}
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="grid h-11 w-11 shrink-0 place-items-center text-ink-soft hover:text-ink"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-                  {/* Navigation arrows */}
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={handlePrevious}
-                      disabled={isFirstStep}
-                      aria-label="Previous step"
-                      className={cn(
-                        "rounded-full p-2",
-                        isFirstStep
-                          ? "cursor-not-allowed text-rule"
-                          : "text-ink-soft hover:bg-ivory-deep hover:text-ink"
-                      )}
-                    >
-                      <ArrowLeft className="w-6 h-6" />
-                    </button>
+              <div className="overflow-y-auto px-5 py-4">
+                <ol className="space-y-6">
+                  {steps.map((step, index) => (
+                    <li key={step.id} className="border-b border-rule pb-6 last:border-0">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-cranberry">
+                        {String(index + 1).padStart(2, "0")}
+                      </p>
+                      <h3 className="mt-1 font-display text-xl text-ink">{step.title}</h3>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={step.image}
+                        alt={step.imageAlt}
+                        className="mt-3 aspect-video w-full border border-rule object-cover"
+                      />
+                      <p className="mt-3 leading-relaxed text-ink-soft">{step.sentence}</p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
 
-                    <button
-                      type="button"
-                      onClick={isLastStep ? handleSkip : handleNext}
-                      aria-label={isLastStep ? "Close" : "Next step"}
-                      className="rounded-full p-2 text-ink-soft hover:bg-ivory-deep hover:text-ink"
-                    >
-                      <ArrowRight className="w-6 h-6" />
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+              <div className="flex flex-wrap justify-end gap-3 border-t border-rule px-5 py-4">
+                {persona === "new_user" && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      onCreateTeam();
+                      onClose();
+                    }}
+                  >
+                    Create an exchange
+                  </Button>
+                )}
+                {persona !== "new_user" && firstTeamId && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      onGoToTeam(firstTeamId);
+                      onClose();
+                    }}
+                  >
+                    Go to {firstTeamName || "the exchange"}
+                  </Button>
+                )}
+                <Button type="button" variant="secondary" onClick={onClose}>
+                  Close
+                </Button>
+              </div>
+        </div>
+      </div>
+    </>
   );
 }

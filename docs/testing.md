@@ -111,7 +111,7 @@ pnpm exec next dev --port 3000
 
 Done when the homepage HTML contains `pk_test_` and does not contain `pk_live_`, and a query to the dawn-wind database is the one the app is using.
 
-In development, invitation and assignment mail is printed in the Next.js log instead of sent. The invitation URL is in that log. The organizer can also copy a shareable invite link from People on the exchange. That link is not in the log.
+In development, invitation and assignment mail is printed in the Next.js log instead of sent. The invitation URL is in that log. The organizer can also copy a shareable invite link, and a message to send with it, from People on the exchange. That link is not in the log. A link generated before the address was stored on the exchange cannot be reprinted; expire it and generate another.
 
 ## Browser pass
 

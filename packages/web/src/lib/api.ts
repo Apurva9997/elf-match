@@ -418,6 +418,7 @@ export interface InviteLinkRow {
   createdAt: string;
   expiredAt: string | null;
   signingOn: boolean;
+  token: string | null;
 }
 
 export interface InviteLinkTable {

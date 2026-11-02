@@ -1,6 +1,7 @@
 "use client";
 
 import { Onboarding } from "@/components/onboarding";
+import { StageFilm } from "@/components/stage-film";
 import {
   AssignmentReveal,
   Celebration,
@@ -26,6 +27,8 @@ import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { track } from "@/lib/analytics";
 import { ApiError, api } from "@/lib/api";
+import { inviteShareMessage } from "@/lib/invite-share";
+import { exchangeStage } from "@/lib/stage-scene";
 import { useAuth } from "@/lib/auth-context";
 import { cn, dateInputValue, formatDate, formatShortDate } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -966,9 +969,9 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ["invite-links", teamId] });
       try {
         await navigator.clipboard.writeText(result.url);
-        toast.success("Invite link copied. Anyone with it can join until you turn signing off or expire it.");
+        toast.success("Invite link copied. You can copy it again from this page.");
       } catch {
-        toast.success("Invite link ready. Copy it from the box. It will not be shown again.");
+        toast.success("Invite link ready. Copy it from the box below.");
       }
     },
     onError: (err: Error) => {
@@ -1030,13 +1033,40 @@ export default function TeamPage() {
     },
   });
 
+  const liveInviteUrl =
+    inviteLinkUrl ||
+    (() => {
+      const live = inviteLinks?.links.find((link) => !link.expiredAt && link.token);
+      return live?.token ? `${window.location.origin}/invite/${live.token}` : null;
+    })();
+
+  const shareFacts = () => ({
+    hostName: user?.name || team?.creator?.name || "",
+    exchangeName: team?.name || "this exchange",
+    url: liveInviteUrl || "",
+    budgetMin: team?.budgetMin,
+    budgetMax: team?.budgetMax,
+    wishlistDeadline: team?.wishlistDeadline,
+    exchangeDate: team?.exchangeDate,
+  });
+
   const copySharedInviteLink = async () => {
-    if (!inviteLinkUrl) return;
+    if (!liveInviteUrl) return;
     try {
-      await navigator.clipboard.writeText(inviteLinkUrl);
+      await navigator.clipboard.writeText(liveInviteUrl);
       toast.success("Invite link copied. The address is unchanged.");
     } catch {
       toast.error("Could not copy the link.");
+    }
+  };
+
+  const copyInviteMessage = async () => {
+    if (!liveInviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteShareMessage(shareFacts()));
+      toast.success("Invite message copied. Paste it into the group chat.");
+    } catch {
+      toast.error("Could not copy the message.");
     }
   };
 
@@ -1439,6 +1469,17 @@ export default function TeamPage() {
         </div>
 
         <section className="mb-6 border border-rule bg-ivory-card p-4" aria-label="Journey">
+          <StageFilm
+            stage={exchangeStage({
+              isOrganizer: isAdmin,
+              drawn: Boolean(status?.drawComplete || assignment?.assigned),
+              joined: status?.totalMembers ?? team.members.filter((member) => member.invitationStatus === "accepted").length,
+              letterSkipped,
+              hasWish: wishItems.some((item) => item.title.trim()),
+              giftStatus: assignment?.giftStatus,
+            })}
+          />
+          <div className="mt-4">
           <ProgressTrail
             steps={((): TrailStep[] => {
               const wishesSent =
@@ -1459,6 +1500,7 @@ export default function TeamPage() {
               return steps;
             })()}
           />
+          </div>
           {team.wishlistDeadline &&
             !letterSkipped &&
             !wishItems.some((item) => item.title.trim()) && (
@@ -1550,26 +1592,53 @@ export default function TeamPage() {
                         Generate invite link
                       </Button>
                     ) : (
-                      <p className="mt-3 text-sm text-ink-soft">
-                        A link is live. Expire it before generating another.
-                      </p>
+                      !liveInviteUrl && (
+                        <p className="mt-3 text-sm text-ink-soft">
+                          A link is live. Expire it before generating another.
+                        </p>
+                      )
                     )}
-                    {inviteLinkUrl && (
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <input
-                          readOnly
-                          value={inviteLinkUrl}
-                          aria-label="Invite link"
-                          onFocus={(event) => event.currentTarget.select()}
-                          className="w-full border border-rule bg-ivory-card px-3 py-2 text-sm text-ink"
-                        />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={copySharedInviteLink}
-                        >
-                          Copy link
-                        </Button>
+                    {liveInviteUrl && (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <input
+                            readOnly
+                            value={liveInviteUrl}
+                            aria-label="Invite link"
+                            onFocus={(event) => event.currentTarget.select()}
+                            className="w-full border border-rule bg-ivory-card px-3 py-2 text-sm text-ink"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="shrink-0"
+                            onClick={copySharedInviteLink}
+                          >
+                            Copy link
+                          </Button>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-ink">Message to send with the link</p>
+                          <p className="mt-1 text-sm text-ink-soft">
+                            Paste this into the group chat. It explains the exchange, and how someone else can organize one.
+                          </p>
+                          <textarea
+                            readOnly
+                            value={inviteShareMessage(shareFacts())}
+                            aria-label="Invite message"
+                            rows={16}
+                            onFocus={(event) => event.currentTarget.select()}
+                            className="mt-2 w-full border border-rule bg-ivory-card px-3 py-2 text-sm leading-relaxed text-ink"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="mt-2"
+                            onClick={copyInviteMessage}
+                          >
+                            Copy message
+                          </Button>
+                        </div>
                       </div>
                     )}
                     {inviteLinks && inviteLinks.links.length > 0 && (
@@ -1637,9 +1706,9 @@ export default function TeamPage() {
                             })}
                           </tbody>
                         </table>
-                        {!inviteLinkUrl && !inviteLinks.canGenerate && (
+                        {!liveInviteUrl && !inviteLinks.canGenerate && (
                           <p className="mt-2 text-sm text-ink-soft">
-                            The address was shown when you generated it. This page cannot reprint it. Copy it from where you saved it, or expire this link and generate another.
+                            This link was made before the address was saved on the exchange. Expire it and generate another to copy the address again.
                           </p>
                         )}
                       </div>

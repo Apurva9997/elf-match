@@ -1,7 +1,8 @@
 -- A shareable invite link is its own row, not a single hash on the exchange.
 -- Expire retires the address. Turning signing off does not.
 -- An existing hash becomes one live row so a link already shared still works.
--- The raw token was never stored, so it cannot be reprinted.
+-- The raw token was not stored by this migration. A later migration adds
+-- a token column so a newly generated address can be copied again.
 
 CREATE TABLE IF NOT EXISTS shareable_invite_links (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

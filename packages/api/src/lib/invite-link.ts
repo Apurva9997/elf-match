@@ -31,6 +31,8 @@ export type ShareableLinkView = {
   createdAt: Date;
   expiredAt: Date | null;
   signingOn: boolean;
+  /** Present only while the link is live and the token was stored. */
+  token: string | null;
 };
 
 export type IssuedLink = {
@@ -85,8 +87,8 @@ async function liveLink(teamId: string): Promise<LinkRow | undefined> {
 
 /**
  * Mints one address and turns signing on. Refuses while an unexpired link
- * exists, including one whose signing is off. The raw token leaves this
- * function once and is not stored.
+ * exists, including one whose signing is off. The raw token is stored so
+ * the organizer can copy it again. Acceptance still checks the hash.
  */
 export async function generateShareLink(teamId: string): Promise<IssuedLink> {
   if (await drawHasStarted(teamId)) {
@@ -110,6 +112,7 @@ export async function generateShareLink(teamId: string): Promise<IssuedLink> {
       .insert(shareableInviteLinks)
       .values({
         teamId,
+        token,
         tokenHash: hashToken(token),
         signingOn: true,
       })
@@ -133,7 +136,7 @@ export async function generateShareLink(teamId: string): Promise<IssuedLink> {
   }
 }
 
-/** Newest first. The raw address is not recoverable from this list. */
+/** Newest first. A live row includes the token the organizer can copy. */
 export async function listShareLinks(teamId: string): Promise<ShareableLinkView[]> {
   const rows = await db.query.shareableInviteLinks.findMany({
     where: eq(shareableInviteLinks.teamId, teamId),
@@ -144,6 +147,7 @@ export async function listShareLinks(teamId: string): Promise<ShareableLinkView[
     createdAt: row.createdAt,
     expiredAt: row.expiredAt,
     signingOn: row.expiredAt ? false : row.signingOn,
+    token: row.expiredAt ? null : row.token,
   }));
 }
 
@@ -176,6 +180,7 @@ export async function setShareSigning(teamId: string, on: boolean): Promise<Shar
     createdAt: live.createdAt,
     expiredAt: null,
     signingOn: on,
+    token: live.token,
   };
 }
 
@@ -199,13 +204,14 @@ export async function expireShareLink(
   const expiredAt = new Date();
   await db
     .update(shareableInviteLinks)
-    .set({ expiredAt, signingOn: false })
+    .set({ expiredAt, signingOn: false, token: null })
     .where(eq(shareableInviteLinks.id, row.id));
   return {
     id: row.id,
     createdAt: row.createdAt,
     expiredAt,
     signingOn: false,
+    token: null,
   };
 }
 
