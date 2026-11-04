@@ -4,6 +4,7 @@ export type InviteShareFacts = {
   url: string;
   budgetMin?: string | null;
   budgetMax?: string | null;
+  currency?: string | null;
   wishlistDeadline?: string | null;
   exchangeDate?: string | null;
 };
@@ -24,18 +25,27 @@ function day(value: string): string {
   });
 }
 
-function rupees(value: string): string {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return value;
-  return `₹${amount.toLocaleString("en-IN")}`;
+function amount(value: string, currency: string | null | undefined): string {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return value;
+  const code = (currency || "USD").toUpperCase();
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: code,
+      maximumFractionDigits: Number.isInteger(number) ? 0 : 2,
+    }).format(number);
+  } catch {
+    return `${code} ${number}`;
+  }
 }
 
 function budgetLine(facts: InviteShareFacts): string | null {
   if (facts.budgetMin && facts.budgetMax) {
-    return `Spend between ${rupees(facts.budgetMin)} and ${rupees(facts.budgetMax)}.`;
+    return `Spend between ${amount(facts.budgetMin, facts.currency)} and ${amount(facts.budgetMax, facts.currency)}.`;
   }
-  if (facts.budgetMax) return `Spend up to ${rupees(facts.budgetMax)}.`;
-  if (facts.budgetMin) return `Spend at least ${rupees(facts.budgetMin)}.`;
+  if (facts.budgetMax) return `Spend up to ${amount(facts.budgetMax, facts.currency)}.`;
+  if (facts.budgetMin) return `Spend at least ${amount(facts.budgetMin, facts.currency)}.`;
   return null;
 }
 

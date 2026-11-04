@@ -197,6 +197,7 @@ class ApiClient {
       wishlistDeadline: string | null;
       budgetMin: string | null;
       budgetMax: string | null;
+      currency: string | null;
     }>(`/invitations/${token}`);
   }
 
@@ -395,6 +396,7 @@ export interface Team {
   description: string | null;
   budgetMin: string | null;
   budgetMax: string | null;
+  currency: string;
   exchangeDate: string | null;
   wishlistDeadline: string | null;
   status: string;
@@ -466,6 +468,7 @@ export interface CreateTeamInput {
   description?: string;
   budgetMin?: number | null;
   budgetMax?: number | null;
+  currency?: string | null;
   exchangeDate?: string | null;
   wishlistDeadline?: string | null;
 }

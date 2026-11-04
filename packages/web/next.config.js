@@ -31,6 +31,24 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/film/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/share.jpg",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400",
+          },
+        ],
+      },
     ];
   },
   experimental: {

@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { track } from "@/lib/analytics";
 import { ApiError, api } from "@/lib/api";
 import { inviteShareMessage } from "@/lib/invite-share";
+import { CURRENCIES, budgetRange, formatMoney } from "@/lib/money";
 import { exchangeStage } from "@/lib/stage-scene";
 import { useAuth } from "@/lib/auth-context";
 import { cn, dateInputValue, formatDate, formatShortDate } from "@/lib/utils";
@@ -94,6 +95,7 @@ const updateTeamSchema = z
     description: z.string().optional(),
     budgetMin: z.string().optional(),
     budgetMax: z.string().optional(),
+    currency: z.string().length(3),
     exchangeDate: z.string().optional(),
     wishlistDeadline: z.string().optional(),
   })
@@ -182,6 +184,7 @@ export default function TeamPage() {
   // Team edit form
   const teamEditForm = useForm<UpdateTeamForm>({
     resolver: zodResolver(updateTeamSchema),
+    defaultValues: { currency: "USD" },
   });
   const [quickAddTitle, setQuickAddTitle] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
@@ -394,6 +397,7 @@ export default function TeamPage() {
         description: data.description || undefined,
         budgetMin: data.budgetMin ? parseFloat(data.budgetMin) : null,
         budgetMax: data.budgetMax ? parseFloat(data.budgetMax) : null,
+        currency: data.currency,
         exchangeDate: data.exchangeDate || null,
         wishlistDeadline: data.wishlistDeadline || null,
       }),
@@ -920,6 +924,7 @@ export default function TeamPage() {
         description: team.description || "",
         budgetMin: team.budgetMin || "",
         budgetMax: team.budgetMax || "",
+        currency: team.currency || "USD",
         exchangeDate: dateInputValue(team.exchangeDate),
         wishlistDeadline: dateInputValue(team.wishlistDeadline),
       });
@@ -1046,6 +1051,7 @@ export default function TeamPage() {
     url: liveInviteUrl || "",
     budgetMin: team?.budgetMin,
     budgetMax: team?.budgetMax,
+    currency: team?.currency,
     wishlistDeadline: team?.wishlistDeadline,
     exchangeDate: team?.exchangeDate,
   });
@@ -1299,7 +1305,7 @@ export default function TeamPage() {
                 )}
                 {team.budgetMin && team.budgetMax && (
                   <span className="text-sm text-ink-soft">
-                    Budget: ₹{team.budgetMin} – ₹{team.budgetMax}
+                    Budget: {budgetRange(team.budgetMin, team.budgetMax, team.currency)}
                   </span>
                 )}
               </div>
@@ -1952,7 +1958,7 @@ export default function TeamPage() {
                               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                                 {item.priceEstimate && (
                                   <span className="text-ink-soft">
-                                    About ₹{item.priceEstimate}
+                                    About {formatMoney(item.priceEstimate, team.currency)}
                                   </span>
                                 )}
                                 {item.description && (
@@ -2017,7 +2023,7 @@ export default function TeamPage() {
                                       e.target.value
                                     )
                                   }
-                                  placeholder="About this much, in rupees"
+                                  placeholder="About this much"
                                   aria-label={`Price for ${item.title || "wish"}`}
                                   type="number"
                                 />
@@ -2488,8 +2494,8 @@ export default function TeamPage() {
                         <AssignmentReveal
                           name={assignment.giftee.name}
                           budget={
-                            team.budgetMin && team.budgetMax
-                              ? `Stay inside ₹${Number(team.budgetMin)} – ₹${Number(team.budgetMax)}.`
+                            budgetRange(team.budgetMin, team.budgetMax, team.currency)
+                              ? `Stay inside ${budgetRange(team.budgetMin, team.budgetMax, team.currency)}.`
                               : null
                           }
                           replay={replaying}
@@ -2505,9 +2511,9 @@ export default function TeamPage() {
                             <h3 className="mt-3 font-display text-4xl text-evergreen">
                               {assignment.giftee?.name || "Name not shared"}
                             </h3>
-                            {team.budgetMin && team.budgetMax && (
+                            {budgetRange(team.budgetMin, team.budgetMax, team.currency) && (
                               <p className="mt-3 text-ink-soft">
-                                Stay inside ₹{Number(team.budgetMin)} – ₹{Number(team.budgetMax)}.
+                                Stay inside {budgetRange(team.budgetMin, team.budgetMax, team.currency)}.
                               </p>
                             )}
                           </div>
@@ -2661,8 +2667,8 @@ export default function TeamPage() {
                         </p>
                         <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
                           Choose something yourself. The budget
-                          {team.budgetMin && team.budgetMax
-                            ? ` is ₹${team.budgetMin}–₹${team.budgetMax}`
+                          {budgetRange(team.budgetMin, team.budgetMax, team.currency)
+                            ? ` is ${budgetRange(team.budgetMin, team.budgetMax, team.currency)}`
                             : " has not been set"}
                           . A wish outside that range is still allowed when someone writes one. It is not a requirement.
                         </p>
@@ -2687,7 +2693,7 @@ export default function TeamPage() {
                                 )}
                                 {item.priceEstimate && (
                                   <p className="text-gold text-sm mt-2">
-                                    ~₹{item.priceEstimate}
+                                    ~{formatMoney(item.priceEstimate, team.currency)}
                                   </p>
                                 )}
                               </div>
@@ -2713,8 +2719,8 @@ export default function TeamPage() {
                         <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
                           {assignment.giftee?.name || "They"} have not added wishes yet.
                           The budget
-                          {team.budgetMin && team.budgetMax
-                            ? ` is ₹${team.budgetMin}–₹${team.budgetMax}`
+                          {budgetRange(team.budgetMin, team.budgetMax, team.currency)
+                            ? ` is ${budgetRange(team.budgetMin, team.budgetMax, team.currency)}`
                             : " has not been set"}
                           . You can still choose something in that range.
                         </p>
@@ -2865,19 +2871,29 @@ export default function TeamPage() {
               placeholder="Our annual office gift exchange..."
             />
 
+            <label className="block text-sm">
+              <span className="input-label">Currency</span>
+              <select {...teamEditForm.register("currency")} className="input-field">
+                {CURRENCIES.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} — {currency.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="grid grid-cols-2 gap-4">
               <Input
                 {...teamEditForm.register("budgetMin")}
                 type="number"
-                label="Min budget, rupees"
-                placeholder="500"
+                label="Minimum"
+                placeholder="20"
                 error={teamEditForm.formState.errors.budgetMin?.message}
               />
               <Input
                 {...teamEditForm.register("budgetMax")}
                 type="number"
-                label="Max budget, rupees"
-                placeholder="2000"
+                label="Maximum"
+                placeholder="50"
               />
             </div>
 

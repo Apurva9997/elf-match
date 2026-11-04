@@ -7,6 +7,7 @@ const message = inviteShareMessage({
   url: "https://elfmatch.com/invite/abc",
   budgetMin: "500",
   budgetMax: "1000",
+  currency: "INR",
   wishlistDeadline: "2026-12-10",
   exchangeDate: "2026-12-24",
 });

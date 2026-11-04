@@ -364,7 +364,7 @@ function LoginPageContent() {
                   {creating && (
                     <ul className="space-y-1 text-sm text-ink-soft">
                       <li>You will name the exchange, set a date, and invite people with a link or by email.</li>
-                      <li>It is free. Budgets are in rupees.</li>
+                      <li>It is free. You choose the currency for the budget.</li>
                     </ul>
                   )}
 

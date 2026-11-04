@@ -51,6 +51,7 @@ export function HeroFilm() {
         playsInline
         loop
         preload={reduce ? "none" : "metadata"}
+        aria-describedby="hero-film-still"
       >
         <source src={FILM} type="video/mp4" />
       </video>
@@ -63,7 +64,10 @@ export function HeroFilm() {
       >
         {playing ? "Pause" : "Play"}
       </button>
-      <p className="sr-only">Someone gets to be your Santa. A short film about Elf Match.</p>
+      <p id="hero-film-still" className="sr-only">
+        Someone gets to be your Santa. The still shows a wrapped gift and the
+        Elf Match card before the film plays.
+      </p>
     </div>
   );
 }

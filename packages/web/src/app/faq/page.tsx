@@ -6,9 +6,9 @@ import Link from "next/link";
 import { FAQAccordion } from "./faq-accordion";
 
 export const metadata: Metadata = {
-  title: "Secret Santa FAQ: budgets, exclusions, and private draws",
+  title: "Secret Santa FAQ: budgets and private draws",
   description:
-    "Answers about budgets, invitations, exclusions, wishlists, and who can see a Secret Santa assignment on Elf Match.",
+    "Budgets in any currency, invite links, exclusions, and who can see a Secret Santa assignment. Free, and the draw cannot be redrawn.",
   alternates: {
     canonical: "https://elfmatch.com/faq",
   },
@@ -50,7 +50,7 @@ const faqs = [
   {
     question: "Can I set a budget for the gift exchange?",
     answer:
-      "Yes. You can set a minimum and maximum, in rupees. Everyone who joins can see that range. There is no other currency.",
+      "Yes. You choose the currency, then a minimum and a maximum. Everyone who joins sees that range in the currency you chose. Leave both blank if the group has no range.",
   },
   {
     question: "How does the Secret Santa matching work?",
@@ -80,7 +80,7 @@ const faqs = [
   {
     question: "Can I add items to my wishlist with links?",
     answer:
-      "Yes. Write the wish in one box. Open More details on that wish if you want a note, a shop link, or a price in rupees. The exchange budget is a guide for the giver. A wish outside it still saves.",
+      "Yes. Write the wish in one box. Open More details on that wish if you want a note, a shop link, or a price in the exchange currency. The exchange budget is a guide for the giver. A wish outside it still saves.",
   },
   {
     question: "Is my delivery address shared with everyone?",
@@ -128,7 +128,11 @@ export default function FAQPage() {
         </h1>
         <p className="mt-4 text-lg text-ink-soft">
           Budgets, who can see a wishlist, and what happens if someone has not
-          joined yet.
+          joined yet. Start from the{" "}
+          <Link href="/" className="text-evergreen underline decoration-rule underline-offset-4">
+            Secret Santa generator
+          </Link>
+          .
         </p>
 
         <div className="mt-10">

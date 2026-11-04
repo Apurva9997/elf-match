@@ -50,6 +50,7 @@ export type ResolveResult =
       wishlistDeadline: string | null;
       budgetMin: string | null;
       budgetMax: string | null;
+      currency: string;
     }
   | { outcome: "unknown" };
 
@@ -238,6 +239,7 @@ function presented(
     wishlistDeadline: team.wishlistDeadline,
     budgetMin: team.budgetMin,
     budgetMax: team.budgetMax,
+    currency: team.currency,
   };
 }
 

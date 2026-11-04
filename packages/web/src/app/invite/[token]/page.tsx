@@ -11,6 +11,7 @@ import {
   markInviteNudged,
   rememberInvite,
 } from "@/lib/pending-invite";
+import { budgetRange } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import { motion, useReducedMotion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
@@ -25,6 +26,7 @@ type Preview = {
   wishlistDeadline: string | null;
   budgetMin: string | null;
   budgetMax: string | null;
+  currency: string | null;
 };
 
 export default function InvitePage() {
@@ -89,10 +91,9 @@ export default function InvitePage() {
     }
   };
 
-  const budget =
-    preview?.budgetMin && preview.budgetMax
-      ? `₹${Number(preview.budgetMin)} – ₹${Number(preview.budgetMax)}`
-      : null;
+  const budget = preview
+    ? budgetRange(preview.budgetMin, preview.budgetMax, preview.currency)
+    : null;
 
   return (
     <div className="flex justify-center px-4 py-16">

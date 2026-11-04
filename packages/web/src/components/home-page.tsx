@@ -46,7 +46,7 @@ export function HomePage() {
                 Draw the names. Keep the giving secret.
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
-                Set a rupee budget and dates, invite by link or email, exclude pairs, and
+                Set a budget and dates, invite by link or email, exclude pairs, and
                 preview every match before sending the final draw.
               </p>
               <HomeActions />

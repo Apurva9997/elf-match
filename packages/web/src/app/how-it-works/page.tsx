@@ -23,7 +23,7 @@ const steps = [
   {
     number: "01",
     title: "Create the exchange",
-    body: "Give it a name people will recognize in the invitation. Add a minimum and maximum budget if you want everyone spending in the same range. Set a wishlist deadline and the day gifts are exchanged. Those fields are visible to everyone who joins.",
+    body: "Give it a name people will recognize in the invitation. Choose the currency, then add a minimum and maximum if you want everyone spending in the same range. Set a wishlist deadline and the day gifts are exchanged. Those fields are visible to everyone who joins.",
     details: [
       "Name is required",
       "Budget, wishlist deadline, and exchange date are optional",
@@ -76,7 +76,11 @@ export default function HowItWorksPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-ink-soft">
           Four things you do as the organizer. Nothing here is automatic until
-          you confirm the assignments.
+          you confirm the assignments. The{" "}
+          <Link href="/" className="text-evergreen underline decoration-rule underline-offset-4">
+            Secret Santa generator
+          </Link>{" "}
+          is the page where you start.
         </p>
 
         <ol className="mt-12 border-t border-rule">
@@ -118,6 +122,27 @@ export default function HowItWorksPage() {
               exchange. It does not list the rest of the draw.
             </p>
           </div>
+        </section>
+
+        <section className="mt-14 max-w-2xl">
+          <h2 className="font-display text-2xl text-ink">What you do not have to do</h2>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            You do not print slips, and you do not sit everyone in one room.
+            People in another city join the same link. A couple who should not
+            draw each other is one exclusion, and it runs both ways. If the
+            rules leave someone with nobody they can give to, the preview says
+            so and does not invent a pairing.
+          </p>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            A wishlist is optional. A person can skip the letter and leave
+            only an address. The address is shown to the assigned giver, not
+            to the group. The giver can mark the gift bought, shipped, or
+            delivered. The person receiving it does not see that progress.
+          </p>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            There is no paid tier and no card. The currency is yours to choose.
+            Leave the budget blank if the group does not want a range.
+          </p>
         </section>
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     absolute: "Secret Santa generator for a private draw | Elf Match",
   },
   description:
-    "Free Secret Santa generator. Set a budget and exchange date, invite people by link or email, keep couples apart, collect wishlists, and send each person a private assignment.",
+    "Free Secret Santa generator. Set a budget and date, invite by link or email, keep couples apart, and send a private assignment.",
   alternates: {
     canonical: "https://elfmatch.com",
   },
@@ -22,18 +22,34 @@ export const metadata: Metadata = {
 
 const webAppSchema = {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: "Elf Match",
-  url: "https://elfmatch.com",
-  applicationCategory: "LifestyleApplication",
-  operatingSystem: "Web",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
-  description:
-    "Free organizer for Secret Santa and other gift exchanges. Set a budget and date, invite people by link or email, keep particular pairs from matching, collect wishlists, and send private assignments.",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: "Elf Match",
+      url: "https://elfmatch.com",
+      email: "hello@elfmatch.com",
+      logo: "https://elfmatch.com/android-chrome-512x512.png",
+    },
+    {
+      "@type": "WebSite",
+      name: "Elf Match",
+      url: "https://elfmatch.com",
+      publisher: { "@type": "Organization", name: "Elf Match", url: "https://elfmatch.com" },
+    },
+    {
+      "@type": "WebApplication",
+      name: "Elf Match",
+      url: "https://elfmatch.com",
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+      },
+      description:
+        "Free organizer for Secret Santa and other gift exchanges. Set a budget and date, invite people by link or email, keep particular pairs from matching, collect wishlists, and send private assignments.",
+    },
+  ],
 };
 
 export default function Page() {

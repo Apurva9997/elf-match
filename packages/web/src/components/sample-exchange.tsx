@@ -39,7 +39,7 @@ export function SampleExchange() {
         <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
             <dt className="font-mono text-xs uppercase tracking-wider text-ink-soft">Budget</dt>
-            <dd className="mt-0.5 font-medium text-ink">₹500 – ₹1,000</dd>
+            <dd className="mt-0.5 font-medium text-ink">$20 – $40</dd>
           </div>
           <div>
             <dt className="font-mono text-xs uppercase tracking-wider text-ink-soft">Exchange</dt>
@@ -92,7 +92,7 @@ export function SampleExchange() {
               You are buying for Meera.
             </p>
             <p className="mt-1 text-sm text-ink-soft">
-              A hardcover notebook. Stay inside ₹500 – ₹1,000.
+              A hardcover notebook. Stay inside $20 – $40.
             </p>
           </div>
         </div>

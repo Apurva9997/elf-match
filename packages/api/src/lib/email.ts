@@ -1,5 +1,6 @@
 import Mailgun from "mailgun.js";
 import FormData from "form-data";
+import { budgetRange } from "./money.js";
 
 function fromAddress() {
   const raw = process.env.FROM_EMAIL || "noreply@localhost";
@@ -36,6 +37,7 @@ interface ExchangeFacts {
   wishlistDeadline?: string | null;
   budgetMin?: string | null;
   budgetMax?: string | null;
+  currency?: string | null;
 }
 
 function escapeHtml(value: string): string {
@@ -59,8 +61,7 @@ function formatMailDate(value: string | null | undefined): string | null {
 }
 
 function budgetLine(facts: ExchangeFacts): string | null {
-  if (!facts.budgetMin || !facts.budgetMax) return null;
-  return `₹${Number(facts.budgetMin).toLocaleString("en-IN")} – ₹${Number(facts.budgetMax).toLocaleString("en-IN")}`;
+  return budgetRange(facts.budgetMin, facts.budgetMax, facts.currency);
 }
 
 function paperEmail(heading: string, bodyHtml: string, text: string) {

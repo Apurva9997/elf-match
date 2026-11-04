@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Secret Santa features: budget, exclusions, wishlists",
+  title: "Secret Santa budget, exclusions, wishlists",
   description:
     "Budget, dates, a shareable invite link, email invitations, wishlists with links, exclusions, a previewable draw, encrypted addresses, and gift status for the giver.",
   alternates: {
@@ -23,7 +23,7 @@ const settings = [
   {
     label: "Exchange",
     title: "Name, budget, and two dates",
-    body: "A name, an optional spend range, a wishlist deadline, and the exchange date. Participants see the same details you enter, so the invitation and the group page agree.",
+    body: "A name, an optional spend range in the currency you choose, a wishlist deadline, and the exchange date. Participants see the same details you enter, so the invitation and the group page agree. Leave the amounts blank if the group has no range.",
   },
   {
     label: "People",
@@ -76,7 +76,12 @@ export default function FeaturesPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-ink-soft">
           Elf Match is free to use: no paid tier and no card to start. These
-          are the controls on an exchange, not a catalogue of moods.
+          are the controls on an exchange, not a catalogue of moods. Start
+          from the{" "}
+          <Link href="/" className="text-evergreen underline decoration-rule underline-offset-4">
+            Secret Santa generator
+          </Link>
+          .
         </p>
 
         <div className="mt-12 divide-y divide-rule border-y border-rule">
@@ -92,6 +97,36 @@ export default function FeaturesPage() {
             </article>
           ))}
         </div>
+
+        <section className="mt-14 max-w-2xl">
+          <h2 className="font-display text-2xl text-ink">What a participant sees</h2>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            They open the invite, sign in, and join as themselves. They can
+            write a wishlist with a note, a shop link, and a price in the
+            currency of the exchange. They can add a delivery address. After
+            the draw they see one name: the person they are buying for. They
+            do not see the rest of the pairings, and they do not see anyone
+            else&apos;s address.
+          </p>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            The organizer sees more, and only until the emails go out. The
+            preview lists every pairing. Generating another set keeps every
+            exclusion. Confirming sends the names and fixes them. A draw needs
+            at least three people who have joined. Someone with an open
+            invitation is not in the draw.
+          </p>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            The same exchange works for a family and an office. Read{" "}
+            <Link href="/family-and-office" className="text-evergreen underline decoration-rule underline-offset-4">
+              family or office
+            </Link>{" "}
+            for who is usually not in the room, and{" "}
+            <Link href="/secret-santa-with-exclusions" className="text-evergreen underline decoration-rule underline-offset-4">
+              exclusions
+            </Link>{" "}
+            for a pair who must not match.
+          </p>
+        </section>
 
         <section className="mt-14">
           <h2 className="font-display text-2xl text-evergreen">Against the usual alternatives</h2>

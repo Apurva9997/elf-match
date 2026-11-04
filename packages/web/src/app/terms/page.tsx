@@ -7,7 +7,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Terms for using Elf Match, a free organizer for Secret Santa and other gift exchanges.",
+    "Terms for Elf Match, a free Secret Santa organizer. Accounts, acceptable use, availability, and how to reach hello@elfmatch.com.",
   alternates: {
     canonical: "https://elfmatch.com/terms",
   },

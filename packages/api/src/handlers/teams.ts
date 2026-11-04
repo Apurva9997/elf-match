@@ -14,6 +14,7 @@ import {
   unauthorized,
 } from "../lib/response.js";
 import { optionalIsoDateSchema } from "../lib/dates.js";
+import { currencyCode } from "../lib/money.js";
 import { sanitizeTransform } from "../lib/sanitize.js";
 
 const budgetField = z.number().positive().max(1_000_000);
@@ -63,6 +64,7 @@ const createTeamSchema = z
       .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
     budgetMin: budgetField.optional(),
     budgetMax: budgetField.optional(),
+    currency: z.string().length(3).optional(),
     exchangeDate: optionalIsoDateSchema,
     wishlistDeadline: optionalIsoDateSchema,
   })
@@ -85,6 +87,7 @@ const updateTeamSchema = z
       .transform((val) => (val ? sanitizeTransform("richText")(val) : val)),
     budgetMin: budgetField.nullable().optional(),
     budgetMax: budgetField.nullable().optional(),
+    currency: z.string().length(3).optional(),
     exchangeDate: optionalIsoDateSchema,
     wishlistDeadline: optionalIsoDateSchema,
   })
@@ -117,6 +120,7 @@ async function _createTeam(
       description,
       budgetMin,
       budgetMax,
+      currency,
       exchangeDate,
       wishlistDeadline,
     } = parsed.data;
@@ -128,6 +132,7 @@ async function _createTeam(
         description,
         budgetMin: budgetMin?.toString(),
         budgetMax: budgetMax?.toString(),
+        currency: currencyCode(currency),
         exchangeDate,
         wishlistDeadline,
         createdBy: user.id,
@@ -376,6 +381,7 @@ async function _updateTeam(
       updates.budgetMin = data.budgetMin?.toString() ?? null;
     if (data.budgetMax !== undefined)
       updates.budgetMax = data.budgetMax?.toString() ?? null;
+    if (data.currency !== undefined) updates.currency = currencyCode(data.currency);
     if (data.exchangeDate !== undefined) updates.exchangeDate = data.exchangeDate;
     if (data.wishlistDeadline !== undefined)
       updates.wishlistDeadline = data.wishlistDeadline;

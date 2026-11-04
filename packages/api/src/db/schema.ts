@@ -56,6 +56,9 @@ export const teams = pgTable("teams", {
   description: text("description"),
   budgetMin: decimal("budget_min", { precision: 10, scale: 2 }),
   budgetMax: decimal("budget_max", { precision: 10, scale: 2 }),
+  // ISO 4217. Existing rows were entered as rupees, so the column default
+  // keeps those amounts reading as INR until an organizer changes them.
+  currency: varchar("currency", { length: 3 }).default("INR").notNull(),
   exchangeDate: date("exchange_date"),
   wishlistDeadline: date("wishlist_deadline"),
   status: varchar("status", { length: 50 })

@@ -6,7 +6,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How Elf Match collects, uses, and protects personal information for a gift exchange.",
+    "What Elf Match stores for a gift exchange, who can see a wishlist or a delivery address, and how to reach hello@elfmatch.com.",
   alternates: {
     canonical: "https://elfmatch.com/privacy",
   },

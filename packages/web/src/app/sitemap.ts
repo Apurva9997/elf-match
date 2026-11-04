@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const published = new Date("2026-10-27");
+const published = new Date("2026-11-04");
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://elfmatch.com";

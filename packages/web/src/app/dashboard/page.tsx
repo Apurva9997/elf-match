@@ -16,6 +16,7 @@ import {
   rememberedInvite,
 } from "@/lib/pending-invite";
 import { api, type TeamWithRole } from "@/lib/api";
+import { CURRENCIES } from "@/lib/money";
 import { useAuth } from "@/lib/auth-context";
 import { cn, formatShortDate } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,6 +45,7 @@ const createTeamSchema = z
     description: z.string().optional(),
     budgetMin: z.string().optional(),
     budgetMax: z.string().optional(),
+    currency: z.string().length(3),
     exchangeDate: z.string().optional(),
     wishlistDeadline: z.string().optional(),
   })
@@ -218,6 +220,7 @@ function DashboardContent() {
     formState: { errors, isSubmitting },
   } = useForm<CreateTeamForm>({
     resolver: zodResolver(createTeamSchema),
+    defaultValues: { currency: "USD" },
   });
 
   const onCreateTeam = async (data: CreateTeamForm) => {
@@ -227,6 +230,7 @@ function DashboardContent() {
         description: data.description,
         budgetMin: data.budgetMin ? parseFloat(data.budgetMin) : undefined,
         budgetMax: data.budgetMax ? parseFloat(data.budgetMax) : undefined,
+        currency: data.currency,
         exchangeDate: data.exchangeDate || undefined,
         wishlistDeadline: data.wishlistDeadline || undefined,
       });
@@ -620,20 +624,30 @@ function DashboardContent() {
             placeholder="Our annual family gift exchange..."
           />
 
-          <p className="text-sm text-ink-soft">Budgets are in rupees. Leave both blank if the group has no range.</p>
+          <p className="text-sm text-ink-soft">Leave the amounts blank if the group has no range.</p>
+          <label className="block text-sm">
+            <span className="input-label">Currency</span>
+            <select {...register("currency")} className="input-field">
+              {CURRENCIES.map((currency) => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.code} — {currency.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="grid grid-cols-2 gap-4">
             <Input
               {...register("budgetMin")}
               type="number"
-              label="Min budget, rupees"
-              placeholder="500"
+              label="Minimum"
+              placeholder="20"
               error={errors.budgetMin?.message}
             />
             <Input
               {...register("budgetMax")}
               type="number"
-              label="Max budget, rupees"
-              placeholder="2000"
+              label="Maximum"
+              placeholder="50"
             />
           </div>
 

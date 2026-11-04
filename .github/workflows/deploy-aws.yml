@@ -74,7 +74,7 @@ jobs:
               "test -n \"$KEY\"",
               "export NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=\"$KEY\"",
               "docker compose -f compose.public.yaml build --pull elfmatch",
-              "docker compose -f compose.public.yaml up -d --force-recreate --no-deps elfmatch",
+              "docker compose -f compose.public.yaml up -d --force-recreate --no-deps elfmatch caddy",
               "rm -rf /opt/elfmatch/src/secret-santa.bak",
               "sleep 3",
               "docker ps --filter name=secret-santa-elfmatch-1 --format {{.Status}}"

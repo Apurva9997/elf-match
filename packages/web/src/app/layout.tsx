@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "en",
     url: "https://elfmatch.com",
     siteName: "Elf Match",
     title: "Elf Match — organize a Secret Santa exchange",
@@ -96,16 +96,22 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-    <html lang="en-IN">
+    <html lang="en">
       <body className="min-h-screen">
+        <link
+          rel="preload"
+          as="image"
+          href="/film/someone-gets-to-be-your-santa.jpg"
+          fetchPriority="high"
+        />
         <Script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="u0RRy0IkQmdhl4Pwds0Clw"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
         <Script
           src="https://cdn.amplitude.com/script/cafdae686221fc101d72a883c8f95324.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script
           id="amplitude-init"

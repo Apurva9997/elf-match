@@ -180,6 +180,7 @@ async function _inviteMembers(
             wishlistDeadline: team.wishlistDeadline,
             budgetMin: team.budgetMin,
             budgetMax: team.budgetMax,
+            currency: team.currency,
           }
         );
 
@@ -232,6 +233,7 @@ async function _previewInvitation(
         wishlistDeadline: shared.wishlistDeadline,
         budgetMin: shared.budgetMin,
         budgetMax: shared.budgetMax,
+        currency: shared.currency,
       });
     }
 
@@ -259,6 +261,7 @@ async function _previewInvitation(
       wishlistDeadline: invitation.team.wishlistDeadline,
       budgetMin: invitation.team.budgetMin,
       budgetMax: invitation.team.budgetMax,
+      currency: invitation.team.currency,
     });
   } catch (err) {
     console.error("Error previewing invitation:", err);
@@ -764,6 +767,7 @@ async function _resendInvitation(
           wishlistDeadline: team.wishlistDeadline,
           budgetMin: team.budgetMin,
           budgetMax: team.budgetMax,
+          currency: team.currency,
         }
       );
     } catch (emailErr) {
