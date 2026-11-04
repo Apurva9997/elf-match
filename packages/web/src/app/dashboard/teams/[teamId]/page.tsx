@@ -383,10 +383,10 @@ export default function TeamPage() {
       // Also invalidate profile since it shows the same address
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["team-status", teamId] });
-      toast.success("Address saved! Your Secret Santa can now ship your gift.");
+      toast.success("Address saved. Only your assigned giver can see it.");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Couldn't save address. Please try again.");
+      toast.error(error.message || "Couldn't save the address. Try again.");
     },
   });
 
@@ -405,11 +405,11 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       setIsEditTeamModalOpen(false);
-      toast.success("Exchange updated successfully");
+      toast.success("Exchange saved.");
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Couldn't update exchange. Please try again."
+        error.message || "Couldn't save the exchange. Try again."
       );
     },
   });
@@ -436,7 +436,7 @@ export default function TeamPage() {
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Couldn't assign Secret Santas. Please try again."
+        error.message || "Couldn't draw names. Try again."
       );
     },
   });
@@ -454,7 +454,7 @@ export default function TeamPage() {
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Couldn't update gift status. Please try again."
+        error.message || "Couldn't update the gift. Try again."
       );
     },
   });
@@ -513,11 +513,11 @@ export default function TeamPage() {
   const resendInvitationMutation = useMutation({
     mutationFn: (memberId: string) => api.resendInvitation(teamId, memberId),
     onSuccess: () => {
-      toast.success("Invitation email sent!");
+      toast.success("Invitation sent.");
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Couldn't resend invitation. Please try again."
+        error.message || "Couldn't resend the invitation. Try again."
       );
     },
   });
@@ -543,7 +543,7 @@ export default function TeamPage() {
       );
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Couldn't add exclusion. Please try again.");
+      toast.error(error.message || "Couldn't add the exclusion. Try again.");
     },
   });
 
@@ -556,7 +556,7 @@ export default function TeamPage() {
     },
     onError: (error: Error) => {
       toast.error(
-        error.message || "Couldn't remove exclusion. Please try again."
+        error.message || "Couldn't remove the exclusion. Try again."
       );
     },
   });
@@ -576,7 +576,7 @@ export default function TeamPage() {
         return;
       }
       toast.error(
-        error.message || "Couldn't generate preview. Please try again."
+        error.message || "Couldn't generate a preview. Try again."
       );
     },
   });
@@ -943,11 +943,11 @@ export default function TeamPage() {
 
   const handleAddExclusion = () => {
     if (!selectedMember1 || !selectedMember2) {
-      toast.error("Please select both members to exclude");
+      toast.error("Choose both people for the exclusion.");
       return;
     }
     if (selectedMember1 === selectedMember2) {
-      toast.error("Please select two different people");
+      toast.error("Choose two different people.");
       return;
     }
     addExclusionMutation.mutate({
@@ -1096,7 +1096,7 @@ export default function TeamPage() {
 
   const handleConfirmAssignment = async () => {
     if (!previewData) {
-      toast.error("Preview not available. Please try generating again.");
+      toast.error("No preview yet. Generate one again.");
       return;
     }
 

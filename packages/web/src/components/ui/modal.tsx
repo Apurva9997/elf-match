@@ -79,7 +79,7 @@ export function Modal({
                 <button
                   onClick={onClose}
                   className="p-1 text-ink-faint hover:text-ink"
-                  aria-label="Close"
+                  aria-label="Close dialog"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -90,7 +90,7 @@ export function Modal({
             {!title && (
               <button
                 onClick={onClose}
-                aria-label="Close"
+                aria-label="Close dialog"
                 className="absolute right-4 top-4 p-1 text-ink-faint hover:text-ink"
               >
                 <X className="w-5 h-5" />

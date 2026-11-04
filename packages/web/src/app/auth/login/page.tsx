@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Enter an email address like name@example.com"),
 });
 
 const codeSchema = z.object({
@@ -142,7 +142,7 @@ function LoginPageContent() {
       )?.emailAddressId;
 
       if (!emailAddressId) {
-        throw new Error("Email sign-in is not enabled. Please contact support.");
+        throw new Error("Email sign-in is not switched on. Write to hello@elfmatch.com.");
       }
 
       await signIn.prepareFirstFactor({
@@ -206,7 +206,7 @@ function LoginPageContent() {
       }
     } catch (error) {
       console.error("Failed to verify code:", error);
-      toast.error(clerkErrorMessage(error, "Invalid code. Please try again."));
+      toast.error(clerkErrorMessage(error, "That code did not work. Ask for a new one."));
     }
   };
 
@@ -223,7 +223,7 @@ function LoginPageContent() {
       });
     } catch (error) {
       console.error("Failed to initiate Google sign-in:", error);
-      toast.error("Failed to connect to Google. Please try again.");
+      toast.error("Google did not connect. Try again.");
       setIsGoogleLoading(false);
     }
   };
@@ -241,7 +241,7 @@ function LoginPageContent() {
       });
     } catch (error) {
       console.error("Failed to initiate Apple sign-in:", error);
-      toast.error("Failed to connect to Apple. Please try again.");
+      toast.error("Apple did not connect. Try again.");
       setIsAppleLoading(false);
     }
   };

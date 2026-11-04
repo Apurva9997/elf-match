@@ -49,7 +49,7 @@ function VerifyContent() {
                   <Loader2 className="h-8 w-8 animate-spin text-evergreen" />
                 </div>
                 <h1 className="mb-2 font-display text-2xl text-evergreen">Checking the code</h1>
-                <p className="text-ink-soft">Please wait while we sign you in.</p>
+                <p className="text-ink-soft">Signing you in.</p>
               </>
             )}
 

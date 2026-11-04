@@ -43,9 +43,9 @@ const faqs = [
       "After creating your exchange, generate one invite link and send it to the group. The People page keeps that address, so you can copy it again, and it also gives you a short message to paste with the link. Anyone who opens it and signs in joins as themselves, and the address does not change when someone else uses it. You can still enter email addresses if you want each person to get their own invitation. Turn signing off when the group is set and you want that same address to stop admitting people. Expire the link only when you want a new address. Until you expire it, a new one cannot be generated.",
   },
   {
-    question: "What are exclusion rules and how do they work?",
+    question: "What is an exclusion?",
     answer:
-      "Exclusion rules prevent certain pairs of people from being matched. This is useful for couples, family members, or anyone who shouldn't gift each other. When you set an exclusion, neither person can be assigned to gift the other. Our matching algorithm respects all exclusions.",
+      "An exclusion is a pair who must not be assigned to each other. It runs both ways. Use it for a couple, for siblings who already buy for each other, or for anyone else who should not draw. The preview keeps every exclusion. It does not invent a pairing that breaks one.",
   },
   {
     question: "Can I set a budget for the gift exchange?",
@@ -55,7 +55,7 @@ const faqs = [
   {
     question: "How does the Secret Santa matching work?",
     answer:
-      "When at least three people have joined, you can assign Santas. The draw is random, never assigns someone to themselves, and keeps every exclusion. You preview the full list, and you can generate another set before confirming. Confirming emails each person only their own recipient.",
+      "When at least three people have joined, you can draw names. The draw is random, never assigns someone to themselves, and keeps every exclusion. You preview the full list, and you can generate another set before confirming. Confirming emails each person only their own recipient.",
   },
   {
     question: "Can I see who everyone else got matched with?",

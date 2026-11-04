@@ -65,7 +65,7 @@ class ApiClient {
 
     if (!response.ok || !data.success) {
       throw new ApiError(
-        data.error?.message || "Something went wrong",
+        data.error?.message || "That did not work. Try again.",
         data.error?.code
       );
     }

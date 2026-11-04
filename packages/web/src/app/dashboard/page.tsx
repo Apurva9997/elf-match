@@ -181,14 +181,14 @@ function DashboardContent() {
     try {
       const result = await api.acceptInvitationDirect(invitationId);
       await Promise.all([refetchTeams(), refetchInvitations()]);
-      toast.success(`Joined ${result.team.name}!`);
+      toast.success(`Joined ${result.team.name}.`);
       router.push(`/dashboard/teams/${result.team.id}`);
     } catch (error) {
       console.error("Failed to accept invitation:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Couldn't accept invitation. Please try again."
+          : "Couldn't join. Try again."
       );
     } finally {
       setProcessingInvitation(null);
@@ -206,7 +206,7 @@ function DashboardContent() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Couldn't decline invitation. Please try again."
+          : "Couldn't decline. Try again."
       );
     } finally {
       setProcessingInvitation(null);
@@ -245,7 +245,7 @@ function DashboardContent() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Couldn't create exchange. Please try again."
+          : "Couldn't create the exchange. Try again."
       );
     }
   };

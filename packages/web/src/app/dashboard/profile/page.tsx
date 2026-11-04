@@ -167,13 +167,13 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       // Invalidate all address queries since address is shared across all teams
       queryClient.invalidateQueries({ queryKey: ["address"] });
-      toast.success("Profile updated!");
+      toast.success("Profile saved.");
     } catch (error) {
       console.error("Failed to update profile:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Couldn't update profile. Please try again."
+          : "Couldn't save the profile. Try again."
       );
     }
   };

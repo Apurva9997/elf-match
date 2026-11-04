@@ -20,10 +20,10 @@ export default function GlobalError({
         <div className="min-h-screen flex items-center justify-center bg-midnight">
           <div className="text-center p-8">
             <h2 className="text-2xl font-bold text-cream mb-4">
-              Something went wrong!
+              This page did not load.
             </h2>
             <p className="text-cream/70 mb-6">
-              We apologize for the inconvenience. Please try again.
+              Try again. If it still fails, write to hello@elfmatch.com.
             </p>
             <button
               onClick={() => reset()}

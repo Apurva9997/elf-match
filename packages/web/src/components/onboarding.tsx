@@ -182,7 +182,7 @@ export function Onboarding({
                   ref={closeRef}
                   type="button"
                   onClick={onClose}
-                  aria-label="Close"
+                  aria-label="Close dialog"
                   className="grid h-11 w-11 shrink-0 place-items-center text-ink-soft hover:text-ink"
                 >
                   <X className="h-5 w-5" />
