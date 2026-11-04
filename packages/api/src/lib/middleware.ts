@@ -24,7 +24,7 @@ function rateLimitExceededResponse(reset: number, headers: Record<string, string
     JSON.stringify({
       success: false,
       error: {
-        message: "Too many requests. Please try again later.",
+        message: "Too many requests. Wait a minute, then try again.",
         code: "RATE_LIMIT_EXCEEDED",
         retryAfter: reset,
       },

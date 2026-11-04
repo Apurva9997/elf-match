@@ -789,7 +789,7 @@ async function _resendInvitation(
       );
     }
 
-    return success({ message: "Invitation resent successfully" });
+    return success({ message: "Invitation sent." });
   } catch (err) {
     console.error("Error resending invitation:", err);
     return serverError("Failed to resend invitation");

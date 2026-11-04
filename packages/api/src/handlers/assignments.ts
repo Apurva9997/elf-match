@@ -252,7 +252,7 @@ async function _triggerAssignment(
       message:
         delivery.failed.length > 0
           ? "Assignments are saved. Some emails did not send — use Send the missing emails."
-          : "Assignments created successfully",
+          : "Names drawn.",
       count: committed.length,
       notified: delivery.notified.length,
       failed: delivery.failed,

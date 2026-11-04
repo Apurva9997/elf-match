@@ -436,7 +436,7 @@ export default function TeamPage() {
       track("draw_confirmed", { role: "admin" });
       if (result.failed.length > 0) {
         toast.error(
-          "Assignments are saved and cannot be changed. Some emails did not send — use Send the missing emails."
+          "Names are saved and cannot be changed. Some emails did not send. Use Send the missing emails."
         );
       } else {
         toast.success("Assignments emailed. They cannot be changed.");
@@ -2130,28 +2130,28 @@ export default function TeamPage() {
                     <Input
                       {...addressForm.register("streetLine1")}
                       label="Street Address"
-                      placeholder="123, MG Road, Near Metro Station"
+                      placeholder="12 High Street"
                       error={addressForm.formState.errors.streetLine1?.message}
                       defaultValue={address?.streetLine1}
                     />
                     <Input
                       {...addressForm.register("streetLine2")}
                       label="Apartment, Floor, etc. (optional)"
-                      placeholder="Flat 4B, 2nd Floor"
+                      placeholder="Apartment 4B"
                       defaultValue={address?.streetLine2 || ""}
                     />
                     <div className="grid grid-cols-2 gap-4">
                       <Input
                         {...addressForm.register("city")}
                         label="City"
-                        placeholder="Mumbai"
+                        placeholder="Austin"
                         error={addressForm.formState.errors.city?.message}
                         defaultValue={address?.city}
                       />
                       <Input
                         {...addressForm.register("state")}
                         label="State"
-                        placeholder="Maharashtra"
+                        placeholder="Texas"
                         defaultValue={address?.state || ""}
                       />
                     </div>
@@ -2163,7 +2163,7 @@ export default function TeamPage() {
                               handlePostalCodeChange(e.target.value),
                           })}
                           label="Postal Code"
-                          placeholder="400001"
+                          placeholder="78701"
                           error={
                             addressForm.formState.errors.postalCode?.message
                           }
@@ -2180,7 +2180,7 @@ export default function TeamPage() {
                       <Input
                         {...addressForm.register("country")}
                         label="Country"
-                        placeholder="India"
+                        placeholder="United States"
                         error={addressForm.formState.errors.country?.message}
                         defaultValue={address?.country}
                       />

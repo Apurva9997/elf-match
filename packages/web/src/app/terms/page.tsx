@@ -180,8 +180,8 @@ export default function TermsPage() {
               11. Changes to Terms
             </h2>
             <p className="text-cream/70">
-              We may modify these Terms at any time. We will notify users of
-              significant changes by posting a notice on the Service. Your
+              These terms can change. A notice on the site is how you hear
+              about a significant change. Your
               continued use of the Service after changes constitutes acceptance
               of the modified Terms.
             </p>

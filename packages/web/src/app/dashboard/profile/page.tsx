@@ -318,27 +318,27 @@ export default function ProfilePage() {
                 <Input
                   {...register("streetLine1")}
                   label="Street Address"
-                  placeholder="123, MG Road, Near Metro Station"
+                  placeholder="12 High Street"
                   error={errors.streetLine1?.message}
                 />
                 <Input
                   {...register("streetLine2")}
                   label="Apartment, Floor, etc. (optional)"
-                  placeholder="Flat 4B, 2nd Floor"
+                  placeholder="Apartment 4B"
                   error={errors.streetLine2?.message}
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     {...register("city")}
                     label="City"
-                    placeholder="Mumbai"
+                    placeholder="Austin"
                     error={errors.city?.message}
                     disabled={isFetchingPincode}
                   />
                   <Input
                     {...register("state")}
                     label="State"
-                    placeholder="Maharashtra"
+                    placeholder="Texas"
                     error={errors.state?.message}
                     disabled={isFetchingPincode}
                   />
@@ -348,7 +348,7 @@ export default function ProfilePage() {
                     <Input
                       {...register("postalCode")}
                       label="Postal Code"
-                      placeholder="400001"
+                      placeholder="78701"
                       error={errors.postalCode?.message}
                       maxLength={6}
                     />
@@ -362,7 +362,7 @@ export default function ProfilePage() {
                   <Input
                     {...register("country")}
                     label="Country"
-                    placeholder="India"
+                    placeholder="United States"
                     error={errors.country?.message}
                   />
                 </div>
