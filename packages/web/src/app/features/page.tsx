@@ -132,7 +132,8 @@ export default function FeaturesPage() {
             </Link>{" "}
             for a pair who must not match. Nothing on this page is a paid
             upgrade. The controls are the same for a three-person family and
-            a larger office.
+            a larger office. Sign-in is an email code or Google. There is no
+            password to invent for a once-a-year exchange.
           </p>
         </section>
 
