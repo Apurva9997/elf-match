@@ -158,7 +158,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 Stop using the product. We do not send marketing mail. Exchange
-                mail is the invitation, the reminder, and the assignment.
+                mail is the invitation, the reminder, and the draw.
               </li>
             </ul>
           </section>
@@ -198,9 +198,8 @@ export default function PrivacyPage() {
               9. Changes to This Policy
             </h2>
             <p className="text-cream/70">
-              We may update this Privacy Policy from time to time. We will
-              notify you of any significant changes by posting the new policy on
-              this page and updating the &quot;Last updated&quot; date.
+              This policy can change. A new date on this page is how you
+              hear about a significant change.
             </p>
           </section>
         </article>

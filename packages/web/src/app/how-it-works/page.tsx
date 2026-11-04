@@ -76,7 +76,7 @@ export default function HowItWorksPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-ink-soft">
           Four things you do as the organizer. Nothing here is automatic until
-          you confirm the assignments. The{" "}
+          you confirm the draw. The{" "}
           <Link href="/" className="text-evergreen underline decoration-rule underline-offset-4">
             Secret Santa generator
           </Link>{" "}

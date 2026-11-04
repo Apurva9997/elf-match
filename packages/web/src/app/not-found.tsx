@@ -26,7 +26,7 @@ export default function NotFound() {
           That page is not on the desk.
         </h1>
         <p className="mt-4 max-w-lg text-lg text-ink-soft">
-          The link may be old. An exchange, an invitation, and an assignment
+          The link may be old. An exchange, an invitation, and a draw
           are never listed here.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">

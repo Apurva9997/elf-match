@@ -255,7 +255,7 @@ async function _getGifteeWishlist(
 
     if (!assignment) {
       return notFound(
-        "No assignment found. Assignments may not have been made yet."
+        "No draw yet."
       );
     }
 
@@ -272,7 +272,7 @@ async function _getGifteeWishlist(
     });
   } catch (err) {
     console.error("Error getting giftee wishlist:", err);
-    return serverError("Failed to get giftee wishlist");
+    return serverError("Couldn't load their wishlist. Try again.");
   }
 }
 

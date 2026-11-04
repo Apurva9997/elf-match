@@ -107,7 +107,7 @@ async function _addExclusion(
 
     if (existingAssignments.length > 0) {
       return error(
-        "Cannot add exclusions after assignments have been made",
+        "Names are already drawn. An exclusion cannot be added.",
         400
       );
     }
@@ -229,7 +229,7 @@ async function _removeExclusion(
 
     if (existingAssignments.length > 0) {
       return error(
-        "Cannot remove exclusions after assignments have been made",
+        "Names are already drawn. An exclusion cannot be removed.",
         400
       );
     }

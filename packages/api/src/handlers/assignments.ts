@@ -149,7 +149,7 @@ async function _triggerAssignment(
     });
 
     if (existingAssignments.length > 0) {
-      return error("Assignments have already been made for this team", 400);
+      return error("Names have already been drawn for this exchange", 400);
     }
 
     const members = await db.query.teamMembers.findMany({
@@ -231,7 +231,7 @@ async function _triggerAssignment(
       });
     } catch (commitErr) {
       if (commitErr instanceof Error && commitErr.message === "ALREADY_ASSIGNED") {
-        return error("Assignments have already been made for this team", 400);
+        return error("Names have already been drawn for this exchange", 400);
       }
       const code =
         commitErr && typeof commitErr === "object" && "code" in commitErr
@@ -239,7 +239,7 @@ async function _triggerAssignment(
           : "";
       if (code === "23505") {
         return error(
-          "Assignments have already been made for this team",
+          "Names have already been drawn for this exchange",
           400
         );
       }
@@ -259,7 +259,7 @@ async function _triggerAssignment(
     });
   } catch (err) {
     console.error("Error triggering assignment:", err);
-    return serverError("Failed to create assignments");
+    return serverError("Couldn't draw names. Try again.");
   }
 }
 
@@ -294,7 +294,7 @@ async function _getAssignment(
     });
 
     if (!assignment) {
-      return success({ assigned: false, message: "Assignments have not been made yet." });
+      return success({ assigned: false, message: "No draw yet." });
     }
 
     // viewedAt is the screen open. revealedAt is the email delivery, and
@@ -319,7 +319,7 @@ async function _getAssignment(
     });
   } catch (err) {
     console.error("Error getting assignment:", err);
-    return serverError("Failed to get assignment");
+    return serverError("Couldn't load the draw. Try again.");
   }
 }
 
@@ -353,7 +353,7 @@ async function _updateAssignment(
       ),
     });
 
-    if (!assignment) return notFound("Assignment not found");
+    if (!assignment) return notFound("No draw yet.");
 
     const [updated] = await db
       .update(assignments)
@@ -367,7 +367,7 @@ async function _updateAssignment(
     });
   } catch (err) {
     console.error("Error updating assignment:", err);
-    return serverError("Failed to update assignment");
+    return serverError("Couldn't update the gift. Try again.");
   }
 }
 
@@ -391,7 +391,7 @@ async function _retryAssignmentEmails(
       ),
     });
     if (!adminMembership) {
-      return forbidden("Only the organizer can resend assignment emails");
+      return forbidden("Only the organizer can resend the draw emails.");
     }
 
     const team = await db.query.teams.findFirst({
@@ -403,13 +403,13 @@ async function _retryAssignmentEmails(
       where: eq(assignments.teamId, teamId),
     });
     if (existing.length === 0) {
-      return error("Assignments have not been made yet", 400);
+      return error("No draw yet.", 400);
     }
 
     const pending = existing.filter((row) => !row.revealedAt);
     if (pending.length === 0) {
       return success({
-        message: "Everyone who has an assignment was already emailed.",
+        message: "Everyone with a recipient was already emailed.",
         notified: 0,
         failed: [],
       });
@@ -419,14 +419,14 @@ async function _retryAssignmentEmails(
     return success({
       message:
         delivery.failed.length > 0
-          ? "Some assignment emails still did not send. Try again in a few minutes."
-          : "The missing assignment emails were sent.",
+          ? "Some emails still did not send. Try again in a few minutes."
+          : "The missing emails were sent.",
       notified: delivery.notified.length,
       failed: delivery.failed,
     });
   } catch (err) {
     console.error("Error resending assignment emails:", err);
-    return serverError("Failed to resend assignment emails");
+    return serverError("Couldn't resend the emails. Try again.");
   }
 }
 
@@ -463,7 +463,7 @@ async function _previewAssignment(
     });
 
     if (existingAssignments.length > 0) {
-      return error("Assignments have already been made for this team", 400);
+      return error("Names have already been drawn for this exchange", 400);
     }
 
     const members = await db.query.teamMembers.findMany({
@@ -517,7 +517,7 @@ async function _previewAssignment(
     });
   } catch (err) {
     console.error("Error previewing assignment:", err);
-    return serverError("Failed to preview assignments");
+    return serverError("Couldn't preview the draw. Try again.");
   }
 }
 

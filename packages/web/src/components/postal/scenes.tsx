@@ -330,7 +330,7 @@ export function AssignmentReveal({
     return (
       <div className="py-2 text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-cranberry">
-          Your assignment
+          Your draw
         </p>
         <h3 className="mt-2 font-display text-4xl text-evergreen">{name}</h3>
         {budget && <p className="mt-2 text-ink-soft">{budget}</p>}
@@ -339,13 +339,13 @@ export function AssignmentReveal({
   }
 
   return (
-    <div className="py-4 text-center" role="dialog" aria-label="Secret assignment">
+    <div className="py-4 text-center" role="dialog" aria-label="Your draw">
       <p className="sr-only" aria-live="polite">
         {phase === "wait" || phase === "enter"
-          ? "A sealed envelope has arrived. Open your secret assignment."
+          ? "A sealed envelope has arrived. Open your draw."
           : phase === "name"
-            ? `You are gifting to ${name}.`
-            : "Opening your assignment."}
+            ? `You are buying for ${name}.`
+            : "Opening your draw."}
       </p>
       <div className={cn("mx-auto max-w-xs", phase === "enter" && "postal-arrive")}>
         <button
@@ -353,7 +353,7 @@ export function AssignmentReveal({
           onClick={open}
           disabled={phase === "enter"}
           className="mx-auto block rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-evergreen disabled:cursor-default"
-          aria-label="Open your secret assignment"
+          aria-label="Open your draw"
         >
           <Envelope flap={phase === "open" || phase === "name" ? "open" : "shut"} stamp />
         </button>
@@ -367,7 +367,7 @@ export function AssignmentReveal({
         </div>
       )}
       {(phase === "wait") && (
-        <p className="mt-4 font-display text-xl text-ink">Open your secret assignment.</p>
+        <p className="mt-4 font-display text-xl text-ink">Open your draw.</p>
       )}
       {replay && phase === "wait" && (
         <p className="mt-1 text-sm text-ink-soft">This is a replay. Nothing is sent.</p>

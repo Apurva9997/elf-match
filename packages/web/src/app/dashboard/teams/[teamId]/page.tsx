@@ -489,7 +489,7 @@ export default function TeamPage() {
       toast.success(result.message);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Couldn't resend the assignment emails.");
+      toast.error(error.message || "Couldn't resend the draw emails.");
     },
   });
 
@@ -2225,7 +2225,7 @@ export default function TeamPage() {
                 ) : (
                   <div className="text-center py-8 text-ink-soft">
                     <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p className="mb-4">No address saved yet.</p>
+                    <p className="mb-4">Add a delivery address. Only your assigned giver can see it.</p>
                     <Button
                       variant="secondary"
                       onClick={handleStartEditAddress}
@@ -2268,8 +2268,7 @@ export default function TeamPage() {
                 {status?.hasAssignments && (
                   <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
                     <p className="text-warning text-sm">
-                      ⚠️ Exclusions cannot be modified after assignments have
-                      been made.
+                      Names are drawn. An exclusion cannot be changed.
                     </p>
                   </div>
                 )}
@@ -2461,16 +2460,16 @@ export default function TeamPage() {
                   <CardTitle>
                     {assignment?.assigned
                       ? "You are buying for"
-                      : "Your assignment"}
+                      : "Your draw"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {assignmentLoading ? (
-                    <p className="py-8 text-center text-ink-soft">Opening your assignment.</p>
+                    <p className="py-8 text-center text-ink-soft">Opening your draw.</p>
                   ) : assignmentError ? (
                     <div className="py-8 text-center">
                       <h3 className="font-display text-xl text-ink">
-                        Your assignment did not open
+                        Your draw did not open
                       </h3>
                       <p className="mt-2 text-ink-soft">
                         The draw may already be saved. Try again before assuming there is none.
@@ -2494,7 +2493,7 @@ export default function TeamPage() {
                   ) : assignment?.assigned ? (
                     <div className="py-4">
                       {revealMode === "checking" && (
-                        <p className="py-8 text-center text-ink-soft">Opening your assignment.</p>
+                        <p className="py-8 text-center text-ink-soft">Opening your draw.</p>
                       )}
                       {(revealMode === "full" || replaying) && assignment.giftee?.name && (
                         <AssignmentReveal
@@ -2617,16 +2616,16 @@ export default function TeamPage() {
                   ) : (
                     <div className="py-8 text-center">
                       <h3 className="mb-2 font-display text-xl text-ink">
-                        No assignment yet
+                        No draw yet
                       </h3>
                       <p className="mb-4 text-ink-soft">
                         {isAdmin
                           ? status?.canAssign
                             ? status.pendingInvitations > 0
                               ? `${peopleStillInvited(status.pendingInvitations)} Draw only the people who have joined, when you mean to email them.`
-                              : "Everyone invited has joined. Draw when you mean to email the assignments."
+                              : "Everyone invited has joined. Draw when you mean to email the names."
                             : `${status?.totalMembers ?? 0} joined. A draw needs three people who have accepted.`
-                          : "The organizer sends assignments when the group is ready. You will see only your own recipient."}
+                          : "The organizer sends the draw when the group is ready. You will see only your own recipient."}
                       </p>
                       {isAdmin && status?.canAssign && (
                         <Button variant="secondary" onClick={handleOpenAssignModal}>
@@ -3052,16 +3051,14 @@ export default function TeamPage() {
         {assignmentStep === "preview" && previewData && !sentDraw && (
           <div className="space-y-4">
             <p className="text-ink-soft text-sm">
-              Here&apos;s how everyone will be matched. Review the assignments
-              below.
+              This is the draw. Read every name before you send it.
             </p>
 
             {previewData.exclusionsApplied > 0 && (
               <div className="p-2 rounded-lg bg-gold/10 border border-gold/20">
                 <p className="text-gold text-xs flex items-center gap-2">
                   <Shield className="w-3 h-3" />
-                  {previewData.exclusionsApplied} exclusion
-                  {previewData.exclusionsApplied !== 1 ? "s" : ""} applied
+                  {exclusionsKept(previewData.exclusionsApplied)}
                 </p>
               </div>
             )}
@@ -3123,7 +3120,7 @@ export default function TeamPage() {
                     variant="secondary"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Re-assign
+                    Draw again
                   </Button>
                   <Button onClick={() => setAssignmentStep("confirm")}>
                     Review before sending
@@ -3132,8 +3129,7 @@ export default function TeamPage() {
                 </div>
               </div>
               <p className="text-ink-soft text-xs text-center">
-                Not happy with these assignments? Click &quot;Re-assign&quot; to
-                generate a new set.
+                Want a different draw? Generate another set.
               </p>
             </div>
           </div>

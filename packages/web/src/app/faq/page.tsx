@@ -63,7 +63,7 @@ const faqs = [
       "As the organizer, you can preview every pairing before you send it. After the emails go out, each person sees only their own recipient. A participant never sees the rest of the draw.",
   },
   {
-    question: "What if I want to redo the assignments?",
+    question: "What if I want to redo the draw?",
     answer:
       "Before you confirm, you can generate another set as many times as you want. After the emails go out, the names cannot be changed.",
   },
@@ -95,7 +95,7 @@ const faqs = [
   {
     question: "What happens if someone doesn't accept their invitation?",
     answer:
-      "Pending invitations are shown in the exchange overview. The admin can resend invitation emails if needed. You should wait until everyone has accepted before triggering the assignment, as pending members won't be included in the matching.",
+      "Pending invitations stay visible. You can resend them. Wait until the people who are taking part have joined before you draw. Someone who has not joined is not in the draw.",
   },
   {
     question: "Can I use Elf Match outside Christmas?",

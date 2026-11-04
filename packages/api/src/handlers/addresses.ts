@@ -192,7 +192,7 @@ async function _getGifteeAddress(
 
     if (!assignment) {
       return notFound(
-        "No assignment found. Assignments may not have been made yet."
+        "No draw yet."
       );
     }
 
@@ -203,7 +203,7 @@ async function _getGifteeAddress(
           name: assignment.receiver.user?.name || "Unknown",
         },
         address: null,
-        message: "Could not find giftee user.",
+        message: "Could not find the person you are buying for.",
       });
     }
 
@@ -217,7 +217,7 @@ async function _getGifteeAddress(
           name: assignment.receiver.user?.name || "Unknown",
         },
         address: null,
-        message: "Your giftee has not added their address yet.",
+        message: "They have not added an address yet.",
       });
     }
 
@@ -231,7 +231,7 @@ async function _getGifteeAddress(
     });
   } catch (err) {
     console.error("Error getting giftee address:", err);
-    return serverError("Failed to get giftee address");
+    return serverError("Couldn't load their address. Try again.");
   }
 }
 
