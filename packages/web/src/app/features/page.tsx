@@ -130,7 +130,9 @@ export default function FeaturesPage() {
             <Link href="/secret-santa-with-exclusions" className="text-evergreen underline decoration-rule underline-offset-4">
               exclusions
             </Link>{" "}
-            for a pair who must not match.
+            for a pair who must not match. Nothing on this page is a paid
+            upgrade. The controls are the same for a three-person family and
+            a larger office.
           </p>
         </section>
 

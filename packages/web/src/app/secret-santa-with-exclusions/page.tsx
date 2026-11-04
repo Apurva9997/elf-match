@@ -110,7 +110,9 @@ export default function ExclusionsPage() {
             </Link>{" "}
             for the order of steps. A family in one country and an office in
             another can use the same exchange. The currency is chosen once,
-            for the whole group.
+            for the whole group. You can add a pair, generate another
+            preview, and add another pair. The preview keeps every pair you
+            have saved.
           </p>
         </section>
         <Link
