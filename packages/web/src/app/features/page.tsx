@@ -7,7 +7,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Secret Santa budget, exclusions, wishlists",
   description:
-    "Budget in any currency, a shareable invite, wishlists, exclusions, and a private draw. Free, with no card to start.",
+    "A budget in any currency, a shareable invite, wishlists, exclusions, and a private draw. Free, with no card to start.",
   alternates: {
     canonical: "https://elfmatch.com/features",
   },
