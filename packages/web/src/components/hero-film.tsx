@@ -47,6 +47,7 @@ export function HeroFilm() {
         ref={videoRef}
         className="h-full w-full object-cover"
         poster={POSTER}
+        fetchPriority="high"
         muted
         playsInline
         loop

@@ -18,6 +18,7 @@ const isPublicRoute = createRouteMatcher([
   "/api(.*)",
   "/sitemap.xml",
   "/robots.txt",
+  "/llms.txt",
   "/opengraph-image(.*)",
   "/twitter-image(.*)",
   "/share.jpg",

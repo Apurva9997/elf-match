@@ -108,7 +108,9 @@ export default function ExclusionsPage() {
             <Link href="/how-it-works" className="text-evergreen underline decoration-rule underline-offset-4">
               how an exchange runs
             </Link>{" "}
-            for the order of steps.
+            for the order of steps. A family in one country and an office in
+            another can use the same exchange. The currency is chosen once,
+            for the whole group.
           </p>
         </section>
         <Link

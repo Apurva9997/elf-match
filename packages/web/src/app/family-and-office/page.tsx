@@ -111,6 +111,10 @@ export default function FamilyAndOfficePage() {
                 "A draw you can preview",
                 "At least three people have to have joined. You see every pairing, and you can generate another set. Confirming emails each person only their own recipient. After that, the names cannot be changed.",
               ],
+              [
+                "Anyone, in any country",
+                "The invite link does not care which country someone is in. They sign in with an email code or with Google, join the same exchange, and see the budget in the currency you chose.",
+              ],
             ].map(([title, body]) => (
               <article key={title} className="py-5">
                 <h3 className="font-display text-xl text-ink">{title}</h3>

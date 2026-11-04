@@ -7,7 +7,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Secret Santa budget, exclusions, wishlists",
   description:
-    "Budget, dates, a shareable invite link, email invitations, wishlists with links, exclusions, a previewable draw, encrypted addresses, and gift status for the giver.",
+    "Budget in any currency, a shareable invite, wishlists, exclusions, and a private draw. Free, with no card to start.",
   alternates: {
     canonical: "https://elfmatch.com/features",
   },
@@ -114,6 +114,12 @@ export default function FeaturesPage() {
             exclusion. Confirming sends the names and fixes them. A draw needs
             at least three people who have joined. Someone with an open
             invitation is not in the draw.
+          </p>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            The currency is the organizer&apos;s choice. Dollars, pounds, euros,
+            rupees, and the rest of the list are all accepted. The range is a
+            guide. A wish outside it still saves, and a person can skip the
+            letter and leave only an address.
           </p>
           <p className="mt-3 leading-relaxed text-ink-soft">
             The same exchange works for a family and an office. Read{" "}

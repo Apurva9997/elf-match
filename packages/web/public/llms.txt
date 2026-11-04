@@ -1,0 +1,14 @@
+# Elf Match
+
+> Elf Match is a free Secret Santa generator. An organizer names an exchange, chooses a currency, invites people by link or email, keeps particular pairs from matching, and sends each person a private assignment.
+
+Elf Match is for a family or an office that is not in one room. A draw needs at least three people who have joined. After the organizer confirms, the names cannot be redrawn. A wishlist is readable by its author, and after the draw only by the assigned giver.
+
+## Pages
+
+- [Secret Santa generator](https://elfmatch.com/): create an exchange
+- [How to organize a Secret Santa exchange](https://elfmatch.com/how-it-works)
+- [Budget, exclusions, and wishlists](https://elfmatch.com/features)
+- [Office Secret Santa and family gift exchange](https://elfmatch.com/family-and-office)
+- [Secret Santa with exclusions](https://elfmatch.com/secret-santa-with-exclusions)
+- [FAQ](https://elfmatch.com/faq)

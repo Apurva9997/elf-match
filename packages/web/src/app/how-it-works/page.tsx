@@ -140,8 +140,12 @@ export default function HowItWorksPage() {
             delivered. The person receiving it does not see that progress.
           </p>
           <p className="mt-3 leading-relaxed text-ink-soft">
-            There is no paid tier and no card. The currency is yours to choose.
-            Leave the budget blank if the group does not want a range.
+            There is no paid tier and no card. The currency is yours to choose:
+            dollars, pounds, euros, rupees, or another from the list. Leave
+            the budget blank if the group does not want a range. People who
+            have not joined are left out of the draw, so wait until the group
+            is actually in before you confirm. After the emails go out, tell
+            the group yourself if a date changes. They are not emailed the edit.
           </p>
         </section>
 
