@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
+  title: "Terms for using the Elf Match site",
   description:
     "Terms for Elf Match, a free Secret Santa organizer. Accounts, acceptable use, availability, and how to reach hello@elfmatch.com.",
   alternates: {
@@ -56,10 +56,10 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p className="text-cream/70">
-              Elf Match is a free online platform that helps users organize
-              Secret Santa and gift exchange events. The Service allows users to
-              create exchanges, invite participants, create wishlists, set
-              exclusion rules, and automatically match participants.
+              Elf Match is a free organizer for a Secret Santa or other gift
+              exchange. You create an exchange, invite people, collect
+              wishlists, set exclusions, and confirm a draw. Names are not
+              sent until you confirm.
             </p>
           </section>
 

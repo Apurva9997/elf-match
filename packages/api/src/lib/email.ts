@@ -244,7 +244,9 @@ export async function sendMemberJoinedEmail(
   const ready =
     joinedCount >= 3
       ? `${joinedCount} people have joined, which is enough to draw.`
-      : `${joinedCount} ${joinedCount === 1 ? "person has" : "people have"} joined. A draw needs three.`;
+      : new Intl.PluralRules("en").select(joinedCount) === "one"
+        ? `${joinedCount} person has joined. A draw needs three.`
+        : `${joinedCount} people have joined. A draw needs three.`;
 
   const { html, text } = paperEmail(
     `${who} joined ${teamName}.`,

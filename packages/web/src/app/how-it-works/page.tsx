@@ -53,9 +53,9 @@ const steps = [
   {
     number: "04",
     title: "Preview, then send the draw",
-    body: "When at least three people have joined, you can assign Santas. Look at the full preview first — only you see every pairing. Generate another set if you want a different arrangement. Confirm when you are ready to email each person their own recipient. After those emails go out, the assignments cannot be changed.",
+    body: "When at least three people have joined, you can draw names. Look at the full preview first — only you see every pairing. Generate another set if you want a different arrangement. Confirm when you are ready to email each person their own recipient. After those emails go out, the names cannot be changed.",
     details: [
-      "No one is assigned themselves",
+      "No one draws their own name",
       "Each participant receives only their own match",
       "Only that giver can open the recipient’s wishlist and delivery address",
     ],

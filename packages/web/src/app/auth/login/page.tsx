@@ -287,14 +287,14 @@ function LoginPageContent() {
               </h1>
               <p className="mt-2 text-ink-soft">
                 {step === "code"
-                  ? `We sent a 6-digit code to ${submittedEmail}.`
+                  ? `A 6-digit code is on its way to ${submittedEmail}.`
                   : creating
-                    ? "Use an email you will still check in December. We will send a 6-digit code. No password."
+                    ? "Use an email you will still check in December. A 6-digit code will arrive there. No password."
                     : joining
                       ? inviteRedirect
                         ? "Sign in or create your account. You will come back to the invitation and can join from there."
                         : "Use the email that received the invitation. A different email will not see the seat."
-                      : "Sign in with the email on the exchange. We will send a 6-digit code. No password."}
+                      : "Sign in with the email on the exchange. A 6-digit code will arrive there. No password."}
               </p>
             </div>
 

@@ -4,7 +4,7 @@ import { shareImage } from "@/lib/share";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
+  title: "How Elf Match handles your data",
   description:
     "What Elf Match stores for a gift exchange, who can see a wishlist or a delivery address, and how to reach hello@elfmatch.com.",
   alternates: {

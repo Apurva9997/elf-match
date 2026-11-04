@@ -27,6 +27,14 @@ import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { track } from "@/lib/analytics";
 import { ApiError, api } from "@/lib/api";
+import {
+  emailsNotSent,
+  exclusionsKept,
+  peopleNotEmailed,
+  peopleNotIncluded,
+  peopleNotJoined,
+  peopleStillInvited,
+} from "@/lib/counts";
 import { inviteShareMessage } from "@/lib/invite-share";
 import { CURRENCIES, budgetRange, formatMoney } from "@/lib/money";
 import { exchangeStage } from "@/lib/stage-scene";
@@ -1278,7 +1286,7 @@ export default function TeamPage() {
               <p className="text-ink">
                 {status?.drawComplete
                   ? status.assignmentEmailsPending > 0
-                    ? `Names are drawn. ${status.assignmentEmailsPending} ${status.assignmentEmailsPending === 1 ? "email has" : "emails have"} not been sent.`
+                    ? `Names are drawn. ${emailsNotSent(status.assignmentEmailsPending)}`
                     : assignment?.assigned && assignment.giftee?.name
                       ? `You are buying for ${assignment.giftee.name}.`
                       : "Names are drawn."
@@ -1316,9 +1324,7 @@ export default function TeamPage() {
         {status && isAdmin && status.drawComplete && status.assignmentEmailsPending > 0 && (
           <div className="mb-8 border border-cranberry/40 bg-ivory-card px-4 py-4">
             <p className="font-medium text-ink">
-              The draw is saved. {status.assignmentEmailsPending}{" "}
-              {status.assignmentEmailsPending === 1 ? "person has" : "people have"} not
-              been emailed their recipient.
+              The draw is saved. {peopleNotEmailed(status.assignmentEmailsPending)}
             </p>
             <p className="mt-1 text-sm text-ink-soft">
               Assignments cannot be redrawn. Sending again only delivers the emails that failed.
@@ -2415,7 +2421,7 @@ export default function TeamPage() {
                         <Input
                           value={exclusionReason}
                           onChange={(e) => setExclusionReason(e.target.value)}
-                          placeholder="e.g., Couple, Family members"
+                          placeholder="Cousins"
                         />
                       </div>
                       <div className="flex justify-end gap-3">
@@ -2617,7 +2623,7 @@ export default function TeamPage() {
                         {isAdmin
                           ? status?.canAssign
                             ? status.pendingInvitations > 0
-                              ? `${status.pendingInvitations} ${status.pendingInvitations === 1 ? "person is" : "people are"} still invited and will be left out. Draw only the people who have joined, when you mean to email them.`
+                              ? `${peopleStillInvited(status.pendingInvitations)} Draw only the people who have joined, when you mean to email them.`
                               : "Everyone invited has joined. Draw when you mean to email the assignments."
                             : `${status?.totalMembers ?? 0} joined. A draw needs three people who have accepted.`
                           : "The organizer sends assignments when the group is ready. You will see only your own recipient."}
@@ -3011,8 +3017,7 @@ export default function TeamPage() {
               <div className="p-3 rounded-lg bg-gold/10 border border-gold/20">
                 <p className="text-gold text-sm flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  {exclusions.length} exclusion
-                  {exclusions.length !== 1 ? "s" : ""} will be respected
+                  {exclusionsKept(exclusions.length)}
                 </p>
               </div>
             )}
@@ -3020,7 +3025,7 @@ export default function TeamPage() {
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
               <p className="text-warning text-sm">
                 {status?.pendingInvitations
-                  ? `${status.pendingInvitations} ${status.pendingInvitations === 1 ? "person has" : "people have"} not joined. They will not be in this draw, and they cannot be added after you send it.`
+                  ? peopleNotJoined(status.pendingInvitations)
                   : "Everyone who was invited has joined. After you send this, the names cannot be redrawn."}
               </p>
             </div>
@@ -3147,7 +3152,7 @@ export default function TeamPage() {
               <p className="text-ink-soft">
                 {previewData?.totalAssignments} people will each be emailed only their own recipient.
                 {status?.pendingInvitations
-                  ? ` ${status.pendingInvitations} ${status.pendingInvitations === 1 ? "person is" : "people are"} still invited and will not be included.`
+                  ? ` ${peopleNotIncluded(status.pendingInvitations)}`
                   : " Everyone invited has joined."}{" "}
                 If an email fails, the names stay as you confirmed them.
               </p>

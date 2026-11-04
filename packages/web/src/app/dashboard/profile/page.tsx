@@ -296,7 +296,7 @@ export default function ProfilePage() {
                 <Input
                   {...register("mobile")}
                   label="Mobile Number"
-                  placeholder="+91 9876543210"
+                  placeholder="202 555 0142"
                   error={errors.mobile?.message}
                 />
               </CardContent>
