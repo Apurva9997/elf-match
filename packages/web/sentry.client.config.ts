@@ -5,7 +5,7 @@ Sentry.init({
 
   // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
   // We recommend adjusting this value in production.
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.1,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
@@ -14,12 +14,11 @@ Sentry.init({
 
   // This sets the sample rate to be 10%. You may want this to be 100% while
   // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
+  // Replay records the DOM. Load it only after an error, not on every visit.
+  replaysSessionSampleRate: 0,
 
-  // You can remove this option if you're not planning to use the Sentry Session Replay feature:
   integrations: [
     Sentry.replayIntegration({
-      // Additional Replay configuration goes in here
       maskAllText: true,
       blockAllMedia: true,
     }),

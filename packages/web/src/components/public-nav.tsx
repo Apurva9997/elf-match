@@ -1,11 +1,5 @@
-"use client";
-
 import { ElfMark } from "@/components/mark";
-import { useAuth } from "@/lib/auth-context";
-import { invitePath, rememberedInvite } from "@/lib/pending-invite";
-import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 const links = [
   { href: "/how-it-works", label: "How it works" },
@@ -16,16 +10,6 @@ const links = [
 ];
 
 export function PublicNav() {
-  const { isAuthenticated } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [pendingInvite, setPendingInvite] = useState<string | null>(null);
-  useEffect(() => {
-    setPendingInvite(rememberedInvite());
-  }, []);
-  const signInHref = pendingInvite
-    ? `/auth/login?intent=join&redirect=${encodeURIComponent(invitePath(pendingInvite))}`
-    : "/auth/login";
-
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-ivory/95">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-4 px-4 sm:px-6">
@@ -49,76 +33,54 @@ export function PublicNav() {
         </nav>
 
         <div className="flex items-center gap-1 sm:gap-3">
-          {isAuthenticated ? (
-            <Link
-              href="/dashboard"
-              className="hidden bg-evergreen px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-evergreen-deep sm:inline-flex"
+          <Link
+            href="/auth/login"
+            className="px-2 py-2 text-sm font-semibold text-evergreen hover:text-evergreen-deep"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/auth/login?intent=create"
+            className="hidden bg-cranberry px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:inline-flex"
+          >
+            Create an exchange
+          </Link>
+          <details className="relative md:hidden">
+            <summary className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center text-evergreen [&::-webkit-details-marker]:hidden">
+              <span className="sr-only">Open menu</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+                <path
+                  d="M4 7h16M4 12h16M4 17h16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </summary>
+            <nav
+              aria-label="Sections"
+              className="absolute right-0 top-full z-50 w-[min(16rem,calc(100vw-2rem))] border border-rule bg-ivory px-4 py-2 shadow-paper"
             >
-              Your exchanges
-            </Link>
-          ) : (
-            <>
-              <Link
-                href={signInHref}
-                className="px-2 py-2 text-sm font-semibold text-evergreen hover:text-evergreen-deep"
-              >
-                Sign in
-              </Link>
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex min-h-11 items-center text-ink"
+                >
+                  {link.label}
+                </Link>
+              ))}
               <Link
                 href="/auth/login?intent=create"
-                className="hidden bg-cranberry px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:inline-flex"
+                className="flex min-h-11 items-center font-semibold text-cranberry sm:hidden"
               >
                 Create an exchange
               </Link>
-            </>
-          )}
-          <button
-            type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center text-evergreen md:hidden"
-            aria-expanded={open}
-            aria-controls="mobile-sections"
-            aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => setOpen((value) => !value)}
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+            </nav>
+          </details>
         </div>
       </div>
-      {open && (
-        <nav
-          id="mobile-sections"
-          aria-label="Sections"
-          className="border-t border-rule px-4 py-2 md:hidden"
-        >
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="flex min-h-11 items-center text-ink"
-            >
-              {link.label}
-            </Link>
-          ))}
-          {isAuthenticated ? (
-            <Link
-              href="/dashboard"
-              onClick={() => setOpen(false)}
-              className="flex min-h-11 items-center font-semibold text-evergreen sm:hidden"
-            >
-              Your exchanges
-            </Link>
-          ) : (
-            <Link
-              href="/auth/login?intent=create"
-              onClick={() => setOpen(false)}
-              className="flex min-h-11 items-center font-semibold text-cranberry sm:hidden"
-            >
-              Create an exchange
-            </Link>
-          )}
-        </nav>
-      )}
     </header>
   );
 }

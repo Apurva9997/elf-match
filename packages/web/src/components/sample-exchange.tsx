@@ -1,6 +1,5 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
 import { useState } from "react";
 
 const people = [
@@ -12,7 +11,7 @@ const people = [
 
 export function SampleExchange() {
   const [open, setOpen] = useState(false);
-  const reduce = useReducedMotion();
+  const reduce = false;
 
   return (
     <figure>

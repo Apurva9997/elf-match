@@ -55,6 +55,9 @@ const nextConfig = {
     // Compile the API package sitting next to this app in the monorepo.
     externalDir: true,
     serverComponentsExternalPackages: ["pg"],
+    // lucide-react is imported as a barrel. Without this, one icon pulls
+    // the whole icon set into the client bundle.
+    optimizePackageImports: ["lucide-react"],
   },
   webpack: (config) => {
     // packages/api is ESM TypeScript that imports sibling files as ".js".

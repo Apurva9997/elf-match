@@ -1,10 +1,7 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Toaster } from "sonner";
 import { shareImage } from "@/lib/share";
 import "./globals.css";
-import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://elfmatch.com"),
@@ -95,15 +92,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
     <html lang="en">
-      <body className="min-h-screen">
+      <head>
+        <link rel="preconnect" href="https://video.gumlet.io" />
         <link
           rel="preload"
           as="image"
           href="/film/someone-gets-to-be-your-santa.jpg"
           fetchPriority="high"
         />
+      </head>
+      <body className="min-h-screen">
         <Script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="u0RRy0IkQmdhl4Pwds0Clw"
@@ -115,7 +114,7 @@ export default function RootLayout({
         />
         <Script
           id="amplitude-init"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
@@ -145,22 +144,8 @@ export default function RootLayout({
             `,
           }}
         />
-        <Providers>
-          {children}
-
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              style: {
-                background: "#FFFCF6",
-                border: "1px solid #DDD4C4",
-                color: "#1C1915",
-              },
-            }}
-          />
-        </Providers>
+        {children}
       </body>
     </html>
-    </ClerkProvider>
   );
 }

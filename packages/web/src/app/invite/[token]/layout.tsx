@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/app-shell";
 import { shareImage } from "@/lib/share";
 import { invitePreviewCopy } from "../../../../../api/src/lib/invite-preview";
 import type { Metadata } from "next";
@@ -36,5 +37,5 @@ export default function InviteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <AppShell>{children}</AppShell>;
 }

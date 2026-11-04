@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/app-shell";
 import { shareImage } from "@/lib/share";
 import type { Metadata } from "next";
 
@@ -15,5 +16,5 @@ export default function SsoLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <AppShell>{children}</AppShell>;
 }
