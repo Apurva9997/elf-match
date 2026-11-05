@@ -29,32 +29,11 @@ const isAuthRoute = createRouteMatcher([
   "/auth/verify(.*)",
 ]);
 
-function signedOut(req: { cookies: { has: (name: string) => boolean; get: (name: string) => { value: string } | undefined } }) {
-  if (req.cookies.has("__session")) return false;
-  // Clerk sets this to "0" after a signed-out visit. Only a real
-  // timestamp means a session may still need a handshake.
-  const updatedAt = req.cookies.get("__client_uat")?.value;
-  return !updatedAt || updatedAt === "0";
-}
-
 export default clerkMiddleware(async (auth, req) => {
-  // Skip the Clerk handshake for a signed-out visitor. Otherwise every
-  // public navigation waits on clerk.elfmatch.com before the document.
-  if (signedOut(req)) {
-    if (!isPublicRoute(req)) {
-      const path = req.nextUrl.pathname;
-      const isAppSurface =
-        path.startsWith("/dashboard") || path.startsWith("/api");
-      if (!isAppSurface) {
-        return NextResponse.rewrite(new URL("/not-found", req.url));
-      }
-      const loginUrl = new URL("/auth/login", req.url);
-      loginUrl.searchParams.set("redirect", path);
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
-  }
-
+  // Let Clerk finish the handshake before this handler decides. A
+  // returning session often has no __session cookie until that
+  // redirect writes one. Treating the missing cookie as signed-out
+  // sent /dashboard back to /auth/login, which sent it forward again.
   const { userId } = await auth();
 
   // Redirect authenticated users away from auth pages. An invitation

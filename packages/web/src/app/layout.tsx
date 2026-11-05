@@ -109,6 +109,7 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
         <Script
+          id="amplitude-sdk"
           src="https://cdn.amplitude.com/script/cafdae686221fc101d72a883c8f95324.js"
           strategy="lazyOnload"
         />
@@ -118,28 +119,33 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
-                var path = location.pathname;
-                var privateSurface = path.indexOf("/dashboard") === 0 || path.indexOf("/invite/") === 0;
-                if (!privateSurface && window.sessionReplay) {
-                  window.amplitude.add(window.sessionReplay.plugin({
-                    sampleRate: 0.1,
-                    privacyConfig: { defaultMaskLevel: "conservative" }
-                  }));
-                }
-                window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
-                  fetchRemoteConfig: false,
-                  autocapture: {
-                    attribution: true,
-                    fileDownloads: true,
-                    formInteractions: false,
-                    pageViews: true,
-                    sessions: true,
-                    elementInteractions: false,
-                    networkTracking: false,
-                    webVitals: true,
-                    frustrationInteractions: false
+                function start() {
+                  if (!window.amplitude || !window.amplitude.init) return;
+                  var path = location.pathname;
+                  var privateSurface = path.indexOf("/dashboard") === 0 || path.indexOf("/invite/") === 0;
+                  if (!privateSurface && window.sessionReplay) {
+                    window.amplitude.add(window.sessionReplay.plugin({
+                      sampleRate: 0.1,
+                      privacyConfig: { defaultMaskLevel: "conservative" }
+                    }));
                   }
-                });
+                  window.amplitude.init('cafdae686221fc101d72a883c8f95324', {
+                    fetchRemoteConfig: false,
+                    autocapture: {
+                      attribution: true,
+                      fileDownloads: true,
+                      formInteractions: false,
+                      pageViews: true,
+                      sessions: true,
+                      elementInteractions: false,
+                      networkTracking: false,
+                      webVitals: true,
+                      frustrationInteractions: false
+                    }
+                  });
+                }
+                if (window.amplitude && window.amplitude.init) start();
+                else document.getElementById("amplitude-sdk")?.addEventListener("load", start);
               })();
             `,
           }}

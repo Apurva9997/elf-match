@@ -17,39 +17,19 @@ function AuthWrapper({ children }: { children: ReactNode }) {
   const { isLoading, user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
   const sent = useRef(false);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (user && !pathname.startsWith("/invite/")) {
-      const token = rememberedInvite();
-      if (token && !inviteWasNudged() && !sent.current) {
-        sent.current = true;
-        router.replace(invitePath(token));
-        return;
-      }
-    }
-    setReady(true);
+    if (isLoading || !user || pathname.startsWith("/invite/")) return;
+    const token = rememberedInvite();
+    if (!token || inviteWasNudged() || sent.current) return;
+    sent.current = true;
+    router.replace(invitePath(token));
   }, [isLoading, user, pathname, router]);
 
-  // A signed-out visitor is not waiting on an account. Hold only while
-  // Clerk is resolving a session that might still be signed in, or while
-  // a remembered invitation is about to redirect.
-  const waitingForInvite =
-    Boolean(user) && !ready && !pathname.startsWith("/invite/");
-  if ((isLoading && user !== null) || waitingForInvite) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent"
-          role="status"
-          aria-label="Loading"
-        />
-      </div>
-    );
-  }
-
+  // Paint the page while Clerk is still resolving. Holding the document
+  // here, then redirecting once the session arrived, fought the login
+  // page's own redirect to the dashboard.
   return <>{children}</>;
 }
 

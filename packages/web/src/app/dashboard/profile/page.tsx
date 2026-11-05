@@ -178,13 +178,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/auth/login");
-    }
-  }, [authLoading, user, router]);
-
   if (!authLoading && !user) {
     return null;
   }

@@ -341,11 +341,6 @@ function DashboardContent() {
   };
 
   const createFromIntent = useRef(false);
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/auth/login");
-    }
-  }, [authLoading, user, router]);
 
   const [pendingInvite, setPendingInvite] = useState<string | null>(null);
   useEffect(() => {

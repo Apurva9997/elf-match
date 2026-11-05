@@ -1123,13 +1123,6 @@ export default function TeamPage() {
   const acceptedMembers =
     team?.members.filter((m) => m.invitationStatus === "accepted") || [];
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/auth/login");
-    }
-  }, [authLoading, user, router]);
-
   useEffect(() => {
     const requested = searchParams.get("tab");
     if (
