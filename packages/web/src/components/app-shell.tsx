@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <MotionConfig reducedMotion="user">

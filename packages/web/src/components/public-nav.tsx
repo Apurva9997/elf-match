@@ -15,7 +15,8 @@ const links = [
 
 export function PublicNav() {
   const auth = useContext(AuthContext);
-  const signedIn = Boolean(auth && !auth.isLoading && auth.isAuthenticated);
+  const resolved = Boolean(auth && !auth.isLoading);
+  const signedIn = Boolean(resolved && auth?.isAuthenticated);
 
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-ivory/95">
@@ -47,7 +48,7 @@ export function PublicNav() {
             >
               Your exchanges
             </Link>
-          ) : (
+          ) : resolved ? (
             <>
               <Link
                 href="/auth/login"
@@ -62,6 +63,10 @@ export function PublicNav() {
                 Create an exchange
               </Link>
             </>
+          ) : (
+            <span className="px-2 py-2 text-sm font-semibold text-ink-faint">
+              Sign in
+            </span>
           )}
           <details className="relative md:hidden">
             <summary className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center text-evergreen [&::-webkit-details-marker]:hidden">
@@ -96,14 +101,14 @@ export function PublicNav() {
                 >
                   Your exchanges
                 </Link>
-              ) : (
+              ) : resolved ? (
                 <Link
                   href="/auth/login?intent=create"
                   className="flex min-h-11 items-center font-semibold text-cranberry sm:hidden"
                 >
                   Create an exchange
                 </Link>
-              )}
+              ) : null}
             </nav>
           </details>
         </div>

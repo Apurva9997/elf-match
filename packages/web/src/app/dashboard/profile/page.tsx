@@ -26,7 +26,6 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -46,7 +45,6 @@ const profileSchema = z.object({
 type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const router = useRouter();
   const { user, isLoading: authLoading, logout } = useAuth();
   const queryClient = useQueryClient();
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
@@ -425,7 +423,6 @@ export default function ProfilePage() {
                       await api.deleteAccount(deleteConfirmation.trim());
                       toast.success("Account deleted.");
                       await logout();
-                      router.push("/");
                     } catch (err) {
                       toast.error(
                         err instanceof Error

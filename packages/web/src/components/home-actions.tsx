@@ -6,8 +6,9 @@ import { useContext } from "react";
 
 export function HomeActions() {
   const auth = useContext(AuthContext);
+  const resolved = Boolean(auth && !auth.isLoading);
 
-  if (auth && !auth.isLoading && auth.isAuthenticated) {
+  if (resolved && auth?.isAuthenticated) {
     return (
       <div className="mt-8">
         <Link
@@ -18,6 +19,10 @@ export function HomeActions() {
         </Link>
       </div>
     );
+  }
+
+  if (!resolved) {
+    return <div className="mt-8 h-12 w-48 bg-ivory-deep" aria-hidden />;
   }
 
   return (

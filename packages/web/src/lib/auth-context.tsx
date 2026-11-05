@@ -16,7 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: () => void;
-  logout: () => void;
+  logout: (redirectUrl?: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,10 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsFetchingUser(false));
   }, [clerkLoaded, isSignedIn, clerkUser]);
 
-  const logout = async () => {
+  const logout = async (redirectUrl = "/") => {
     setUser(null);
     api.setTokenGetter(null);
-    await signOut();
+    // Clerk clears the session and only then navigates. A second
+    // navigation here leaves the cookie in place, so the next Sign in
+    // is sent to the dashboard and the late sign-out sends it home.
+    await signOut({ redirectUrl });
   };
 
   const isLoading = !clerkLoaded || (!!isSignedIn && isFetchingUser);

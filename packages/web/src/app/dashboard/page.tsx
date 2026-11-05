@@ -251,8 +251,7 @@ function DashboardContent() {
   };
 
   const handleLogout = () => {
-    logout();
-    router.push("/");
+    void logout();
   };
 
   // Check if user needs onboarding

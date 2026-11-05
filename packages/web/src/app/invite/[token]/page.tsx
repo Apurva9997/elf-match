@@ -178,7 +178,9 @@ export default function InvitePage() {
                       <Button
                         variant="secondary"
                         className="mt-4 w-full"
-                        onClick={() => logout()}
+                        onClick={() =>
+                          logout(`${window.location.pathname}${window.location.search}`)
+                        }
                       >
                         Sign out and use {error.match(/sent to ([^\s]+)\./)?.[1] || "the invited email"}
                       </Button>
