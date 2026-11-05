@@ -1,5 +1,9 @@
+"use client";
+
 import { ElfMark } from "@/components/mark";
+import { AuthContext } from "@/lib/auth-context";
 import Link from "next/link";
+import { useContext } from "react";
 
 const links = [
   { href: "/how-it-works", label: "How it works" },
@@ -10,6 +14,9 @@ const links = [
 ];
 
 export function PublicNav() {
+  const auth = useContext(AuthContext);
+  const signedIn = Boolean(auth && !auth.isLoading && auth.isAuthenticated);
+
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-ivory/95">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-4 px-4 sm:px-6">
@@ -33,18 +40,29 @@ export function PublicNav() {
         </nav>
 
         <div className="flex items-center gap-1 sm:gap-3">
-          <Link
-            href="/auth/login"
-            className="px-2 py-2 text-sm font-semibold text-evergreen hover:text-evergreen-deep"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/auth/login?intent=create"
-            className="hidden bg-cranberry px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:inline-flex"
-          >
-            Create an exchange
-          </Link>
+          {signedIn ? (
+            <Link
+              href="/dashboard"
+              className="bg-evergreen px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-evergreen-deep"
+            >
+              Your exchanges
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth/login"
+                className="px-2 py-2 text-sm font-semibold text-evergreen hover:text-evergreen-deep"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/login?intent=create"
+                className="hidden bg-cranberry px-3.5 py-2 text-sm font-semibold text-ivory hover:bg-cranberry-deep sm:inline-flex"
+              >
+                Create an exchange
+              </Link>
+            </>
+          )}
           <details className="relative md:hidden">
             <summary className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center text-evergreen [&::-webkit-details-marker]:hidden">
               <span className="sr-only">Open menu</span>
@@ -71,12 +89,21 @@ export function PublicNav() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/auth/login?intent=create"
-                className="flex min-h-11 items-center font-semibold text-cranberry sm:hidden"
-              >
-                Create an exchange
-              </Link>
+              {signedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="flex min-h-11 items-center font-semibold text-evergreen sm:hidden"
+                >
+                  Your exchanges
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login?intent=create"
+                  className="flex min-h-11 items-center font-semibold text-cranberry sm:hidden"
+                >
+                  Create an exchange
+                </Link>
+              )}
             </nav>
           </details>
         </div>

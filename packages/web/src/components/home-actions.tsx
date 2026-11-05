@@ -1,6 +1,25 @@
+"use client";
+
+import { AuthContext } from "@/lib/auth-context";
 import Link from "next/link";
+import { useContext } from "react";
 
 export function HomeActions() {
+  const auth = useContext(AuthContext);
+
+  if (auth && !auth.isLoading && auth.isAuthenticated) {
+    return (
+      <div className="mt-8">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center justify-center bg-cranberry px-5 py-3 text-base font-semibold text-ivory hover:bg-cranberry-deep"
+        >
+          Open your exchanges
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-8">
       <Link
