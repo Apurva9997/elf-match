@@ -23,6 +23,7 @@ export const onRequestError = async (
     revalidateReason?: string;
   }
 ) => {
+  if (!process.env.SENTRY_DSN) return;
   const Sentry = await import("@sentry/nextjs");
   Sentry.captureException(error, {
     extra: {

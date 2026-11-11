@@ -1,3 +1,4 @@
+# https://elfmatch.com. A copy you run yourself replaces both hostnames.
 www.elfmatch.com {
 	redir https://elfmatch.com{uri} permanent
 }

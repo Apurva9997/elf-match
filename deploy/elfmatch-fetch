@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Download one object from the Elf Match deploy bucket.
+"""Download one object from a deploy bucket, using the instance role.
 
-Uses the instance role through IMDSv2. The host role can read only
-s3://your-deploy-bucket/src/*. Nothing else is fetched.
-Installed on the host at /usr/local/sbin/elfmatch-fetch. The deploy
-workflow calls that path. This copy is what a new host should install.
+The host role should be allowed to read only the prefix this script
+accepts. Nothing else is fetched. Install it on the host and call that
+path from your own deploy workflow.
+
+  elfmatch-fetch src/COMMIT.tgz /tmp/elfmatch-src.tgz
+
+Set ELFMATCH_DEPLOY_BUCKET and ELFMATCH_DEPLOY_REGION to the bucket and
+region you created. The key must stay under src/.
 """
 import hashlib
 import hmac
 import json
+import os
 import sys
 import urllib.request
 from datetime import datetime, timezone
 
-BUCKET = "your-deploy-bucket"
-REGION = "ap-south-1"
+BUCKET = os.environ["ELFMATCH_DEPLOY_BUCKET"]
+REGION = os.environ["ELFMATCH_DEPLOY_REGION"]
 PREFIX = "src/"
 
 

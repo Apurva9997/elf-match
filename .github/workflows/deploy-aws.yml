@@ -1,7 +1,8 @@
 name: Deploy to AWS
 
-# A push to main publishes elfmatch.com. The site is the Docker Compose
-# project on the hearth instance. Netlify files stay in the repo for the
+# A push to main publishes https://elfmatch.com.
+# The AWS account, deploy role, bucket, and instance are GitHub Actions
+# secrets, not committed values. Netlify files stay in the repo for the
 # return after Christmas. This workflow does not call Netlify.
 on:
   push:
@@ -17,9 +18,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AWS_REGION: ap-south-1
-  DEPLOY_BUCKET: your-deploy-bucket
-  INSTANCE_ID: i-00000000000000000
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  DEPLOY_BUCKET: ${{ secrets.DEPLOY_BUCKET }}
+  INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
 
 jobs:
   deploy:
@@ -29,7 +30,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::ACCOUNT:role/your-deploy-role
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Pack the source

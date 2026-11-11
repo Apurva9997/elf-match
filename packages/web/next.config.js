@@ -70,7 +70,7 @@ const nextConfig = {
 
 module.exports = withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
-  project: "elf-match",
+  project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: true,
   widenClientFileUpload: true,

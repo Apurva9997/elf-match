@@ -5,7 +5,6 @@
  * Run on the host, with the production env file, after the title column
  * is text. Prints counts only. Never prints a wishlist.
  *
- *   set -a; . /etc/elfmatch.env; set +a   # fails if values contain shell syntax
  *   node --env-file=/etc/elfmatch.env packages/api/scripts/reseal-wishlists.mjs
  */
 const { createCipheriv, hkdfSync, randomBytes } = require("node:crypto");

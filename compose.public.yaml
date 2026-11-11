@@ -1,4 +1,6 @@
-# Public entry for elfmatch.com. Hearth's Caddy stays on loopback.
+# Public entry for https://elfmatch.com.
+# A copy you run yourself: change the hostnames in Caddyfile, and point
+# env_file at an env file you keep outside the repository.
 services:
   elfmatch:
     build:
